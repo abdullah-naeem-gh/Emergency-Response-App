@@ -46,7 +46,7 @@ export const MockLocationService = {
    */
   simulateEnterRedZone: () => {
     useAppStore.getState().setRedZone(true);
-    useAppStore.getState().setMode('PANIC');
+    useAppStore.getState().setMode('PREDICTIVE');
   },
 
   /**
