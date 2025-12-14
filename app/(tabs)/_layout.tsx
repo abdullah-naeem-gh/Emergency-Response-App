@@ -1,4 +1,5 @@
 import { Tabs } from 'expo-router';
+import { Newspaper } from 'lucide-react-native';
 import React from 'react';
 
 import { HapticTab } from '@/components/haptic-tab';
@@ -21,6 +22,13 @@ export default function TabLayout() {
         options={{
           title: 'Home',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="news"
+        options={{
+          title: 'Alerts',
+          tabBarIcon: ({ color }) => <Newspaper size={28} color={color} />,
         }}
       />
       <Tabs.Screen
