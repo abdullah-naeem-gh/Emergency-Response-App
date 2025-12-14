@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { BookOpen, Newspaper, Phone } from 'lucide-react-native';
+import { BookOpen, HandHeart, Newspaper, Phone } from 'lucide-react-native';
 import React from 'react';
 
 import { HapticTab } from '@/components/haptic-tab';
@@ -50,6 +50,13 @@ export default function TabLayout() {
         options={{
           title: 'Directory',
           tabBarIcon: ({ color }) => <Phone size={28} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="volunteer"
+        options={{
+          title: 'Volunteer',
+          tabBarIcon: ({ color }) => <HandHeart size={28} color={color} />,
         }}
       />
     </Tabs>
