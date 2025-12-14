@@ -1,64 +1,110 @@
-import { Tabs } from 'expo-router';
-import { BookOpen, HandHeart, Newspaper, Phone } from 'lucide-react-native';
-import React from 'react';
-
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import CustomHeader from '@/components/CustomHeader';
+import CustomTabBar from '@/components/CustomTabBar';
+import SettingsDrawer from '@/components/SettingsDrawer';
+import { BottomTabNavigationState } from '@react-navigation/bottom-tabs';
+import { useNavigationState } from '@react-navigation/native';
+import { Tabs, useNavigation, usePathname } from 'expo-router';
+import React, { useRef, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
+  const [showSettings, setShowSettings] = useState(false);
+  const navigation = useNavigation();
+  const pathname = usePathname();
+  const tabBarPropsRef = useRef<any>(null);
+
+  // Get navigation state
+  const state = useNavigationState((state) => {
+    if (state && state.type === 'tab') {
+      const tabState = state as BottomTabNavigationState;
+      tabBarPropsRef.current = {
+        state: tabState,
+        navigation: navigation as any,
+        descriptors: {},
+      };
+      return tabState;
+    }
+    return null;
+  });
 
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
-      }}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
-        }}
+    <View style={styles.container}>
+      <CustomHeader onSettingsPress={() => setShowSettings(true)} />
+      <View style={styles.tabsWrapper}>
+        <Tabs
+          screenOptions={{
+            headerShown: false,
+            tabBarStyle: { display: 'none' }, // Hide default tab bar
+          }}
+        >
+          <Tabs.Screen
+            name="index"
+            options={{
+              title: 'Home',
+              href: '/(tabs)',
+            }}
+          />
+          <Tabs.Screen
+            name="volunteer"
+            options={{
+              title: 'Map',
+              href: '/(tabs)/volunteer',
+            }}
+          />
+          <Tabs.Screen
+            name="guides"
+            options={{
+              title: 'Guides',
+              href: '/(tabs)/guides',
+            }}
+          />
+          <Tabs.Screen
+            name="chatbot"
+            options={{
+              title: 'Chat',
+              href: '/(tabs)/chatbot',
+            }}
+          />
+          {/* Hide these screens from tab bar but keep them accessible */}
+          <Tabs.Screen
+            name="news"
+            options={{
+              href: null,
+            }}
+          />
+          <Tabs.Screen
+            name="explore"
+            options={{
+              href: null,
+            }}
+          />
+          <Tabs.Screen
+            name="directory"
+            options={{
+              href: null,
+            }}
+          />
+        </Tabs>
+      </View>
+      {/* Manually render tab bar at bottom - always visible */}
+      <CustomTabBar 
+        state={state as any || { routes: [], index: 0 }}
+        navigation={navigation as any}
+        descriptors={{}}
       />
-      <Tabs.Screen
-        name="news"
-        options={{
-          title: 'Alerts',
-          tabBarIcon: ({ color }) => <Newspaper size={28} color={color} />,
-        }}
+      <SettingsDrawer 
+        visible={showSettings} 
+        onClose={() => setShowSettings(false)} 
       />
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="guides"
-        options={{
-          title: 'Guides',
-          tabBarIcon: ({ color }) => <BookOpen size={28} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="directory"
-        options={{
-          title: 'Directory',
-          tabBarIcon: ({ color }) => <Phone size={28} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="volunteer"
-        options={{
-          title: 'Volunteer',
-          tabBarIcon: ({ color }) => <HandHeart size={28} color={color} />,
-        }}
-      />
-    </Tabs>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  tabsWrapper: {
+    flex: 1,
+  },
+});

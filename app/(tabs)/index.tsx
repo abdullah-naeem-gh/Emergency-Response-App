@@ -1,98 +1,170 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { Report, reportService } from '@/services/ReportService';
+import { useAppStore } from '@/store/useAppStore';
+import * as Haptics from 'expo-haptics';
+import { useRouter } from 'expo-router';
+import { AlertTriangle, Cloud, Heart, X } from 'lucide-react-native';
+import React, { useState } from 'react';
+import { Dimensions, Modal, Pressable, ScrollView, Text, View } from 'react-native';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+const { width } = Dimensions.get('window');
+const CARD_WIDTH = (width - 48) / 2; // 2 columns with padding
 
-export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
-
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
-  );
+interface IncidentCategory {
+  id: string;
+  label: string;
+  color: string;
 }
 
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
-});
+const INCIDENT_CATEGORIES: IncidentCategory[] = [
+  { id: 'flood', label: 'Flood', color: '#3b82f6' },
+  { id: 'medical', label: 'Medical', color: '#ef4444' },
+  { id: 'fire', label: 'Fire', color: '#f59e0b' },
+];
+
+export default function HomeScreen() {
+  const router = useRouter();
+  const { isRedZone, connectivity, setMode, setConnectivity } = useAppStore();
+  const [showIncidentModal, setShowIncidentModal] = useState(false);
+
+  const handleReportIncident = async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setShowIncidentModal(true);
+  };
+
+  const handleIncidentCategory = async (category: IncidentCategory) => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    console.log('Reported incident:', category.label);
+    
+    // Create report
+    const report: Report = {
+      id: Date.now().toString(),
+      timestamp: Date.now(),
+      type: category.id,
+      details: `${category.label} incident reported`,
+    };
+    
+    // Send report (will queue if offline, send if online)
+    const result = await reportService.sendReport(report);
+    
+    // Update store for UI tracking
+    useAppStore.getState().addToQueue(report);
+    
+    setShowIncidentModal(false);
+    
+    // Show feedback based on result
+    if (result.queued) {
+      console.log('Report queued for offline sending');
+    } else if (result.success) {
+      console.log('Report sent successfully');
+    }
+  };
+
+  const handleVolunteer = async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    router.push('/(tabs)/volunteer');
+  };
+
+  const handleWeatherAlerts = async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    router.push('/(tabs)/news');
+  };
+
+  return (
+    <View className="flex-1 bg-neutral-50">
+      {/* Body - Grid Layout */}
+      <ScrollView className="flex-1" contentContainerClassName="p-4 pt-4">
+        <View className="flex-row flex-wrap justify-between gap-4">
+          {/* Report Incident Card */}
+          <Pressable
+            onPress={handleReportIncident}
+            className="bg-red-500 rounded-2xl p-6 shadow-lg active:opacity-80"
+            style={{ width: CARD_WIDTH, minHeight: 180 }}
+          >
+            <View className="flex-1 justify-between">
+              <View>
+                <AlertTriangle size={36} color="white" className="mb-4" />
+                <Text className="text-white text-2xl font-bold mb-2">Report</Text>
+                <Text className="text-white text-base opacity-90">Incident</Text>
+              </View>
+            </View>
+          </Pressable>
+
+          {/* Volunteer Card */}
+          <Pressable
+            onPress={handleVolunteer}
+            className="bg-yellow-500 rounded-2xl p-6 shadow-lg active:opacity-80"
+            style={{ width: CARD_WIDTH, minHeight: 180 }}
+          >
+            <View className="flex-1 justify-between">
+              <View>
+                <Heart size={36} color="white" className="mb-4" fill="white" />
+                <Text className="text-white text-2xl font-bold mb-2">Volunteer</Text>
+                <Text className="text-white text-base opacity-90">Help Others</Text>
+              </View>
+            </View>
+          </Pressable>
+
+          {/* Weather/Alerts Card - Full Width */}
+          <Pressable
+            onPress={handleWeatherAlerts}
+            className="bg-blue-500 rounded-2xl p-6 shadow-lg w-full active:opacity-80"
+            style={{ minHeight: 140 }}
+          >
+            <View className="flex-row items-center justify-between">
+              <View className="flex-1">
+                <Cloud size={36} color="white" className="mb-4" />
+                <Text className="text-white text-2xl font-bold mb-2">Weather & Alerts</Text>
+                <Text className="text-white text-base opacity-90">Stay Informed</Text>
+              </View>
+            </View>
+          </Pressable>
+        </View>
+      </ScrollView>
+
+      {/* Report Incident Modal */}
+      <Modal
+        visible={showIncidentModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowIncidentModal(false)}
+      >
+        <View className="flex-1 bg-black/50 justify-end">
+          <View className="bg-white rounded-t-3xl p-6 pb-12">
+            <View className="flex-row items-center justify-between mb-6">
+              <Text className="text-2xl font-bold text-neutral-900">Report Incident</Text>
+              <Pressable
+                onPress={() => setShowIncidentModal(false)}
+                className="p-2"
+              >
+                <X size={24} color="#6b7280" />
+              </Pressable>
+            </View>
+
+            <Text className="text-neutral-600 mb-6">
+              Select the type of incident you want to report:
+            </Text>
+
+            <View className="gap-3">
+              {INCIDENT_CATEGORIES.map((category) => (
+                <Pressable
+                  key={category.id}
+                  onPress={() => handleIncidentCategory(category)}
+                  className="bg-neutral-100 rounded-xl p-5 flex-row items-center justify-between active:opacity-70"
+                  style={{ minHeight: 60 }}
+                >
+                  <Text className="text-lg font-semibold text-neutral-900">
+                    {category.label}
+                  </Text>
+                  <View
+                    className="w-5 h-5 rounded-full"
+                    style={{ backgroundColor: category.color }}
+                  />
+                </Pressable>
+              ))}
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </View>
+  );
+}

@@ -1,5 +1,4 @@
 import { MockLocationService } from '@/services/MockLocationService';
-import { useAppStore } from '@/store/useAppStore';
 import { Audio } from 'expo-av';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
@@ -18,14 +17,12 @@ import Animated, {
 
 const { width } = Dimensions.get('window');
 const SLIDER_WIDTH = width - 40;
-const SLIDER_HEIGHT = 80;
 const KNOB_WIDTH = 80;
 const MAX_SLIDE = SLIDER_WIDTH - KNOB_WIDTH;
 const RECORDING_DURATION = 12000; // 12 seconds instead of 5
 
 export default function PanicScreen() {
   const router = useRouter();
-  const { setMode } = useAppStore();
   const [isRecording, setIsRecording] = useState(false);
   const [isSent, setIsSent] = useState(false);
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
@@ -291,7 +288,7 @@ export default function PanicScreen() {
       // Get the recording URI for potential upload
       const uri = recording.getURI();
       console.log('Recording saved to:', uri);
-    } catch (error) {
+    } catch {
        // Ignore error if already unloaded
     }
     setRecording(null);
@@ -321,7 +318,7 @@ export default function PanicScreen() {
   const handleGoBack = async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     MockLocationService.simulateExitRedZone();
-    router.replace('/(peace)');
+    router.replace('/(tabs)');
   };
 
   const panGesture = Gesture.Pan()

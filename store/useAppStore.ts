@@ -9,11 +9,14 @@ interface Report {
   details: string;
 }
 
+export type Language = 'en' | 'ur';
+
 interface AppState {
   mode: AppMode;
   isRedZone: boolean;
   connectivity: boolean;
   reportQueue: Report[];
+  language: Language;
   
   // Volunteer Stats
   volunteerTasksDone: number;
@@ -26,6 +29,8 @@ interface AppState {
   addToQueue: (report: Report) => void;
   clearQueue: () => void;
   incrementVolunteerTasks: () => void;
+  setLanguage: (language: Language) => void;
+  toggleLanguage: () => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -33,6 +38,7 @@ export const useAppStore = create<AppState>((set) => ({
   isRedZone: false,
   connectivity: true,
   reportQueue: [],
+  language: 'en',
   volunteerTasksDone: 0,
   volunteerLevel: 'Rookie',
 
@@ -52,5 +58,7 @@ export const useAppStore = create<AppState>((set) => ({
       volunteerLevel: newLevel,
     };
   }),
+  setLanguage: (language) => set({ language }),
+  toggleLanguage: () => set((state) => ({ language: state.language === 'en' ? 'ur' : 'en' })),
 }));
 

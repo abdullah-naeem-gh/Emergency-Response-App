@@ -1,21 +1,21 @@
-import '../global.css';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect, useState } from 'react';
 import 'react-native-reanimated';
-import { useState, useEffect } from 'react';
+import '../global.css';
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import { GlobalSensorListener } from '@/components/GlobalSensorListener';
-import { PredictiveModal } from '@/components/PredictiveModal';
 import { OfflineBanner } from '@/components/OfflineBanner';
-import { useAppStore } from '@/store/useAppStore';
+import { PredictiveModal } from '@/components/PredictiveModal';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { reportService } from '@/services/ReportService';
+import { useAppStore } from '@/store/useAppStore';
 import NetInfo from '@react-native-community/netinfo';
 
 export const unstable_settings = {
   // Ensure that reloading on `/modal` keeps a back button present.
-  initialRouteName: '(peace)',
+  initialRouteName: '(tabs)',
 };
 
 export default function RootLayout() {
@@ -68,10 +68,9 @@ export default function RootLayout() {
       <GlobalSensorListener />
       <OfflineBanner />
       <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(peace)" />
+        <Stack.Screen name="(tabs)" />
         <Stack.Screen name="(panic)" options={{ gestureEnabled: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', headerShown: true }} />
-        <Stack.Screen name="(tabs)" options={{ href: null }} />
       </Stack>
       <PredictiveModal 
         visible={showPredictiveModal} 
