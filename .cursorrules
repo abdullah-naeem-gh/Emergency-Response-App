@@ -16,3 +16,4 @@ You are an expert React Native and Expo developer.
 # Specific Logic:
 *   If generating the SOS screen, ensure the button is red and huge.
 *   If generating the Offline queue, use AsyncStorage logic.
+*   **Icons:** Always use `lucide-react-native` for icons. Import specific icons as needed (e.g., `import { ArrowLeft, CheckCircle, Mic } from 'lucide-react-native'`).
