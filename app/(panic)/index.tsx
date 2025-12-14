@@ -1,24 +1,20 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Dimensions, Alert, Pressable } from 'react-native';
-import { useRouter } from 'expo-router';
-import * as Haptics from 'expo-haptics';
-import { Audio } from 'expo-av';
-import { GestureDetector, Gesture, GestureHandlerRootView } from 'react-native-gesture-handler';
-import Animated, { 
-  useSharedValue, 
-  useAnimatedStyle, 
-  withSpring, 
-  runOnJS, 
-  withRepeat, 
-  withSequence, 
-  withTiming, 
-  Easing,
-  interpolate,
-  useAnimatedReaction
-} from 'react-native-reanimated';
-import { ArrowLeft, CheckCircle, Mic } from 'lucide-react-native';
-import { useAppStore } from '@/store/useAppStore';
 import { MockLocationService } from '@/services/MockLocationService';
+import { useAppStore } from '@/store/useAppStore';
+import { Audio } from 'expo-av';
+import * as Haptics from 'expo-haptics';
+import { useRouter } from 'expo-router';
+import { ArrowLeft, CheckCircle, Mic } from 'lucide-react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { Alert, Dimensions, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
+import Animated, {
+  Easing,
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming
+} from 'react-native-reanimated';
 
 const { width } = Dimensions.get('window');
 const SLIDER_WIDTH = width - 40;
@@ -35,8 +31,9 @@ export default function PanicScreen() {
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
   const [timeRemaining, setTimeRemaining] = useState(RECORDING_DURATION / 1000);
   const recordingStartTime = useRef<number>(0);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const countdownRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const recordingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   // Slide to SOS animations
   const translateX = useSharedValue(0);
@@ -63,15 +60,38 @@ export default function PanicScreen() {
     return () => {
       // Cleanup recording on unmount
       if (recording) {
+        // Clear all timers first
+        if (recordingTimeoutRef.current) {
+          clearTimeout(recordingTimeoutRef.current);
+          recordingTimeoutRef.current = null;
+        }
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
+        if (countdownRef.current) {
+          clearInterval(countdownRef.current);
+          countdownRef.current = null;
+        }
+        // Then stop recording
         stopRecording();
-      }
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-      if (countdownRef.current) {
-        clearInterval(countdownRef.current);
+      } else {
+        // Clean up timers even if no recording
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
+        if (countdownRef.current) {
+          clearInterval(countdownRef.current);
+          countdownRef.current = null;
+        }
+        if (recordingTimeoutRef.current) {
+          clearTimeout(recordingTimeoutRef.current);
+          recordingTimeoutRef.current = null;
+        }
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recording]);
 
   // Real-time countdown timer
@@ -232,10 +252,16 @@ export default function PanicScreen() {
       // Start dynamic visualizer animation
       simulateAudioLevels();
 
+      // Clear any existing timeout
+      if (recordingTimeoutRef.current) {
+        clearTimeout(recordingTimeoutRef.current);
+      }
+
       // Stop recording and send after duration
-      setTimeout(() => {
+      recordingTimeoutRef.current = setTimeout(() => {
         stopRecording();
         handleSentSuccess();
+        recordingTimeoutRef.current = null;
       }, RECORDING_DURATION);
 
     } catch (err) {
@@ -244,6 +270,12 @@ export default function PanicScreen() {
   };
 
   const stopRecording = async () => {
+    // Clear recording timeout
+    if (recordingTimeoutRef.current) {
+      clearTimeout(recordingTimeoutRef.current);
+      recordingTimeoutRef.current = null;
+    }
+    
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;

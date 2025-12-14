@@ -5,6 +5,7 @@ import * as Haptics from 'expo-haptics';
 import { Wifi, WifiOff, Shield, AlertTriangle, Heart, Cloud, X, AlertCircle } from 'lucide-react-native';
 import { useAppStore } from '@/store/useAppStore';
 import { MockLocationService } from '@/services/MockLocationService';
+import { reportService, Report } from '@/services/ReportService';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 48) / 2; // 2 columns with padding
@@ -35,17 +36,29 @@ export default function PeaceDashboard() {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     console.log('Reported incident:', category.label);
     
-    // Add to report queue
-    const report = {
+    // Create report
+    const report: Report = {
       id: Date.now().toString(),
       timestamp: Date.now(),
       type: category.id,
       details: `${category.label} incident reported`,
     };
+    
+    // Send report (will queue if offline, send if online)
+    const result = await reportService.sendReport(report);
+    
+    // Update store for UI tracking
     useAppStore.getState().addToQueue(report);
     
     setShowIncidentModal(false);
-    // Could show a success message here
+    
+    // Show feedback based on result
+    if (result.queued) {
+      // Could show a "Queued for later" message
+      console.log('Report queued for offline sending');
+    } else if (result.success) {
+      console.log('Report sent successfully');
+    }
   };
 
   const handleVolunteer = async () => {

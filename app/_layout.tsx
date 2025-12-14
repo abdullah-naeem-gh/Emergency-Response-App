@@ -8,7 +8,10 @@ import { useState, useEffect } from 'react';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { GlobalSensorListener } from '@/components/GlobalSensorListener';
 import { PredictiveModal } from '@/components/PredictiveModal';
+import { OfflineBanner } from '@/components/OfflineBanner';
 import { useAppStore } from '@/store/useAppStore';
+import { reportService } from '@/services/ReportService';
+import NetInfo from '@react-native-community/netinfo';
 
 export const unstable_settings = {
   // Ensure that reloading on `/modal` keeps a back button present.
@@ -29,6 +32,33 @@ export default function RootLayout() {
     }
   }, [mode, isRedZone]);
 
+  // Process pending reports when coming back online
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener(async state => {
+      if (state.isConnected) {
+        // Just came back online, process pending reports
+        const result = await reportService.processPendingReports();
+        if (result.sent > 0 || result.failed > 0) {
+          console.log(`Processed ${result.sent} sent, ${result.failed} failed reports`);
+        }
+      }
+    });
+
+    // Check initial state and process if online
+    NetInfo.fetch().then(async state => {
+      if (state.isConnected) {
+        const result = await reportService.processPendingReports();
+        if (result.sent > 0 || result.failed > 0) {
+          console.log(`Processed ${result.sent} sent, ${result.failed} failed reports`);
+        }
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
   const handleClosePredictiveModal = () => {
     setShowPredictiveModal(false);
   };
@@ -36,6 +66,7 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <GlobalSensorListener />
+      <OfflineBanner />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(peace)" />
         <Stack.Screen name="(panic)" options={{ gestureEnabled: false }} />

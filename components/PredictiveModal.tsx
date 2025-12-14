@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { View, Text, Modal, Pressable, Alert, ActivityIndicator } from 'react-native';
-import * as Location from 'expo-location';
-import * as Haptics from 'expo-haptics';
-import { AlertTriangle, CheckCircle } from 'lucide-react-native';
-import { useAppStore } from '@/store/useAppStore';
 import { MockLocationService } from '@/services/MockLocationService';
+import { Report, reportService } from '@/services/ReportService';
+import { useAppStore } from '@/store/useAppStore';
+import * as Haptics from 'expo-haptics';
+import * as Location from 'expo-location';
+import { AlertTriangle, CheckCircle } from 'lucide-react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Alert, Modal, Pressable, Text, View } from 'react-native';
 
 interface PredictiveModalProps {
   visible: boolean;
@@ -15,6 +16,30 @@ export const PredictiveModal: React.FC<PredictiveModalProps> = ({ visible, onClo
   const { addToQueue, setMode, setRedZone } = useAppStore();
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cleanup timeout on unmount or when modal closes
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+    };
+  }, []);
+
+  // Clear timeout when modal visibility changes
+  useEffect(() => {
+    if (!visible) {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+      // Reset state when modal closes
+      setShowSuccess(false);
+      setIsLoading(false);
+    }
+  }, [visible]);
 
   const handleYes = async () => {
     try {
@@ -41,27 +66,40 @@ export const PredictiveModal: React.FC<PredictiveModalProps> = ({ visible, onClo
       const { latitude, longitude } = location.coords;
 
       // Create report with GPS coordinates
-      const report = {
+      const report: Report = {
         id: Date.now().toString(),
         timestamp: Date.now(),
         type: 'flood',
         details: `High confidence flood report at ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`,
+        location: {
+          latitude,
+          longitude,
+        },
       };
 
-      // Add to queue
+      // Send report (will queue if offline)
+      const result = await reportService.sendReport(report);
+      
+      // Update store for UI tracking
       addToQueue(report);
 
       // Show success
       setIsLoading(false);
       setShowSuccess(true);
 
+      // Clear any existing timeout
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+
       // Auto-close after 2 seconds and reset
-      setTimeout(() => {
+      timeoutRef.current = setTimeout(() => {
         setShowSuccess(false);
         onClose();
         setMode('PEACE');
         setRedZone(false);
         MockLocationService.simulateExitRedZone();
+        timeoutRef.current = null;
       }, 2000);
 
     } catch (error) {
@@ -73,6 +111,13 @@ export const PredictiveModal: React.FC<PredictiveModalProps> = ({ visible, onClo
 
   const handleNo = async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
+    // Clear any pending timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    
     onClose();
     setMode('PEACE');
     setRedZone(false);
