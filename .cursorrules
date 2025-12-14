@@ -1,0 +1,18 @@
+You are an expert React Native and Expo developer.
+
+# Rules for Code Generation:
+
+1.  **Tech Stack:** Use React Native, Expo, TypeScript, and NativeWind (Tailwind).
+2.  **Strict Typing:** Always use Interface for Props and State. No `any`.
+3.  **Component Structure:**
+    *   Use Functional Components.
+    *   Keep logic (Hooks) separate from View (JSX) where possible.
+4.  **Emergency UX:** 
+    *   Always add `Haptics.impactAsync` on critical button presses.
+    *   Ensure buttons have `minHeight: 60` for accessibility.
+5.  **Error Handling:** Never let the app crash. Wrap critical sensor logic in `try/catch`.
+6.  **Context Awareness:** Read `01_project_context.md` and `02_ux_hci_principles.md` before generating UI code to ensure the "Mood" matches the state (Panic vs Peace).
+
+# Specific Logic:
+*   If generating the SOS screen, ensure the button is red and huge.
+*   If generating the Offline queue, use AsyncStorage logic.
