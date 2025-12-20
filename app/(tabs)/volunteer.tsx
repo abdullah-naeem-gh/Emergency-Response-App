@@ -1,16 +1,42 @@
+import { EnhancedTask, TeamMessage, volunteerService } from '@/services/VolunteerService';
 import * as Haptics from 'expo-haptics';
 import * as Location from 'expo-location';
-import { List, MapPin } from 'lucide-react-native';
-import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
+import {
+  CheckCircle,
+  List,
+  MapPin,
+  MessageCircle,
+  Navigation,
+  PlayCircle,
+  Send,
+  X,
+} from 'lucide-react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  Alert,
+  FlatList,
+  Linking,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import { RescueTask, tasksData } from '../../src/data/tasksData';
 import { useAppStore } from '../../store/useAppStore';
 
 type ViewMode = 'map' | 'list';
 
-interface SelectedTask extends RescueTask {
+interface SelectedTask {
+  id: string;
+  type: RescueTask['type'];
+  coords: { lat: number; long: number };
+  urgency: RescueTask['urgency'];
   distance: number;
+  status?: string;
 }
 
 // Helper function to calculate distance between two coordinates (Haversine approximation)
@@ -55,12 +81,60 @@ const getTaskTypeName = (type: RescueTask['type']): string => {
   }
 };
 
+type TaskViewMode = 'open' | 'my_tasks';
+
 export default function VolunteerScreen() {
   const { volunteerTasksDone, volunteerLevel, incrementVolunteerTasks } = useAppStore();
   const [viewMode, setViewMode] = useState<ViewMode>('map');
+  const [taskViewMode, setTaskViewMode] = useState<TaskViewMode>('open');
   const [selectedTask, setSelectedTask] = useState<SelectedTask | null>(null);
+  const [myTasks, setMyTasks] = useState<EnhancedTask[]>([]);
+  const [showTaskDetails, setShowTaskDetails] = useState(false);
+  const [showTeamChat, setShowTeamChat] = useState(false);
+  const [teamMessages, setTeamMessages] = useState<TeamMessage[]>([]);
+  const [chatMessage, setChatMessage] = useState('');
+  const [taskNotes, setTaskNotes] = useState('');
   const [userLocation, setUserLocation] = useState<{ lat: number; long: number } | null>(null);
   const [locationPermission, setLocationPermission] = useState<boolean>(false);
+  const [routeInfo, setRouteInfo] = useState<{ distance: number; estimatedTime: number } | null>(null);
+
+  const loadMyTasks = useCallback(async () => {
+    const tasks = await volunteerService.getUserTasks('current-user');
+    setMyTasks(tasks);
+  }, []);
+
+  const loadTeamMessages = useCallback(async () => {
+    if (!selectedTask) return;
+    const messages = await volunteerService.getTeamMessages(selectedTask.id);
+    setTeamMessages(messages);
+  }, [selectedTask]);
+
+  const loadRouteInfo = useCallback(async () => {
+    if (!selectedTask || !userLocation) return;
+    const route = await volunteerService.getNavigationRoute(
+      userLocation.lat,
+      userLocation.long,
+      selectedTask.coords.lat,
+      selectedTask.coords.long
+    );
+    setRouteInfo(route);
+  }, [selectedTask, userLocation]);
+
+  useEffect(() => {
+    loadMyTasks();
+  }, [loadMyTasks]);
+
+  useEffect(() => {
+    if (showTeamChat) {
+      loadTeamMessages();
+    }
+  }, [showTeamChat, loadTeamMessages]);
+
+  useEffect(() => {
+    if (selectedTask && userLocation) {
+      loadRouteInfo();
+    }
+  }, [selectedTask, userLocation, loadRouteInfo]);
 
   // Get open tasks only
   const openTasks = useMemo(() => {
@@ -139,14 +213,60 @@ export default function VolunteerScreen() {
 
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     
-    // Increment volunteer tasks
-    incrementVolunteerTasks();
-    
-    Alert.alert(
-      'Task Accepted!',
-      `You've accepted the ${getTaskTypeName(selectedTask.type)} task. Thank you for helping!`,
-      [{ text: 'OK', onPress: () => setSelectedTask(null) }]
-    );
+    const enhancedTask = await volunteerService.acceptTask(selectedTask.id, 'current-user');
+    if (enhancedTask) {
+      incrementVolunteerTasks();
+      await loadMyTasks();
+      Alert.alert(
+        'Task Accepted!',
+        `You've accepted the ${getTaskTypeName(selectedTask.type)} task. Thank you for helping!`,
+        [{ text: 'OK', onPress: () => {
+          setSelectedTask(null);
+          setTaskViewMode('my_tasks');
+        }}]
+      );
+    }
+  };
+
+  const handleUpdateTaskStatus = async (newStatus: 'IN_PROGRESS' | 'COMPLETED') => {
+    if (!selectedTask) return;
+
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    await volunteerService.updateTaskStatus(selectedTask.id, newStatus, taskNotes);
+    await loadMyTasks();
+    setShowTaskDetails(false);
+    setTaskNotes('');
+    if (newStatus === 'COMPLETED') {
+      incrementVolunteerTasks();
+      Alert.alert('Success', 'Task marked as completed!');
+    }
+  };
+
+  const handleOpenNavigation = async () => {
+    if (!selectedTask || !userLocation) return;
+
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const url = `https://www.google.com/maps/dir/${userLocation.lat},${userLocation.long}/${selectedTask.coords.lat},${selectedTask.coords.long}`;
+    try {
+      await Linking.openURL(url);
+    } catch {
+      Alert.alert('Error', 'Could not open navigation app');
+    }
+  };
+
+  const handleSendChatMessage = async () => {
+    if (!chatMessage.trim() || !selectedTask) return;
+
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    await volunteerService.sendTeamMessage({
+      userId: 'current-user',
+      userName: 'You',
+      message: chatMessage,
+      taskId: selectedTask.id,
+      type: 'message',
+    });
+    setChatMessage('');
+    await loadTeamMessages();
   };
 
   const toggleViewMode = async () => {
@@ -155,80 +275,101 @@ export default function VolunteerScreen() {
     setSelectedTask(null); // Close bottom sheet when switching views
   };
 
-  const renderMapView = () => (
-    <View style={styles.mapContainer}>
-      <MapView
-        style={styles.map}
-        initialRegion={initialRegion}
-        showsUserLocation={locationPermission}
-        showsMyLocationButton={false}
-        toolbarEnabled={false}>
-        {tasksWithDistance.map((task) => (
-          <Marker
-            key={task.id}
-            coordinate={{
-              latitude: task.coords.lat,
-              longitude: task.coords.long,
-            }}
-            pinColor={getMarkerColor(task.type)}
-            onPress={() => handleMarkerPress(task)}
-          />
-        ))}
-      </MapView>
-    </View>
-  );
 
-  const renderListView = () => (
-    <FlatList
-      data={tasksWithDistance.sort((a, b) => a.distance - b.distance)}
-      keyExtractor={(item) => item.id}
-      contentContainerStyle={styles.listContainer}
-      renderItem={({ item }) => (
-        <TouchableOpacity
-          style={styles.listItem}
-          onPress={() => handleMarkerPress(item)}
-          activeOpacity={0.7}>
-          <View
-            style={[
-              styles.taskTypeIndicator,
-              { backgroundColor: getMarkerColor(item.type) },
-            ]}
-          />
-          <View style={styles.listItemContent}>
-            <Text style={styles.listItemTitle}>{getTaskTypeName(item.type)}</Text>
-            <Text style={styles.listItemDistance}>
-              {item.distance > 0 ? `${item.distance}km away` : 'Distance unknown'}
-            </Text>
-            <Text style={styles.listItemUrgency}>
-              {item.urgency === 'HIGH' ? '🔴 High Urgency' : '🟡 Medium Urgency'}
-            </Text>
-          </View>
-        </TouchableOpacity>
-      )}
-    />
-  );
+  const displayTasks = useMemo(() => {
+    if (taskViewMode === 'open') {
+      return tasksWithDistance;
+    }
+    return myTasks.map((t) => ({
+      id: t.id,
+      type: t.type,
+      coords: t.coords,
+      urgency: t.urgency,
+      distance: userLocation
+        ? calculateDistance(userLocation.lat, userLocation.long, t.coords.lat, t.coords.long)
+        : 0,
+      status: t.status,
+    }));
+  }, [taskViewMode, tasksWithDistance, myTasks, userLocation]);
 
   const renderBottomSheet = () => {
     if (!selectedTask) return null;
 
+    const isMyTask = myTasks.some((t) => t.id === selectedTask.id);
+    const currentTask = myTasks.find((t) => t.id === selectedTask.id);
+
     return (
       <View style={styles.bottomSheet}>
         <View style={styles.bottomSheetHandle} />
-        <Text style={styles.bottomSheetTitle}>
-          Task: {getTaskTypeName(selectedTask.type)}
-        </Text>
-        <Text style={styles.bottomSheetDistance}>
-          Distance: {selectedTask.distance > 0 ? `${selectedTask.distance}km` : 'Unknown'}
-        </Text>
-        <Text style={styles.bottomSheetUrgency}>
-          Urgency: {selectedTask.urgency === 'HIGH' ? 'High' : 'Medium'}
-        </Text>
-        <TouchableOpacity
-          style={styles.acceptButton}
-          onPress={handleAcceptTask}
-          activeOpacity={0.8}>
-          <Text style={styles.acceptButtonText}>Accept Task</Text>
-        </TouchableOpacity>
+        <ScrollView showsVerticalScrollIndicator={false}>
+          <Text style={styles.bottomSheetTitle}>
+            Task: {getTaskTypeName(selectedTask.type)}
+          </Text>
+          <Text style={styles.bottomSheetDistance}>
+            Distance: {selectedTask.distance > 0 ? `${selectedTask.distance}km` : 'Unknown'}
+          </Text>
+          {routeInfo && (
+            <Text style={styles.bottomSheetDistance}>
+              ETA: {Math.round(routeInfo.estimatedTime)} minutes
+            </Text>
+          )}
+          <Text style={styles.bottomSheetUrgency}>
+            Urgency: {selectedTask.urgency === 'HIGH' ? 'High' : 'Medium'}
+          </Text>
+
+          {isMyTask && currentTask && (
+            <>
+              <View style={styles.statusBadge}>
+                <Text style={styles.statusText}>
+                  Status: {currentTask.status.replace('_', ' ')}
+                </Text>
+              </View>
+              <View style={styles.actionButtons}>
+                {currentTask.status === 'ACCEPTED' && (
+                  <TouchableOpacity
+                    style={[styles.actionButton, { backgroundColor: '#007AFF' }]}
+                    onPress={() => handleUpdateTaskStatus('IN_PROGRESS')}
+                    activeOpacity={0.8}>
+                    <PlayCircle size={20} color="#FFFFFF" />
+                    <Text style={styles.actionButtonText}>Start Task</Text>
+                  </TouchableOpacity>
+                )}
+                {currentTask.status === 'IN_PROGRESS' && (
+                  <TouchableOpacity
+                    style={[styles.actionButton, { backgroundColor: '#32D74B' }]}
+                    onPress={() => setShowTaskDetails(true)}
+                    activeOpacity={0.8}>
+                    <CheckCircle size={20} color="#FFFFFF" />
+                    <Text style={styles.actionButtonText}>Complete Task</Text>
+                  </TouchableOpacity>
+                )}
+                <TouchableOpacity
+                  style={[styles.actionButton, { backgroundColor: '#5856D6' }]}
+                  onPress={handleOpenNavigation}
+                  activeOpacity={0.8}>
+                  <Navigation size={20} color="#FFFFFF" />
+                  <Text style={styles.actionButtonText}>Navigate</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.actionButton, { backgroundColor: '#FF9500' }]}
+                  onPress={() => setShowTeamChat(true)}
+                  activeOpacity={0.8}>
+                  <MessageCircle size={20} color="#FFFFFF" />
+                  <Text style={styles.actionButtonText}>Team Chat</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
+
+          {!isMyTask && (
+            <TouchableOpacity
+              style={styles.acceptButton}
+              onPress={handleAcceptTask}
+              activeOpacity={0.8}>
+              <Text style={styles.acceptButtonText}>Accept Task</Text>
+            </TouchableOpacity>
+          )}
+        </ScrollView>
       </View>
     );
   };
@@ -237,13 +378,110 @@ export default function VolunteerScreen() {
     <View style={styles.container}>
       {/* Volunteer Stats Pill */}
       <View style={[styles.statsPill, { top: 8 }]}>
-        <Text style={styles.statsText}>
-          Tasks Done: {volunteerTasksDone} | Level: {volunteerLevel}
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Text style={styles.statsText}>
+            Tasks Done: {volunteerTasksDone} | Level: {volunteerLevel}
+          </Text>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <TouchableOpacity
+              onPress={() => {
+                Haptics.selectionAsync();
+                setTaskViewMode('open');
+              }}
+              style={{
+                paddingHorizontal: 12,
+                paddingVertical: 4,
+                borderRadius: 12,
+                backgroundColor: taskViewMode === 'open' ? '#007AFF' : 'transparent',
+              }}>
+              <Text style={[styles.statsText, { fontSize: 12, color: taskViewMode === 'open' ? '#FFFFFF' : '#000000' }]}>
+                Open
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                Haptics.selectionAsync();
+                setTaskViewMode('my_tasks');
+              }}
+              style={{
+                paddingHorizontal: 12,
+                paddingVertical: 4,
+                borderRadius: 12,
+                backgroundColor: taskViewMode === 'my_tasks' ? '#007AFF' : 'transparent',
+              }}>
+              <Text style={[styles.statsText, { fontSize: 12, color: taskViewMode === 'my_tasks' ? '#FFFFFF' : '#000000' }]}>
+                My Tasks ({myTasks.length})
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </View>
 
       {/* Map or List View */}
-      {viewMode === 'map' ? renderMapView() : renderListView()}
+      {viewMode === 'map' ? (
+        <MapView
+          style={styles.map}
+          initialRegion={initialRegion}
+          showsUserLocation={locationPermission}
+          showsMyLocationButton={false}
+          toolbarEnabled={false}
+          provider={PROVIDER_GOOGLE}>
+          {displayTasks.map((task) => (
+            <Marker
+              key={task.id}
+              coordinate={{
+                latitude: task.coords.lat,
+                longitude: task.coords.long,
+              }}
+              pinColor={getMarkerColor(task.type)}
+              onPress={() => handleMarkerPress(task)}
+            />
+          ))}
+          {selectedTask && userLocation && routeInfo && (
+            <Polyline
+              coordinates={[
+                { latitude: userLocation.lat, longitude: userLocation.long },
+                { latitude: selectedTask.coords.lat, longitude: selectedTask.coords.long },
+              ]}
+              strokeColor="#007AFF"
+              strokeWidth={3}
+            />
+          )}
+        </MapView>
+      ) : (
+        <FlatList
+          data={displayTasks.sort((a, b) => a.distance - b.distance)}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContainer}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={styles.listItem}
+              onPress={() => handleMarkerPress(item)}
+              activeOpacity={0.7}>
+              <View
+                style={[
+                  styles.taskTypeIndicator,
+                  { backgroundColor: getMarkerColor(item.type) },
+                ]}
+              />
+              <View style={styles.listItemContent}>
+                <Text style={styles.listItemTitle}>{getTaskTypeName(item.type)}</Text>
+                <Text style={styles.listItemDistance}>
+                  {item.distance > 0 ? `${item.distance}km away` : 'Distance unknown'}
+                </Text>
+                {item.status && (
+                  <Text style={styles.listItemStatus}>
+                    Status: {item.status.replace('_', ' ')}
+                  </Text>
+                )}
+                <Text style={styles.listItemUrgency}>
+                  {item.urgency === 'HIGH' ? '🔴 High Urgency' : '🟡 Medium Urgency'}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          )}
+        />
+      )}
 
       {/* Bottom Sheet Overlay */}
       {viewMode === 'map' && renderBottomSheet()}
@@ -259,6 +497,85 @@ export default function VolunteerScreen() {
           <MapPin size={24} color="#FFFFFF" />
         )}
       </TouchableOpacity>
+
+      {/* Task Details Modal */}
+      <Modal
+        visible={showTaskDetails}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowTaskDetails(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Complete Task</Text>
+              <TouchableOpacity onPress={() => setShowTaskDetails(false)}>
+                <X size={24} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.modalLabel}>Notes (Optional)</Text>
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Add completion notes..."
+              placeholderTextColor="#8E8E93"
+              value={taskNotes}
+              onChangeText={setTaskNotes}
+              multiline
+              numberOfLines={4}
+            />
+            <TouchableOpacity
+              style={styles.completeButton}
+              onPress={() => handleUpdateTaskStatus('COMPLETED')}
+              activeOpacity={0.8}>
+              <Text style={styles.completeButtonText}>Mark as Completed</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Team Chat Modal */}
+      <Modal
+        visible={showTeamChat}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowTeamChat(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Team Chat</Text>
+              <TouchableOpacity onPress={() => setShowTeamChat(false)}>
+                <X size={24} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.chatContainer}>
+              {teamMessages.slice().reverse().map((msg) => (
+                <View key={msg.id} style={styles.chatMessage}>
+                  <Text style={styles.chatUserName}>{msg.userName}</Text>
+                  <Text style={styles.chatMessageText}>{msg.message}</Text>
+                  <Text style={styles.chatTime}>
+                    {new Date(msg.timestamp).toLocaleTimeString()}
+                  </Text>
+                </View>
+              ))}
+            </ScrollView>
+            <View style={styles.chatInputContainer}>
+              <TextInput
+                style={styles.chatInput}
+                placeholder="Type a message..."
+                placeholderTextColor="#8E8E93"
+                value={chatMessage}
+                onChangeText={setChatMessage}
+                onSubmitEditing={handleSendChatMessage}
+              />
+              <TouchableOpacity
+                onPress={handleSendChatMessage}
+                disabled={!chatMessage.trim()}
+                style={[styles.sendButton, !chatMessage.trim() && { opacity: 0.5 }]}>
+                <Send size={20} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -286,11 +603,139 @@ const styles = StyleSheet.create({
     color: '#000000',
     textAlign: 'center',
   },
-  mapContainer: {
-    flex: 1,
-  },
   map: {
     flex: 1,
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 16,
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    gap: 8,
+    minHeight: 50,
+  },
+  actionButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  statusBadge: {
+    backgroundColor: '#5856D6',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+    marginBottom: 12,
+  },
+  statusText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#1C1C1E',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    maxHeight: '80%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  modalLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 8,
+  },
+  modalInput: {
+    backgroundColor: '#2C2C2E',
+    borderRadius: 12,
+    padding: 16,
+    color: '#FFFFFF',
+    fontSize: 16,
+    minHeight: 100,
+    textAlignVertical: 'top',
+    marginBottom: 20,
+  },
+  completeButton: {
+    backgroundColor: '#32D74B',
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    minHeight: 60,
+  },
+  completeButtonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  chatContainer: {
+    maxHeight: 400,
+    marginBottom: 16,
+  },
+  chatMessage: {
+    backgroundColor: '#2C2C2E',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 8,
+  },
+  chatUserName: {
+    color: '#007AFF',
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  chatMessageText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    marginBottom: 4,
+  },
+  chatTime: {
+    color: '#8E8E93',
+    fontSize: 12,
+  },
+  chatInputContainer: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+  },
+  chatInput: {
+    flex: 1,
+    backgroundColor: '#2C2C2E',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    color: '#FFFFFF',
+    fontSize: 16,
+  },
+  sendButton: {
+    backgroundColor: '#007AFF',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   listContainer: {
     padding: 16,
@@ -327,6 +772,11 @@ const styles = StyleSheet.create({
   listItemUrgency: {
     fontSize: 12,
     color: '#FF9500',
+  },
+  listItemStatus: {
+    fontSize: 12,
+    color: '#5856D6',
+    marginTop: 4,
   },
   bottomSheet: {
     position: 'absolute',

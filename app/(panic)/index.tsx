@@ -1,10 +1,14 @@
 import { MockLocationService } from '@/services/MockLocationService';
+import {
+  speechRecognitionService,
+  TranscriptionResult,
+} from '@/services/SpeechRecognitionService';
 import { Audio } from 'expo-av';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, CheckCircle, Mic } from 'lucide-react-native';
 import React, { useEffect, useRef, useState } from 'react';
-import { Alert, Dimensions, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Dimensions, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, {
   Easing,
@@ -27,6 +31,8 @@ export default function PanicScreen() {
   const [isSent, setIsSent] = useState(false);
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
   const [timeRemaining, setTimeRemaining] = useState(RECORDING_DURATION / 1000);
+  const [transcription, setTranscription] = useState<TranscriptionResult | null>(null);
+  const [isTranscribing, setIsTranscribing] = useState(false);
   const recordingStartTime = useRef<number>(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -283,11 +289,12 @@ export default function PanicScreen() {
     }
     if (!recording) return;
     setIsRecording(false);
+    let recordingUri: string | null = null;
     try {
       await recording.stopAndUnloadAsync();
       // Get the recording URI for potential upload
-      const uri = recording.getURI();
-      console.log('Recording saved to:', uri);
+      recordingUri = recording.getURI();
+      console.log('Recording saved to:', recordingUri);
     } catch {
        // Ignore error if already unloaded
     }
@@ -303,6 +310,34 @@ export default function PanicScreen() {
     wave7.value = withTiming(1, resetConfig);
     speechState.value = 0;
     speechEnvelope.value = 0;
+
+    // Transcribe audio if available
+    if (recordingUri) {
+      await transcribeRecording(recordingUri);
+    }
+  };
+
+  const transcribeRecording = async (audioUri: string) => {
+    try {
+      setIsTranscribing(true);
+      // Try auto-detect language first (supports both Urdu and English)
+      const result = await speechRecognitionService.transcribeWithAutoDetect(audioUri, {
+        enableOffline: false,
+      });
+
+      if (result) {
+        setTranscription(result);
+        console.log('Transcription:', result.text);
+        console.log('Language:', result.language);
+        console.log('Confidence:', result.confidence);
+      } else {
+        console.warn('Transcription failed or returned no result');
+      }
+    } catch (error) {
+      console.error('Error transcribing audio:', error);
+    } finally {
+      setIsTranscribing(false);
+    }
   };
 
   const handleSentSuccess = async () => {
@@ -394,9 +429,33 @@ export default function PanicScreen() {
             <CheckCircle size={64} color="#22c55e" strokeWidth={3} />
           </View>
           <Text className="text-white text-4xl font-bold mb-2 text-center">HELP SENT</Text>
-          <Text className="text-white text-lg text-center mb-10 px-6">
+          <Text className="text-white text-lg text-center mb-6 px-6">
             Volunteers have received your location and audio. Stay calm.
           </Text>
+
+          {/* Transcription Display */}
+          {isTranscribing && (
+            <View className="bg-white/10 rounded-xl p-4 mb-6 w-full max-w-sm">
+              <View className="flex-row items-center justify-center mb-2">
+                <ActivityIndicator size="small" color="#ffffff" />
+                <Text className="text-white/80 text-sm ml-2">Transcribing audio...</Text>
+              </View>
+            </View>
+          )}
+
+          {transcription && !isTranscribing && (
+            <View className="bg-white/10 rounded-xl p-4 mb-6 w-full max-w-sm">
+              <Text className="text-white/60 text-xs mb-2 uppercase tracking-wide">
+                Transcribed Message ({speechRecognitionService.getLanguageName(transcription.language)})
+              </Text>
+              <Text className="text-white text-base leading-5">{transcription.text}</Text>
+              {transcription.confidence < 0.7 && (
+                <Text className="text-white/60 text-xs mt-2">
+                  Low confidence transcription ({Math.round(transcription.confidence * 100)}%)
+                </Text>
+              )}
+            </View>
+          )}
           
           <Pressable
             onPress={handleGoBack}

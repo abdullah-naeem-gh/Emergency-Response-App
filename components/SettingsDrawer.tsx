@@ -16,6 +16,8 @@ import {
   Phone,
   Settings,
   Shield,
+  User,
+  Users,
   X
 } from 'lucide-react-native';
 import React, { useState } from 'react';
@@ -107,9 +109,13 @@ export default function SettingsDrawer({ visible, onClose }: SettingsDrawerProps
   }));
 
   const navigationItems: MenuItem[] = [
+    { id: 'profile', label: 'Profile', icon: User, route: '/(tabs)/profile', color: '#6b7280' },
     { id: 'weather', label: 'Weather', icon: Cloud, route: '/(tabs)/weather', color: '#3b82f6' },
     { id: 'reports', label: 'Report History', icon: History, route: '/(tabs)/reports', color: '#f59e0b' },
     { id: 'explore', label: 'Explore', icon: BookOpen, route: '/(tabs)/explore', color: '#ec4899' },
+    { id: 'preparedness', label: 'Preparedness', icon: BookOpen, route: '/(tabs)/preparedness', color: '#10b981' },
+    { id: 'evacuation', label: 'Evacuation Routes', icon: MapPin, route: '/(tabs)/evacuation', color: '#8b5cf6' },
+    { id: 'community', label: 'Community', icon: Users, route: '/(tabs)/community', color: '#ec4899' },
     { id: 'crowd-map', label: 'Crowd Map', icon: MapPin, route: '/(tabs)/crowd-map', color: '#10b981' },
     { id: 'news', label: 'News & Alerts', icon: Newspaper, route: '/(tabs)/news', color: '#ef4444' },
     { id: 'directory', label: 'Directory', icon: Phone, route: '/(tabs)/directory', color: '#8b5cf6' },

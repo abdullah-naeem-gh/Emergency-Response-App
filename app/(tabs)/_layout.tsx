@@ -100,6 +100,30 @@ export default function TabLayout() {
               href: null,
             }}
           />
+          <Tabs.Screen
+            name="preparedness"
+            options={{
+              href: null,
+            }}
+          />
+          <Tabs.Screen
+            name="profile"
+            options={{
+              href: null,
+            }}
+          />
+          <Tabs.Screen
+            name="evacuation"
+            options={{
+              href: null,
+            }}
+          />
+          <Tabs.Screen
+            name="community"
+            options={{
+              href: null,
+            }}
+          />
         </Tabs>
       </View>
       {/* Manually render tab bar at bottom - always visible */}

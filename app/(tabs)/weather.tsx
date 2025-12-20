@@ -1,6 +1,7 @@
 import { ForecastDay, WeatherAlert, WeatherData, weatherService } from '@/services/WeatherService';
 import * as Haptics from 'expo-haptics';
-import { AlertCircle, Cloud, Droplet, Eye, Gauge, MapPin, RefreshCw, Sun, Thermometer, Wind } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
+import { AlertCircle, ArrowLeft, Cloud, Droplet, Eye, Gauge, MapPin, RefreshCw, Sun, Thermometer, Wind } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Dimensions, Pressable, ScrollView, Text, View } from 'react-native';
 
@@ -58,6 +59,7 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ icon: Icon, label, value, uni
 );
 
 export default function WeatherScreen() {
+  const router = useRouter();
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [forecast, setForecast] = useState<ForecastDay[]>([]);
   const [alerts, setAlerts] = useState<WeatherAlert[]>([]);
@@ -117,21 +119,38 @@ export default function WeatherScreen() {
     <View className="flex-1 bg-gray-50">
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingBottom: 100, paddingTop: 80 }}
+        contentContainerStyle={{ paddingBottom: 100, paddingTop: 16 }}
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
-        <View className="px-6 pt-0 pb-6 flex-row items-center justify-between">
-          <View className="flex-1">
-            <Text className="text-4xl font-bold text-gray-900 mb-2">Weather</Text>
-            {location && (
-              <View className="flex-row items-center">
-                <MapPin size={16} color="#6B7280" />
-                <Text className="text-gray-600 text-sm ml-1">
-                  {location.latitude.toFixed(2)}, {location.longitude.toFixed(2)}
-                </Text>
-              </View>
-            )}
+        <View className="px-6 pb-6 flex-row items-center justify-between">
+          <View className="flex-row items-center flex-1">
+            <Pressable
+              onPress={async () => {
+                await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.back();
+              }}
+              className="mr-3"
+              style={{
+                minHeight: 44,
+                minWidth: 44,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <ArrowLeft size={24} color="#374151" />
+            </Pressable>
+            <View className="flex-1">
+              <Text className="text-4xl font-bold text-gray-900 mb-2">Weather</Text>
+              {location && (
+                <View className="flex-row items-center">
+                  <MapPin size={16} color="#6B7280" />
+                  <Text className="text-gray-600 text-sm ml-1">
+                    {location.latitude.toFixed(2)}, {location.longitude.toFixed(2)}
+                  </Text>
+                </View>
+              )}
+            </View>
           </View>
           <Pressable
             onPress={handleRefresh}

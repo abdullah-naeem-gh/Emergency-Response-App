@@ -1,11 +1,10 @@
-import { crowdReportService, CrowdReport, ReportStatus } from '@/services/CrowdReportService';
+import { CrowdReport, crowdReportService, ReportStatus } from '@/services/CrowdReportService';
 import { reportService } from '@/services/ReportService';
 import * as Haptics from 'expo-haptics';
-import { CheckCircle, Clock, Edit, MapPin, Trash2, XCircle } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
+import { ArrowLeft, CheckCircle, Clock, Edit, MapPin, Trash2, XCircle } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Dimensions, Modal, Pressable, ScrollView, Text, TouchableOpacity, View } from 'react-native';
-
-const { width } = Dimensions.get('window');
+import { ActivityIndicator, Alert, Modal, Pressable, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
 const getStatusIcon = (status?: ReportStatus) => {
   switch (status) {
@@ -180,6 +179,7 @@ const ReportCard: React.FC<ReportCardProps> = ({ report, onPress, onEdit, onDele
 };
 
 export default function ReportsHistoryScreen() {
+  const router = useRouter();
   const [reports, setReports] = useState<CrowdReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedReport, setSelectedReport] = useState<CrowdReport | null>(null);
@@ -243,7 +243,7 @@ export default function ReportsHistoryScreen() {
     setFilter(newFilter);
   };
 
-  const FILTER_OPTIONS: Array<{ id: ReportStatus | 'all'; label: string }> = [
+  const FILTER_OPTIONS: { id: ReportStatus | 'all'; label: string }[] = [
     { id: 'all', label: 'All' },
     { id: 'pending', label: 'Pending' },
     { id: 'sent', label: 'Sent' },
@@ -263,13 +263,32 @@ export default function ReportsHistoryScreen() {
   return (
     <View className="flex-1 bg-gray-50">
       {/* Header */}
-      <View className="bg-white px-6 pt-16 pb-4">
-        <Text className="text-4xl font-bold text-gray-900 mb-2">
-          Report History
-        </Text>
-        <Text className="text-gray-600 text-base">
-          {filteredReports.length} {filteredReports.length === 1 ? 'report' : 'reports'}
-        </Text>
+      <View className="bg-white px-6 pt-4 pb-4">
+        <View className="flex-row items-center mb-3">
+          <Pressable
+            onPress={async () => {
+              await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.back();
+            }}
+            className="mr-3"
+            style={{
+              minHeight: 44,
+              minWidth: 44,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <ArrowLeft size={24} color="#374151" />
+          </Pressable>
+          <View className="flex-1">
+            <Text className="text-4xl font-bold text-gray-900 mb-2">
+              Report History
+            </Text>
+            <Text className="text-gray-600 text-base">
+              {filteredReports.length} {filteredReports.length === 1 ? 'report' : 'reports'}
+            </Text>
+          </View>
+        </View>
       </View>
 
       {/* Filter Pills */}
@@ -277,7 +296,7 @@ export default function ReportsHistoryScreen() {
         horizontal
         showsHorizontalScrollIndicator={false}
         className="bg-white px-6 py-3 border-b border-gray-200"
-        contentContainerStyle={{ gap: 8 }}
+        contentContainerStyle={{ gap: 8, paddingRight: 24 }}
       >
         {FILTER_OPTIONS.map((option) => {
           const StatusIcon = getStatusIcon(option.id === 'all' ? undefined : option.id);
@@ -287,13 +306,16 @@ export default function ReportsHistoryScreen() {
             <TouchableOpacity
               key={option.id}
               onPress={() => handleFilterChange(option.id)}
-              className={`px-4 py-2 rounded-full flex-row items-center ${
+              className={`rounded-full flex-row items-center justify-center ${
                 filter === option.id ? 'bg-gray-100' : 'bg-white'
               }`}
               style={{
-                minHeight: 36,
+                paddingHorizontal: 16,
+                paddingVertical: 8,
+                height: 36,
                 borderWidth: filter === option.id ? 2 : 1,
                 borderColor: filter === option.id ? statusColor : '#E5E7EB',
+                flexShrink: 0,
               }}
             >
               {option.id !== 'all' && (
@@ -304,6 +326,7 @@ export default function ReportsHistoryScreen() {
                 style={{
                   color: filter === option.id ? statusColor : '#6B7280',
                 }}
+                numberOfLines={1}
               >
                 {option.label}
               </Text>
@@ -326,7 +349,7 @@ export default function ReportsHistoryScreen() {
             <Text className="text-gray-500 text-sm text-center">
               {filter === 'all'
                 ? 'You haven\'t submitted any reports yet'
-                : `No reports with status "${getStatusLabel(filter === 'all' ? undefined : filter)}"`}
+                : `No reports with status "${getStatusLabel(filter as ReportStatus)}"`}
             </Text>
           </View>
         ) : (

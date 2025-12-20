@@ -131,10 +131,133 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Greeting Section */}
-        <View className="px-6 pt-0 pb-9">
+        <View className="px-6 pt-0 pb-4">
           <Text className="text-5xl font-bold text-gray-900 leading-tight" style={{ lineHeight: 56 }}>
             Hi,{'\n'}How can we help you today?
           </Text>
+        </View>
+
+        {/* Quick Links Section - Horizontal Row */}
+        <View className="pb-4">
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 24, gap: 12 }}
+          >
+            {/* Weather Card */}
+            <Pressable
+              onPress={handleViewWeather}
+              className="bg-white rounded-xl p-3"
+              style={{
+                width: 120,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.1,
+                shadowRadius: 2,
+                elevation: 2,
+                borderWidth: 1,
+                borderColor: '#e5e7eb',
+              }}
+            >
+              <View className="items-center">
+                <View
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 20,
+                    backgroundColor: '#dbeafe',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: 8,
+                  }}
+                >
+                  <Cloud size={20} color="#3b82f6" />
+                </View>
+                <Text className="text-sm font-semibold text-gray-900 text-center">
+                  Weather
+                </Text>
+                <Text className="text-xs text-gray-500 text-center mt-1" numberOfLines={1}>
+                  Forecast
+                </Text>
+              </View>
+            </Pressable>
+
+            {/* Reports History Card */}
+            <Pressable
+              onPress={handleViewReports}
+              className="bg-white rounded-xl p-3"
+              style={{
+                width: 120,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.1,
+                shadowRadius: 2,
+                elevation: 2,
+                borderWidth: 1,
+                borderColor: '#e5e7eb',
+              }}
+            >
+              <View className="items-center">
+                <View
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 20,
+                    backgroundColor: '#fef3c7',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: 8,
+                  }}
+                >
+                  <History size={20} color="#f59e0b" />
+                </View>
+                <Text className="text-sm font-semibold text-gray-900 text-center">
+                  Reports
+                </Text>
+                <Text className="text-xs text-gray-500 text-center mt-1" numberOfLines={1}>
+                  History
+                </Text>
+              </View>
+            </Pressable>
+
+            {/* Explore Card */}
+            <Pressable
+              onPress={handleViewExplore}
+              className="bg-white rounded-xl p-3"
+              style={{
+                width: 120,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.1,
+                shadowRadius: 2,
+                elevation: 2,
+                borderWidth: 1,
+                borderColor: '#e5e7eb',
+              }}
+            >
+              <View className="items-center">
+                <View
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 20,
+                    backgroundColor: '#fce7f3',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: 8,
+                  }}
+                >
+                  <BookOpen size={20} color="#ec4899" />
+                </View>
+                <Text className="text-sm font-semibold text-gray-900 text-center">
+                  Explore
+                </Text>
+                <Text className="text-xs text-gray-500 text-center mt-1" numberOfLines={1}>
+                  Articles
+                </Text>
+              </View>
+            </Pressable>
+          </ScrollView>
         </View>
 
         {/* Action Buttons Grid - 2x2 */}
@@ -228,119 +351,6 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Quick Links Section */}
-        <View className="px-6 pb-3">
-          <Text className="text-xl font-bold text-gray-900 mb-4">Quick Links</Text>
-          <View className="flex-row flex-wrap justify-between gap-3">
-            {/* Weather Card */}
-            <Pressable
-              onPress={handleViewWeather}
-              className="bg-white rounded-2xl p-4 flex-1"
-              style={{
-                minWidth: (width - 60) / 2,
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.1,
-                shadowRadius: 4,
-                elevation: 3,
-              }}
-            >
-              <View className="items-center">
-                <View
-                  style={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 24,
-                    backgroundColor: '#dbeafe',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginBottom: 12,
-                  }}
-                >
-                  <Cloud size={24} color="#3b82f6" />
-                </View>
-                <Text className="text-base font-semibold text-gray-900 text-center">
-                  Weather
-                </Text>
-                <Text className="text-xs text-gray-500 text-center mt-1">
-                  Forecast & Alerts
-                </Text>
-              </View>
-            </Pressable>
-
-            {/* Reports History Card */}
-            <Pressable
-              onPress={handleViewReports}
-              className="bg-white rounded-2xl p-4 flex-1"
-              style={{
-                minWidth: (width - 60) / 2,
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.1,
-                shadowRadius: 4,
-                elevation: 3,
-              }}
-            >
-              <View className="items-center">
-                <View
-                  style={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 24,
-                    backgroundColor: '#fef3c7',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginBottom: 12,
-                  }}
-                >
-                  <History size={24} color="#f59e0b" />
-                </View>
-                <Text className="text-base font-semibold text-gray-900 text-center">
-                  Reports
-                </Text>
-                <Text className="text-xs text-gray-500 text-center mt-1">
-                  View History
-                </Text>
-              </View>
-            </Pressable>
-
-            {/* Explore Card */}
-            <Pressable
-              onPress={handleViewExplore}
-              className="bg-white rounded-2xl p-4 flex-1"
-              style={{
-                minWidth: (width - 60) / 2,
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.1,
-                shadowRadius: 4,
-                elevation: 3,
-              }}
-            >
-              <View className="items-center">
-                <View
-                  style={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 24,
-                    backgroundColor: '#fce7f3',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginBottom: 12,
-                  }}
-                >
-                  <BookOpen size={24} color="#ec4899" />
-                </View>
-                <Text className="text-base font-semibold text-gray-900 text-center">
-                  Explore
-                </Text>
-                <Text className="text-xs text-gray-500 text-center mt-1">
-                  Articles & Stories
-                </Text>
-              </View>
-            </Pressable>
-          </View>
-        </View>
       </ScrollView>
 
       {/* Enhanced Report Form */}

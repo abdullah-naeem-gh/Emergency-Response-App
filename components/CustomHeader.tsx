@@ -1,5 +1,6 @@
 import { useAppStore } from '@/store/useAppStore';
 import * as Haptics from 'expo-haptics';
+import { useRouter } from 'expo-router';
 import { Menu, User } from 'lucide-react-native';
 import React from 'react';
 import { Pressable, Text, View } from 'react-native';
@@ -11,6 +12,7 @@ interface CustomHeaderProps {
 
 export default function CustomHeader({ onMenuPress }: CustomHeaderProps) {
   const { mode } = useAppStore();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
 
   // Hide header in panic mode
@@ -36,8 +38,7 @@ export default function CustomHeader({ onMenuPress }: CustomHeaderProps) {
 
   const handleAvatarPress = async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    // Could navigate to profile or show user info
-    console.log('Avatar pressed');
+    router.push('/(tabs)/profile');
   };
   
   return (

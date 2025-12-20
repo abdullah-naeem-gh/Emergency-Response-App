@@ -1,6 +1,6 @@
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
-import { BookOpen, Heart, Newspaper, TrendingUp, Video } from 'lucide-react-native';
+import { ArrowLeft, BookOpen, Heart, Newspaper, TrendingUp, Video } from 'lucide-react-native';
 import React from 'react';
 import { Dimensions, Pressable, ScrollView, Text, View } from 'react-native';
 
@@ -181,17 +181,36 @@ export default function ExploreScreen() {
     <View className="flex-1 bg-gray-50">
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingBottom: 100, paddingTop: 80 }}
+        contentContainerStyle={{ paddingBottom: 100, paddingTop: 16 }}
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
-        <View className="px-6 pt-0 pb-6">
-          <Text className="text-5xl font-bold text-gray-900 leading-tight mb-2">
-            Explore
-          </Text>
-          <Text className="text-gray-600 text-base">
-            Learn, prepare, and stay informed
-          </Text>
+        <View className="px-6 pb-6">
+          <View className="flex-row items-center mb-4">
+            <Pressable
+              onPress={async () => {
+                await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.back();
+              }}
+              className="mr-3"
+              style={{
+                minHeight: 44,
+                minWidth: 44,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <ArrowLeft size={24} color="#374151" />
+            </Pressable>
+            <View className="flex-1">
+              <Text className="text-5xl font-bold text-gray-900 leading-tight mb-2">
+                Explore
+              </Text>
+              <Text className="text-gray-600 text-base">
+                Learn, prepare, and stay informed
+              </Text>
+            </View>
+          </View>
         </View>
 
         {/* Category Pills */}
@@ -260,7 +279,7 @@ export default function ExploreScreen() {
             <Text className="text-gray-600 text-sm leading-5 mb-4">
               Read inspiring stories of how Muhafiz has helped communities during
               emergencies. From flood relief to earthquake response, see the
-              difference we're making together.
+              difference we&apos;re making together.
             </Text>
             <Pressable
               onPress={async () => {
