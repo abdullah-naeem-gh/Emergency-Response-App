@@ -1,62 +1,44 @@
-import { Report, reportService } from '@/services/ReportService';
-import { useAppStore } from '@/store/useAppStore';
+import { EnhancedReportForm } from '@/components/EnhancedReportForm';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
-import { AlertTriangle, Cloud, Heart, X } from 'lucide-react-native';
+import {
+  AlertTriangle,
+  Bot,
+  Heart,
+  Map,
+  Mic,
+  Search
+} from 'lucide-react-native';
 import React, { useState } from 'react';
-import { Dimensions, Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import {
+  Dimensions,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View
+} from 'react-native';
 
 const { width } = Dimensions.get('window');
-const CARD_WIDTH = (width - 48) / 2; // 2 columns with padding
+const BUTTON_SIZE = (width - 48) / 2 - 8; // 2 columns with padding and gap
 
-interface IncidentCategory {
+interface ActionButton {
   id: string;
   label: string;
+  icon: React.ComponentType<{ size: number; color: string }>;
   color: string;
+  bgColor: string;
+  onPress: () => void;
 }
-
-const INCIDENT_CATEGORIES: IncidentCategory[] = [
-  { id: 'flood', label: 'Flood', color: '#3b82f6' },
-  { id: 'medical', label: 'Medical', color: '#ef4444' },
-  { id: 'fire', label: 'Fire', color: '#f59e0b' },
-];
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { isRedZone, connectivity, setMode, setConnectivity } = useAppStore();
-  const [showIncidentModal, setShowIncidentModal] = useState(false);
+  const [showEnhancedForm, setShowEnhancedForm] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const handleReportIncident = async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setShowIncidentModal(true);
-  };
-
-  const handleIncidentCategory = async (category: IncidentCategory) => {
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-    console.log('Reported incident:', category.label);
-    
-    // Create report
-    const report: Report = {
-      id: Date.now().toString(),
-      timestamp: Date.now(),
-      type: category.id,
-      details: `${category.label} incident reported`,
-    };
-    
-    // Send report (will queue if offline, send if online)
-    const result = await reportService.sendReport(report);
-    
-    // Update store for UI tracking
-    useAppStore.getState().addToQueue(report);
-    
-    setShowIncidentModal(false);
-    
-    // Show feedback based on result
-    if (result.queued) {
-      console.log('Report queued for offline sending');
-    } else if (result.success) {
-      console.log('Report sent successfully');
-    }
+    setShowEnhancedForm(true);
   };
 
   const handleVolunteer = async () => {
@@ -64,107 +46,181 @@ export default function HomeScreen() {
     router.push('/(tabs)/volunteer');
   };
 
-  const handleWeatherAlerts = async () => {
+  const handleViewMap = async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    router.push('/(tabs)/news');
+    router.push('/(tabs)/crowd-map');
   };
 
+  const handleAskAI = async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    router.push('/(tabs)/chatbot');
+  };
+
+  const handleSearch = async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (searchQuery.trim()) {
+      // Navigate to chatbot screen
+      router.push('/(tabs)/chatbot');
+    }
+  };
+
+  const handleVoiceInput = async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    // Navigate to chatbot for voice input
+    router.push('/(tabs)/chatbot');
+  };
+
+  const actionButtons: ActionButton[] = [
+    {
+      id: 'report',
+      label: 'Report',
+      icon: AlertTriangle,
+      color: '#ef4444',
+      bgColor: '#dbeafe', // light blue
+      onPress: handleReportIncident,
+    },
+    {
+      id: 'volunteer',
+      label: 'Volunteer',
+      icon: Heart,
+      color: '#ea580c',
+      bgColor: '#ffffff', // white
+      onPress: handleVolunteer,
+    },
+    {
+      id: 'map',
+      label: 'View Map',
+      icon: Map,
+      color: '#3b82f6',
+      bgColor: '#dcfce7', // light green
+      onPress: handleViewMap,
+    },
+    {
+      id: 'ask-ai',
+      label: 'Ask AI',
+      icon: Bot,
+      color: '#eab308',
+      bgColor: '#fef3c7', // light yellow
+      onPress: handleAskAI,
+    },
+  ];
+
   return (
-    <View className="flex-1 bg-neutral-50">
-      {/* Body - Grid Layout */}
-      <ScrollView className="flex-1" contentContainerClassName="p-4 pt-4">
-        <View className="flex-row flex-wrap justify-between gap-4">
-          {/* Report Incident Card */}
-          <Pressable
-            onPress={handleReportIncident}
-            className="bg-red-500 rounded-2xl p-6 shadow-lg active:opacity-80"
-            style={{ width: CARD_WIDTH, minHeight: 180 }}
-          >
-            <View className="flex-1 justify-between">
-              <View>
-                <AlertTriangle size={36} color="white" className="mb-4" />
-                <Text className="text-white text-2xl font-bold mb-2">Report</Text>
-                <Text className="text-white text-base opacity-90">Incident</Text>
-              </View>
-            </View>
-          </Pressable>
+    <View className="flex-1 bg-white">
+      <ScrollView 
+        className="flex-1" 
+        contentContainerStyle={{ paddingBottom: 100, paddingTop: 80 }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Greeting Section */}
+        <View className="px-6 pt-0 pb-9">
+          <Text className="text-5xl font-bold text-gray-900 leading-tight" style={{ lineHeight: 56 }}>
+            Hi,{'\n'}How can we help you today?
+          </Text>
+        </View>
 
-          {/* Volunteer Card */}
-          <Pressable
-            onPress={handleVolunteer}
-            className="bg-yellow-500 rounded-2xl p-6 shadow-lg active:opacity-80"
-            style={{ width: CARD_WIDTH, minHeight: 180 }}
-          >
-            <View className="flex-1 justify-between">
-              <View>
-                <Heart size={36} color="white" className="mb-4" fill="white" />
-                <Text className="text-white text-2xl font-bold mb-2">Volunteer</Text>
-                <Text className="text-white text-base opacity-90">Help Others</Text>
-              </View>
-            </View>
-          </Pressable>
+        {/* Action Buttons Grid - 2x2 */}
+        <View className="px-6 pb-3">
+          <View className="flex-row flex-wrap justify-between gap-4">
+            {actionButtons.map((button) => {
+              const IconComponent = button.icon;
+              return (
+                <Pressable
+                  key={button.id}
+                  onPress={button.onPress}
+                  className="rounded-2xl active:opacity-80"
+                  style={{
+                    width: BUTTON_SIZE,
+                    minHeight: BUTTON_SIZE,
+                    backgroundColor: button.bgColor,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 4,
+                    elevation: 3,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    paddingVertical: 20,
+                  }}
+                >
+                  <View className="items-center justify-center">
+                    <View
+                      style={{
+                        width: 64,
+                        height: 64,
+                        borderRadius: 32,
+                        backgroundColor: '#ffffff',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginBottom: 16,
+                      }}
+                    >
+                      <IconComponent size={40} color="#000000" />
+                    </View>
+                    <Text 
+                      className="text-xl font-semibold"
+                      style={{ color: '#000000', textAlign: 'center' }}
+                    >
+                      {button.label}
+                    </Text>
+                  </View>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
 
-          {/* Weather/Alerts Card - Full Width */}
-          <Pressable
-            onPress={handleWeatherAlerts}
-            className="bg-blue-500 rounded-2xl p-6 shadow-lg w-full active:opacity-80"
-            style={{ minHeight: 140 }}
+        {/* Search Bar */}
+        <View className="px-6 pb-3">
+          <View 
+            className="flex-row items-center bg-white px-4 py-4"
+            style={{ 
+              minHeight: 60,
+              borderRadius: 30,
+              borderWidth: 1,
+              borderColor: '#e5e7eb',
+            }}
           >
-            <View className="flex-row items-center justify-between">
-              <View className="flex-1">
-                <Cloud size={36} color="white" className="mb-4" />
-                <Text className="text-white text-2xl font-bold mb-2">Weather & Alerts</Text>
-                <Text className="text-white text-base opacity-90">Stay Informed</Text>
-              </View>
-            </View>
-          </Pressable>
+            <Search size={20} color="#1f2937" />
+            <TextInput
+              className="flex-1 ml-3 text-base"
+              style={{ color: '#111827' }}
+              placeholder="Search for guides, alerts, or ask anything"
+              placeholderTextColor="#6b7280"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              onSubmitEditing={handleSearch}
+              returnKeyType="search"
+            />
+            <Pressable
+              onPress={handleVoiceInput}
+              className="ml-2"
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 18,
+                borderWidth: 1,
+                borderColor: '#e5e7eb',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Mic size={20} color="#1f2937" />
+            </Pressable>
+          </View>
         </View>
       </ScrollView>
 
-      {/* Report Incident Modal */}
-      <Modal
-        visible={showIncidentModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowIncidentModal(false)}
-      >
-        <View className="flex-1 bg-black/50 justify-end">
-          <View className="bg-white rounded-t-3xl p-6 pb-12">
-            <View className="flex-row items-center justify-between mb-6">
-              <Text className="text-2xl font-bold text-neutral-900">Report Incident</Text>
-              <Pressable
-                onPress={() => setShowIncidentModal(false)}
-                className="p-2"
-              >
-                <X size={24} color="#6b7280" />
-              </Pressable>
-            </View>
-
-            <Text className="text-neutral-600 mb-6">
-              Select the type of incident you want to report:
-            </Text>
-
-            <View className="gap-3">
-              {INCIDENT_CATEGORIES.map((category) => (
-                <Pressable
-                  key={category.id}
-                  onPress={() => handleIncidentCategory(category)}
-                  className="bg-neutral-100 rounded-xl p-5 flex-row items-center justify-between active:opacity-70"
-                  style={{ minHeight: 60 }}
-                >
-                  <Text className="text-lg font-semibold text-neutral-900">
-                    {category.label}
-                  </Text>
-                  <View
-                    className="w-5 h-5 rounded-full"
-                    style={{ backgroundColor: category.color }}
-                  />
-                </Pressable>
-              ))}
-            </View>
-          </View>
-        </View>
-      </Modal>
+      {/* Enhanced Report Form */}
+      <EnhancedReportForm
+        visible={showEnhancedForm}
+        onClose={() => {
+          setShowEnhancedForm(false);
+        }}
+        onSuccess={() => {
+          setShowEnhancedForm(false);
+        }}
+      />
     </View>
   );
 }

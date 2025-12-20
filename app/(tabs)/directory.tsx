@@ -2,7 +2,6 @@ import * as Haptics from 'expo-haptics';
 import { ChevronDown, Phone } from 'lucide-react-native';
 import React, { useMemo, useState } from 'react';
 import { Linking, Modal, SectionList, Text, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { contactsData, EmergencyContact } from '../../src/data/contactsData';
 
 type CityFilter = 'ALL' | 'KARACHI' | 'LAHORE' | 'ISLAMABAD' | 'QUETTA' | 'PESHAWAR';
@@ -97,10 +96,10 @@ export default function DirectoryScreen() {
   const selectedCityLabel = CITY_OPTIONS.find((opt) => opt.value === selectedCity)?.label || 'All Pakistan';
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50" edges={['top']}>
-      <View className="flex-1 px-4">
+    <View className="flex-1 bg-gray-50">
+      <View className="flex-1 px-4 pt-2">
         {/* Header */}
-        <View className="mb-4 pt-2">
+        <View className="mb-4">
           <Text className="text-3xl font-bold text-gray-900 mb-4">Emergency Directory</Text>
 
           {/* City Filter Dropdown */}
@@ -204,6 +203,6 @@ export default function DirectoryScreen() {
           </TouchableOpacity>
         </Modal>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }

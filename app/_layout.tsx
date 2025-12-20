@@ -76,7 +76,7 @@ export default function RootLayout() {
         visible={showPredictiveModal} 
         onClose={handleClosePredictiveModal}
       />
-      <StatusBar style="auto" />
+      <StatusBar style={mode === 'PANIC' ? 'light' : 'dark'} />
     </ThemeProvider>
   );
 }

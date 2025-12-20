@@ -51,33 +51,34 @@ export default function CustomHeader({ onSettingsPress }: CustomHeaderProps) {
     console.log('Avatar pressed');
   };
 
-  const modeColor = mode === 'PEACE' ? '#22c55e' : '#eab308'; // green-500 or yellow-500
-
+  const isDark = mode === 'PANIC'; // We can extend this if we add a Dark Mode setting later, but for now align with Peace/Panic
+  
   return (
     <View 
       style={{ 
-        backgroundColor: '#171717', // neutral-900
-        borderBottomWidth: 1,
-        borderBottomColor: '#262626', // neutral-800
+        backgroundColor: '#ffffff', 
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         paddingHorizontal: 16,
         paddingTop: Math.max(insets.top, 8),
-        paddingBottom: 12,
-        minHeight: 60,
+        paddingBottom: 16,
+        minHeight: 72,
+        zIndex: 10,
       }}
     >
       {/* Left: App Mode Badge */}
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
         <View style={{
-          backgroundColor: modeColor,
+          backgroundColor: mode === 'PEACE' ? '#dcfce7' : '#fef9c3', // green-100 : yellow-100
           paddingHorizontal: 12,
           paddingVertical: 6,
           borderRadius: 9999,
+          borderWidth: 1,
+          borderColor: mode === 'PEACE' ? '#bbf7d0' : '#fef08a',
         }}>
           <Text style={{
-            color: '#ffffff',
+            color: mode === 'PEACE' ? '#15803d' : '#854d0e', // green-700 : yellow-800
             fontSize: 12,
             fontWeight: '700',
             textTransform: 'uppercase',
@@ -93,7 +94,7 @@ export default function CustomHeader({ onSettingsPress }: CustomHeaderProps) {
         <Pressable
           onPress={handleAvatarPress}
           style={{
-            backgroundColor: '#262626', // neutral-800
+            backgroundColor: '#f3f4f6', // gray-100
             borderRadius: 9999,
             padding: 8,
             minHeight: 44,
@@ -102,12 +103,12 @@ export default function CustomHeader({ onSettingsPress }: CustomHeaderProps) {
             justifyContent: 'center',
           }}
         >
-          <User size={20} color="#ffffff" />
+          <User size={24} color="#374151" />
         </Pressable>
         <Pressable
           onPress={handleSettingsPress}
           style={{
-            backgroundColor: '#262626', // neutral-800
+            backgroundColor: '#f3f4f6', // gray-100
             borderRadius: 9999,
             padding: 8,
             minHeight: 44,
@@ -116,7 +117,7 @@ export default function CustomHeader({ onSettingsPress }: CustomHeaderProps) {
             justifyContent: 'center',
           }}
         >
-          <Settings size={20} color="#ffffff" />
+          <Settings size={24} color="#374151" />
         </Pressable>
       </View>
     </View>

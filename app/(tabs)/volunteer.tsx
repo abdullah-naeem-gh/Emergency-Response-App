@@ -4,7 +4,6 @@ import { List, MapPin } from 'lucide-react-native';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { RescueTask, tasksData } from '../../src/data/tasksData';
 import { useAppStore } from '../../store/useAppStore';
 
@@ -235,9 +234,9 @@ export default function VolunteerScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <View style={styles.container}>
       {/* Volunteer Stats Pill */}
-      <View style={styles.statsPill}>
+      <View style={[styles.statsPill, { top: 8 }]}>
         <Text style={styles.statsText}>
           Tasks Done: {volunteerTasksDone} | Level: {volunteerLevel}
         </Text>
@@ -260,7 +259,7 @@ export default function VolunteerScreen() {
           <MapPin size={24} color="#FFFFFF" />
         )}
       </TouchableOpacity>
-    </SafeAreaView>
+    </View>
   );
 }
 

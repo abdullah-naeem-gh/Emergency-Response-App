@@ -11,7 +11,6 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { NewsItem } from '../../src/data/alertsData';
 import { contactsData, EmergencyContact } from '../../src/data/contactsData';
 import { Guide } from '../../src/data/guidesData';
@@ -318,7 +317,7 @@ export default function ChatbotScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50" edges={['top']}>
+    <View className="flex-1 bg-gray-50">
       <KeyboardAvoidingView
         className="flex-1"
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -368,6 +367,6 @@ export default function ChatbotScreen() {
           </View>
         </View>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 }

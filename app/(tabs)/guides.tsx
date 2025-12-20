@@ -6,7 +6,6 @@ import { useRouter } from 'expo-router';
 import { CheckCircle } from 'lucide-react-native';
 import React, { useMemo, useState } from 'react';
 import { FlatList, ScrollView, Text, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 type FilterType = 'All' | 'Medical' | 'Fire' | 'Flood' | 'Earthquake';
 
@@ -158,10 +157,10 @@ export default function GuidesScreen() {
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50" edges={['top']}>
-      <View className="flex-1 px-4">
+    <View className="flex-1 bg-gray-50">
+      <View className="flex-1 px-4 pt-2">
         {/* Header */}
-        <View className="mb-4 pt-2">
+        <View className="mb-4">
           <Text className="text-3xl font-bold text-gray-900 mb-4">Guides</Text>
 
           {/* Quick Filters */}
@@ -197,6 +196,6 @@ export default function GuidesScreen() {
           contentContainerStyle={{ paddingBottom: 20 }}
         />
       </View>
-    </SafeAreaView>
+    </View>
   );
 }

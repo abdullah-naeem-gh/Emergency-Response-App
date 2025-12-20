@@ -3,7 +3,6 @@ import { AlertTriangle, Clock, Info, MapPin, Search, Share2, Siren, X } from 'lu
 import React, { useEffect, useMemo, useState } from 'react';
 import { FlatList, Modal, ScrollView, Share, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { alertsData, NewsItem } from '../../src/data/alertsData';
 
 // Helper for relative time
@@ -127,10 +126,10 @@ export default function NewsScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50" edges={['top']}>
-      <View className="flex-1 px-4">
+    <View className="flex-1 bg-gray-50">
+      <View className="flex-1 px-4 pt-2">
         {/* Header */}
-        <View className="mb-4 pt-2">
+        <View className="mb-4">
           <Text className="text-3xl font-bold text-gray-900 mb-4">Alerts</Text>
           
           {/* Search Bar */}
@@ -330,6 +329,6 @@ export default function NewsScreen() {
           </View>
         </Modal>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }

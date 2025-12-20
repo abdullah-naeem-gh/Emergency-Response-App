@@ -84,6 +84,12 @@ export default function TabLayout() {
               href: null,
             }}
           />
+          <Tabs.Screen
+            name="crowd-map"
+            options={{
+              href: null,
+            }}
+          />
         </Tabs>
       </View>
       {/* Manually render tab bar at bottom - always visible */}
