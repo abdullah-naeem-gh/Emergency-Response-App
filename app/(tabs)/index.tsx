@@ -3,8 +3,11 @@ import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import {
   AlertTriangle,
+  BookOpen,
   Bot,
+  Cloud,
   Heart,
+  History,
   Map,
   Mic,
   Search
@@ -68,6 +71,21 @@ export default function HomeScreen() {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     // Navigate to chatbot for voice input
     router.push('/(tabs)/chatbot');
+  };
+
+  const handleViewWeather = async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push('/(tabs)/weather');
+  };
+
+  const handleViewReports = async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push('/(tabs)/reports');
+  };
+
+  const handleViewExplore = async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push('/(tabs)/explore');
   };
 
   const actionButtons: ActionButton[] = [
@@ -206,6 +224,120 @@ export default function HomeScreen() {
               }}
             >
               <Mic size={20} color="#1f2937" />
+            </Pressable>
+          </View>
+        </View>
+
+        {/* Quick Links Section */}
+        <View className="px-6 pb-3">
+          <Text className="text-xl font-bold text-gray-900 mb-4">Quick Links</Text>
+          <View className="flex-row flex-wrap justify-between gap-3">
+            {/* Weather Card */}
+            <Pressable
+              onPress={handleViewWeather}
+              className="bg-white rounded-2xl p-4 flex-1"
+              style={{
+                minWidth: (width - 60) / 2,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.1,
+                shadowRadius: 4,
+                elevation: 3,
+              }}
+            >
+              <View className="items-center">
+                <View
+                  style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 24,
+                    backgroundColor: '#dbeafe',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: 12,
+                  }}
+                >
+                  <Cloud size={24} color="#3b82f6" />
+                </View>
+                <Text className="text-base font-semibold text-gray-900 text-center">
+                  Weather
+                </Text>
+                <Text className="text-xs text-gray-500 text-center mt-1">
+                  Forecast & Alerts
+                </Text>
+              </View>
+            </Pressable>
+
+            {/* Reports History Card */}
+            <Pressable
+              onPress={handleViewReports}
+              className="bg-white rounded-2xl p-4 flex-1"
+              style={{
+                minWidth: (width - 60) / 2,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.1,
+                shadowRadius: 4,
+                elevation: 3,
+              }}
+            >
+              <View className="items-center">
+                <View
+                  style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 24,
+                    backgroundColor: '#fef3c7',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: 12,
+                  }}
+                >
+                  <History size={24} color="#f59e0b" />
+                </View>
+                <Text className="text-base font-semibold text-gray-900 text-center">
+                  Reports
+                </Text>
+                <Text className="text-xs text-gray-500 text-center mt-1">
+                  View History
+                </Text>
+              </View>
+            </Pressable>
+
+            {/* Explore Card */}
+            <Pressable
+              onPress={handleViewExplore}
+              className="bg-white rounded-2xl p-4 flex-1"
+              style={{
+                minWidth: (width - 60) / 2,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.1,
+                shadowRadius: 4,
+                elevation: 3,
+              }}
+            >
+              <View className="items-center">
+                <View
+                  style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 24,
+                    backgroundColor: '#fce7f3',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: 12,
+                  }}
+                >
+                  <BookOpen size={24} color="#ec4899" />
+                </View>
+                <Text className="text-base font-semibold text-gray-900 text-center">
+                  Explore
+                </Text>
+                <Text className="text-xs text-gray-500 text-center mt-1">
+                  Articles & Stories
+                </Text>
+              </View>
             </Pressable>
           </View>
         </View>

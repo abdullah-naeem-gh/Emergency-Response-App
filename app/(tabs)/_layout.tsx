@@ -1,22 +1,20 @@
 import CustomHeader from '@/components/CustomHeader';
 import CustomTabBar from '@/components/CustomTabBar';
 import SettingsDrawer from '@/components/SettingsDrawer';
-import { BottomTabNavigationState } from '@react-navigation/bottom-tabs';
 import { useNavigationState } from '@react-navigation/native';
-import { Tabs, useNavigation, usePathname } from 'expo-router';
+import { Tabs, useNavigation } from 'expo-router';
 import React, { useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 export default function TabLayout() {
   const [showSettings, setShowSettings] = useState(false);
   const navigation = useNavigation();
-  const pathname = usePathname();
   const tabBarPropsRef = useRef<any>(null);
 
   // Get navigation state
   const state = useNavigationState((state) => {
     if (state && state.type === 'tab') {
-      const tabState = state as BottomTabNavigationState;
+      const tabState = state as any;
       tabBarPropsRef.current = {
         state: tabState,
         navigation: navigation as any,
@@ -29,7 +27,7 @@ export default function TabLayout() {
 
   return (
     <View style={styles.container}>
-      <CustomHeader onSettingsPress={() => setShowSettings(true)} />
+      <CustomHeader onMenuPress={() => setShowSettings(true)} />
       <View style={styles.tabsWrapper}>
         <Tabs
           screenOptions={{
@@ -90,13 +88,27 @@ export default function TabLayout() {
               href: null,
             }}
           />
+          <Tabs.Screen
+            name="reports"
+            options={{
+              href: null,
+            }}
+          />
+          <Tabs.Screen
+            name="weather"
+            options={{
+              href: null,
+            }}
+          />
         </Tabs>
       </View>
       {/* Manually render tab bar at bottom - always visible */}
       <CustomTabBar 
-        state={state as any || { routes: [], index: 0 }}
-        navigation={navigation as any}
-        descriptors={{}}
+        {...({
+          state: state as any || { routes: [], index: 0 },
+          navigation: navigation as any,
+          descriptors: {},
+        } as any)}
       />
       <SettingsDrawer 
         visible={showSettings} 

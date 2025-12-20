@@ -1,6 +1,8 @@
 import { Report } from './ReportService';
 
-export interface CrowdReport extends Report {
+export type ReportStatus = 'pending' | 'sent' | 'failed' | 'verified' | 'resolved';
+
+export interface CrowdReport extends Omit<Report, 'status'> {
   userId?: string;
   photoUrl?: string;
   videoUrl?: string;
@@ -8,6 +10,7 @@ export interface CrowdReport extends Report {
   affectedPeople?: number;
   verified?: boolean;
   verificationCount?: number;
+  status?: ReportStatus;
 }
 
 export interface ReportCluster {
@@ -97,7 +100,6 @@ export function clusterReports(reports: CrowdReport[]): ReportCluster[] {
         ) / nearbyReports.length;
 
       // Calculate confidence based on report count and verification
-      const verifiedCount = nearbyReports.filter((r) => r.verified).length;
       const verificationCount = nearbyReports.reduce(
         (sum, r) => sum + (r.verificationCount || 0),
         0
@@ -107,7 +109,7 @@ export function clusterReports(reports: CrowdReport[]): ReportCluster[] {
       const confidence = Math.min(1, baseConfidence + verificationBonus);
 
       // Determine overall severity (highest severity in cluster)
-      const severities: Array<'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'> = [
+      const severities: ('LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL')[] = [
         'LOW',
         'MEDIUM',
         'HIGH',
@@ -290,6 +292,45 @@ class CrowdReportService {
         longitude <= bounds.east
       );
     });
+  }
+
+  /**
+   * Get reports filtered by time range
+   */
+  async getReportsByTimeRange(
+    timeRange: 'hour' | 'day' | 'week' | 'all'
+  ): Promise<CrowdReport[]> {
+    const allReports = await this.getAllReports();
+    if (timeRange === 'all') return allReports;
+
+    const now = Date.now();
+    let cutoffTime: number;
+
+    switch (timeRange) {
+      case 'hour':
+        cutoffTime = now - 3600000; // 1 hour
+        break;
+      case 'day':
+        cutoffTime = now - 86400000; // 24 hours
+        break;
+      case 'week':
+        cutoffTime = now - 604800000; // 7 days
+        break;
+      default:
+        return allReports;
+    }
+
+    return allReports.filter((report) => report.timestamp >= cutoffTime);
+  }
+
+  /**
+   * Update report status
+   */
+  async updateReportStatus(reportId: string, status: ReportStatus): Promise<void> {
+    const report = this.mockReports.find((r) => r.id === reportId);
+    if (report) {
+      report.status = status;
+    }
   }
 
   /**

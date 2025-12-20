@@ -1,17 +1,16 @@
 import { EnhancedReportForm } from '@/components/EnhancedReportForm';
-import { crowdReportService, clusterReports, CrowdReport, ReportCluster } from '@/services/CrowdReportService';
+import { clusterReports, CrowdReport, crowdReportService, generateHeatmapData, ReportCluster } from '@/services/CrowdReportService';
 import { useAppStore } from '@/store/useAppStore';
 import * as Haptics from 'expo-haptics';
 import * as Location from 'expo-location';
-import { AlertTriangle, Filter, Layers, MapPin, Plus, RefreshCw } from 'lucide-react-native';
+import { Clock, Plus, RefreshCw } from 'lucide-react-native';
 import React, { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Dimensions, Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import MapView, { Circle, Marker, PROVIDER_GOOGLE } from 'react-native-maps';
-
-const { width, height } = Dimensions.get('window');
 
 type FilterType = 'all' | 'flood' | 'fire' | 'medical' | 'earthquake' | 'other';
 type ViewMode = 'reports' | 'clusters' | 'heatmap';
+type TimeFilter = 'all' | 'hour' | 'day' | 'week';
 
 interface IncidentCategory {
   id: FilterType;
@@ -43,6 +42,28 @@ const getSeverityColor = (severity?: string): string => {
   }
 };
 
+const TIME_FILTERS: { id: TimeFilter; label: string }[] = [
+  { id: 'all', label: 'All Time' },
+  { id: 'week', label: 'Week' },
+  { id: 'day', label: 'Day' },
+  { id: 'hour', label: 'Hour' },
+];
+
+const getStatusColor = (status?: string): string => {
+  switch (status) {
+    case 'resolved':
+      return '#10B981';
+    case 'verified':
+      return '#3B82F6';
+    case 'sent':
+      return '#F59E0B';
+    case 'pending':
+      return '#6B7280';
+    default:
+      return '#6B7280';
+  }
+};
+
 export default function CrowdMapScreen() {
   const { setMode, setRedZone } = useAppStore();
   const [reports, setReports] = useState<CrowdReport[]>([]);
@@ -50,9 +71,11 @@ export default function CrowdMapScreen() {
   const [loading, setLoading] = useState(true);
   const [selectedFilter, setSelectedFilter] = useState<FilterType>('all');
   const [viewMode, setViewMode] = useState<ViewMode>('clusters');
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>('all');
   const [selectedCluster, setSelectedCluster] = useState<ReportCluster | null>(null);
   const [userLocation, setUserLocation] = useState<{ lat: number; long: number } | null>(null);
   const [showReportForm, setShowReportForm] = useState(false);
+  const [showTimeFilter, setShowTimeFilter] = useState(false);
   const [mapRegion, setMapRegion] = useState({
     latitude: 24.8607, // Karachi default
     longitude: 67.0011,
@@ -116,7 +139,7 @@ export default function CrowdMapScreen() {
       setLoading(true);
       const allReports = await crowdReportService.getAllReports();
       
-      // Add some mock reports for demonstration
+      // Add some mock reports for demonstration with status
       const mockReports: CrowdReport[] = [
         {
           id: '1',
@@ -127,6 +150,7 @@ export default function CrowdMapScreen() {
           severity: 'HIGH',
           verificationCount: 5,
           verified: true,
+          status: 'verified',
         },
         {
           id: '2',
@@ -137,6 +161,7 @@ export default function CrowdMapScreen() {
           severity: 'MEDIUM',
           verificationCount: 3,
           verified: true,
+          status: 'verified',
         },
         {
           id: '3',
@@ -147,6 +172,7 @@ export default function CrowdMapScreen() {
           severity: 'CRITICAL',
           verificationCount: 8,
           verified: true,
+          status: 'verified',
         },
         {
           id: '4',
@@ -156,6 +182,7 @@ export default function CrowdMapScreen() {
           location: { latitude: 24.8500, longitude: 67.0000 },
           severity: 'HIGH',
           verificationCount: 2,
+          status: 'sent',
         },
         {
           id: '5',
@@ -165,6 +192,7 @@ export default function CrowdMapScreen() {
           location: { latitude: 24.8800, longitude: 67.0200 },
           severity: 'HIGH',
           verificationCount: 1,
+          status: 'pending',
         },
       ];
 
@@ -181,17 +209,57 @@ export default function CrowdMapScreen() {
     }
   };
 
-  // Filter reports by type
+  // Filter reports by type and time
   const filteredReports = useMemo(() => {
-    if (selectedFilter === 'all') return reports;
-    return reports.filter((report) => report.type === selectedFilter);
-  }, [reports, selectedFilter]);
+    let filtered = reports;
+
+    // Filter by type
+    if (selectedFilter !== 'all') {
+      filtered = filtered.filter((report) => report.type === selectedFilter);
+    }
+
+    // Filter by time
+    if (timeFilter !== 'all') {
+      const now = Date.now();
+      let cutoffTime: number;
+      switch (timeFilter) {
+        case 'hour':
+          cutoffTime = now - 3600000;
+          break;
+        case 'day':
+          cutoffTime = now - 86400000;
+          break;
+        case 'week':
+          cutoffTime = now - 604800000;
+          break;
+        default:
+          return filtered;
+      }
+      filtered = filtered.filter((report) => report.timestamp >= cutoffTime);
+    }
+
+    return filtered;
+  }, [reports, selectedFilter, timeFilter]);
 
   // Filter clusters by type
   const filteredClusters = useMemo(() => {
     if (selectedFilter === 'all') return clusters;
     return clusters.filter((cluster) => cluster.type === selectedFilter);
   }, [clusters, selectedFilter]);
+
+  // Generate heatmap data
+  const heatmapData = useMemo(() => {
+    if (viewMode !== 'heatmap' || !mapRegion) return [];
+    
+    const bounds = {
+      north: mapRegion.latitude + mapRegion.latitudeDelta / 2,
+      south: mapRegion.latitude - mapRegion.latitudeDelta / 2,
+      east: mapRegion.longitude + mapRegion.longitudeDelta / 2,
+      west: mapRegion.longitude - mapRegion.longitudeDelta / 2,
+    };
+
+    return generateHeatmapData(filteredReports, bounds);
+  }, [viewMode, filteredReports, mapRegion]);
 
   const handleRefresh = async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -210,6 +278,12 @@ export default function CrowdMapScreen() {
     setSelectedCluster(null);
   };
 
+  const handleTimeFilterChange = (filter: TimeFilter) => {
+    Haptics.selectionAsync();
+    setTimeFilter(filter);
+    setShowTimeFilter(false);
+  };
+
   const handleClusterPress = (cluster: ReportCluster) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setSelectedCluster(cluster);
@@ -225,7 +299,23 @@ export default function CrowdMapScreen() {
   };
 
   const renderMarkers = () => {
-    if (viewMode === 'clusters') {
+    if (viewMode === 'heatmap') {
+      // Render heatmap circles
+      return heatmapData.map((point, index) => {
+        const opacity = point.intensity * 0.6;
+        const radius = point.intensity * 500; // Scale radius based on intensity
+        
+        return (
+          <Circle
+            key={`heatmap-${index}`}
+            center={{ latitude: point.latitude, longitude: point.longitude }}
+            radius={radius}
+            fillColor={`rgba(239, 68, 68, ${opacity})`}
+            strokeColor="transparent"
+          />
+        );
+      });
+    } else if (viewMode === 'clusters') {
       return filteredClusters.map((cluster) => (
         <React.Fragment key={cluster.id}>
           <Marker
@@ -325,23 +415,35 @@ export default function CrowdMapScreen() {
 
         {/* View Mode Toggle */}
         <View className="absolute top-4 right-4 bg-neutral-800 rounded-xl p-1 flex-row shadow-lg">
-          {(['reports', 'clusters'] as ViewMode[]).map((mode) => (
+          {(['reports', 'clusters', 'heatmap'] as ViewMode[]).map((mode) => (
             <TouchableOpacity
               key={mode}
               onPress={() => handleViewModeChange(mode)}
-              className={`px-4 py-2 rounded-lg ${
+              className={`px-3 py-2 rounded-lg ${
                 viewMode === mode ? 'bg-blue-500' : 'bg-transparent'
               }`}
               style={{ minHeight: 44 }}
             >
-              <Text className={`font-semibold text-sm ${
+              <Text className={`font-semibold text-xs ${
                 viewMode === mode ? 'text-white' : 'text-neutral-400'
               }`}>
-                {mode === 'reports' ? 'Reports' : 'Clusters'}
+                {mode === 'reports' ? 'Reports' : mode === 'clusters' ? 'Clusters' : 'Heat'}
               </Text>
             </TouchableOpacity>
           ))}
         </View>
+
+        {/* Time Filter Button */}
+        <TouchableOpacity
+          onPress={() => setShowTimeFilter(true)}
+          className="absolute top-4 left-4 bg-neutral-800 rounded-xl px-4 py-2 flex-row items-center shadow-lg"
+          style={{ minHeight: 44 }}
+        >
+          <Clock size={16} color="white" />
+          <Text className="text-white font-semibold text-sm ml-2">
+            {TIME_FILTERS.find(f => f.id === timeFilter)?.label || 'All Time'}
+          </Text>
+        </TouchableOpacity>
 
         {/* Filter Pills */}
         <ScrollView
@@ -443,15 +545,32 @@ export default function CrowdMapScreen() {
                       <Text className="text-white text-sm mb-1">
                         {report.details}
                       </Text>
-                      <View className="flex-row items-center">
-                        <Text className="text-neutral-400 text-xs">
-                          {new Date(report.timestamp).toLocaleTimeString()}
-                        </Text>
-                        {report.verified && (
-                          <>
-                            <Text className="text-neutral-400 text-xs mx-2">•</Text>
-                            <Text className="text-green-400 text-xs">Verified</Text>
-                          </>
+                      <View className="flex-row items-center justify-between">
+                        <View className="flex-row items-center">
+                          <Text className="text-neutral-400 text-xs">
+                            {new Date(report.timestamp).toLocaleTimeString()}
+                          </Text>
+                          {report.verified && (
+                            <>
+                              <Text className="text-neutral-400 text-xs mx-2">•</Text>
+                              <Text className="text-green-400 text-xs">Verified</Text>
+                            </>
+                          )}
+                        </View>
+                        {report.status && (
+                          <View
+                            className="px-2 py-1 rounded-full"
+                            style={{
+                              backgroundColor: getStatusColor(report.status) + '20',
+                            }}
+                          >
+                            <Text
+                              className="text-xs font-semibold capitalize"
+                              style={{ color: getStatusColor(report.status) }}
+                            >
+                              {report.status}
+                            </Text>
+                          </View>
                         )}
                       </View>
                     </View>
@@ -476,6 +595,35 @@ export default function CrowdMapScreen() {
           <ActivityIndicator size="large" color="#3B82F6" />
         </View>
       )}
+
+      {/* Time Filter Modal */}
+      <Modal
+        visible={showTimeFilter}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowTimeFilter(false)}
+      >
+        <Pressable
+          className="flex-1 bg-black/50 justify-center items-center"
+          onPress={() => setShowTimeFilter(false)}
+        >
+          <View className="bg-neutral-800 rounded-2xl p-4 w-64">
+            <Text className="text-white text-lg font-bold mb-4">Time Filter</Text>
+            {TIME_FILTERS.map((filter) => (
+              <TouchableOpacity
+                key={filter.id}
+                onPress={() => handleTimeFilterChange(filter.id)}
+                className={`py-3 px-4 rounded-xl mb-2 ${
+                  timeFilter === filter.id ? 'bg-blue-500' : 'bg-neutral-700'
+                }`}
+                style={{ minHeight: 50 }}
+              >
+                <Text className="text-white font-semibold">{filter.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </Pressable>
+      </Modal>
 
       {/* Enhanced Report Form */}
       <EnhancedReportForm

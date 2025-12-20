@@ -1,15 +1,15 @@
 import { useAppStore } from '@/store/useAppStore';
 import * as Haptics from 'expo-haptics';
-import { Settings, User } from 'lucide-react-native';
+import { Menu, User } from 'lucide-react-native';
 import React from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface CustomHeaderProps {
-  onSettingsPress: () => void;
+  onMenuPress: () => void;
 }
 
-export default function CustomHeader({ onSettingsPress }: CustomHeaderProps) {
+export default function CustomHeader({ onMenuPress }: CustomHeaderProps) {
   const { mode } = useAppStore();
   const insets = useSafeAreaInsets();
 
@@ -29,20 +29,9 @@ export default function CustomHeader({ onSettingsPress }: CustomHeaderProps) {
     }
   };
 
-  const getModeColor = () => {
-    switch (mode) {
-      case 'PEACE':
-        return 'bg-green-500';
-      case 'PREDICTIVE':
-        return 'bg-yellow-500';
-      default:
-        return 'bg-green-500';
-    }
-  };
-
-  const handleSettingsPress = async () => {
+  const handleMenuPress = async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    onSettingsPress();
+    onMenuPress();
   };
 
   const handleAvatarPress = async () => {
@@ -50,8 +39,6 @@ export default function CustomHeader({ onSettingsPress }: CustomHeaderProps) {
     // Could navigate to profile or show user info
     console.log('Avatar pressed');
   };
-
-  const isDark = mode === 'PANIC'; // We can extend this if we add a Dark Mode setting later, but for now align with Peace/Panic
   
   return (
     <View 
@@ -106,7 +93,7 @@ export default function CustomHeader({ onSettingsPress }: CustomHeaderProps) {
           <User size={24} color="#374151" />
         </Pressable>
         <Pressable
-          onPress={handleSettingsPress}
+          onPress={handleMenuPress}
           style={{
             backgroundColor: '#f3f4f6', // gray-100
             borderRadius: 9999,
@@ -117,7 +104,7 @@ export default function CustomHeader({ onSettingsPress }: CustomHeaderProps) {
             justifyContent: 'center',
           }}
         >
-          <Settings size={24} color="#374151" />
+          <Menu size={24} color="#374151" />
         </Pressable>
       </View>
     </View>
