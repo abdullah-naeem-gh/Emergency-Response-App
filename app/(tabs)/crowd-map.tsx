@@ -1,3 +1,4 @@
+import { AnimatedPressable } from '@/components/AnimatedPressable';
 import { EnhancedReportForm } from '@/components/EnhancedReportForm';
 import { clusterReports, CrowdReport, crowdReportService, generateHeatmapData, ReportCluster } from '@/services/CrowdReportService';
 import { useAppStore } from '@/store/useAppStore';
@@ -376,18 +377,20 @@ export default function CrowdMapScreen() {
             {filteredClusters.length} clusters • {filteredReports.length} reports
           </Text>
         </View>
-        <TouchableOpacity
+        <AnimatedPressable
           onPress={handleRefresh}
           disabled={loading}
           className="bg-neutral-700 rounded-full p-2"
           style={{ minHeight: 44, minWidth: 44 }}
+          hapticFeedback={true}
+          hapticStyle={Haptics.ImpactFeedbackStyle.Light}
         >
           <RefreshCw
             size={20}
             color="white"
             style={loading ? { transform: [{ rotate: '180deg' }] } : undefined}
           />
-        </TouchableOpacity>
+        </AnimatedPressable>
       </View>
 
       {/* Map */}
@@ -416,34 +419,38 @@ export default function CrowdMapScreen() {
         {/* View Mode Toggle */}
         <View className="absolute top-4 right-4 bg-neutral-800 rounded-xl p-1 flex-row shadow-lg">
           {(['reports', 'clusters', 'heatmap'] as ViewMode[]).map((mode) => (
-            <TouchableOpacity
+            <AnimatedPressable
               key={mode}
               onPress={() => handleViewModeChange(mode)}
               className={`px-3 py-2 rounded-lg ${
                 viewMode === mode ? 'bg-blue-500' : 'bg-transparent'
               }`}
               style={{ minHeight: 44 }}
+              hapticFeedback={true}
+              hapticStyle={Haptics.ImpactFeedbackStyle.Light}
             >
               <Text className={`font-semibold text-xs ${
                 viewMode === mode ? 'text-white' : 'text-neutral-400'
               }`}>
                 {mode === 'reports' ? 'Reports' : mode === 'clusters' ? 'Clusters' : 'Heat'}
               </Text>
-            </TouchableOpacity>
+            </AnimatedPressable>
           ))}
         </View>
 
         {/* Time Filter Button */}
-        <TouchableOpacity
+        <AnimatedPressable
           onPress={() => setShowTimeFilter(true)}
           className="absolute top-4 left-4 bg-neutral-800 rounded-xl px-4 py-2 flex-row items-center shadow-lg"
           style={{ minHeight: 44 }}
+          hapticFeedback={true}
+          hapticStyle={Haptics.ImpactFeedbackStyle.Light}
         >
           <Clock size={16} color="white" />
           <Text className="text-white font-semibold text-sm ml-2">
             {TIME_FILTERS.find(f => f.id === timeFilter)?.label || 'All Time'}
           </Text>
-        </TouchableOpacity>
+        </AnimatedPressable>
 
         {/* Filter Pills */}
         <ScrollView
@@ -453,7 +460,7 @@ export default function CrowdMapScreen() {
           contentContainerStyle={{ gap: 8 }}
         >
           {INCIDENT_CATEGORIES.map((category) => (
-            <TouchableOpacity
+            <AnimatedPressable
               key={category.id}
               onPress={() => handleFilterChange(category.id)}
               className={`px-4 py-2 rounded-full border ${
@@ -462,6 +469,8 @@ export default function CrowdMapScreen() {
                   : 'bg-neutral-800/90 border-neutral-600'
               }`}
               style={{ minHeight: 36 }}
+              hapticFeedback={true}
+              hapticStyle={Haptics.ImpactFeedbackStyle.Light}
             >
               <Text
                 className={`font-semibold text-xs ${
@@ -472,18 +481,20 @@ export default function CrowdMapScreen() {
               >
                 {category.label}
               </Text>
-            </TouchableOpacity>
+            </AnimatedPressable>
           ))}
         </ScrollView>
 
         {/* FAB - Report Incident */}
-        <TouchableOpacity
+        <AnimatedPressable
           onPress={handleReportIncident}
           className="absolute bottom-20 right-4 bg-red-500 rounded-full p-4 shadow-lg"
           style={{ minHeight: 56, minWidth: 56 }}
+          hapticFeedback={true}
+          hapticStyle={Haptics.ImpactFeedbackStyle.Medium}
         >
           <Plus size={24} color="white" />
-        </TouchableOpacity>
+        </AnimatedPressable>
       </View>
 
       {/* Cluster Details Modal */}
@@ -546,15 +557,15 @@ export default function CrowdMapScreen() {
                         {report.details}
                       </Text>
                       <View className="flex-row items-center justify-between">
-                        <View className="flex-row items-center">
-                          <Text className="text-neutral-400 text-xs">
-                            {new Date(report.timestamp).toLocaleTimeString()}
-                          </Text>
-                          {report.verified && (
-                            <>
-                              <Text className="text-neutral-400 text-xs mx-2">•</Text>
-                              <Text className="text-green-400 text-xs">Verified</Text>
-                            </>
+                      <View className="flex-row items-center">
+                        <Text className="text-neutral-400 text-xs">
+                          {new Date(report.timestamp).toLocaleTimeString()}
+                        </Text>
+                        {report.verified && (
+                          <>
+                            <Text className="text-neutral-400 text-xs mx-2">•</Text>
+                            <Text className="text-green-400 text-xs">Verified</Text>
+                          </>
                           )}
                         </View>
                         {report.status && (

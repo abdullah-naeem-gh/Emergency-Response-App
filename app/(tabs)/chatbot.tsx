@@ -11,6 +11,7 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NewsItem } from '../../src/data/alertsData';
 import { contactsData, EmergencyContact } from '../../src/data/contactsData';
 import { Guide } from '../../src/data/guidesData';
@@ -264,6 +265,7 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = () => {
 };
 
 export default function ChatbotScreen() {
+  const insets = useSafeAreaInsets();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -275,6 +277,9 @@ export default function ChatbotScreen() {
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const flatListRef = useRef<FlatList>(null);
+  
+  // Navbar height + safe area bottom
+  const navbarHeight = 56 + insets.bottom;
 
   useEffect(() => {
     // Scroll to bottom when messages change
@@ -321,7 +326,7 @@ export default function ChatbotScreen() {
       <KeyboardAvoidingView
         className="flex-1"
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? navbarHeight + 20 : navbarHeight}
       >
         {/* Header */}
         <View className="bg-white px-4 py-3 border-b border-gray-200 flex-row items-center">
@@ -335,13 +340,28 @@ export default function ChatbotScreen() {
           data={messages}
           keyExtractor={item => item.id}
           renderItem={({ item }) => <MessageBubble message={item} />}
-          contentContainerStyle={{ padding: 16, paddingBottom: 20 }}
+          contentContainerStyle={{ padding: 16, paddingBottom: navbarHeight + 100 }}
           ListFooterComponent={isTyping ? <TypingIndicator /> : null}
           onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
         />
 
-        {/* Input Bar */}
-        <View className="bg-white border-t border-gray-200 px-4 py-3">
+        {/* Input Bar - Positioned absolutely above navbar */}
+        <View 
+          className="bg-white border-t border-gray-200 px-4 py-3"
+          style={{ 
+            position: 'absolute',
+            bottom: navbarHeight,
+            left: 0,
+            right: 0,
+            paddingBottom: insets.bottom + 8,
+            zIndex: 10,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: -2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 4,
+            elevation: 5,
+          }}
+        >
           <View className="flex-row items-center">
             <TextInput
               className="flex-1 bg-gray-100 rounded-xl px-4 py-3 text-base text-gray-900 mr-3"

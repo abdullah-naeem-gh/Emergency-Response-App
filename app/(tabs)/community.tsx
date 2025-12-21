@@ -74,9 +74,17 @@ export default function CommunityScreen() {
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [showCheckInModal, setShowCheckInModal] = useState(false);
   const [showResourceModal, setShowResourceModal] = useState(false);
+  const [resourceModalType, setResourceModalType] = useState<'request' | 'offer'>('request');
   const [newMessage, setNewMessage] = useState('');
   const [checkInStatus, setCheckInStatus] = useState<'safe' | 'needs_help' | 'evacuating'>('safe');
   const [checkInMessage, setCheckInMessage] = useState('');
+  
+  // Resource form state
+  const [resourceType, setResourceType] = useState<'food' | 'water' | 'medical' | 'shelter' | 'transport' | 'other'>('food');
+  const [resourceTitle, setResourceTitle] = useState('');
+  const [resourceDescription, setResourceDescription] = useState('');
+  const [resourceQuantity, setResourceQuantity] = useState('');
+  const [resourceUrgency, setResourceUrgency] = useState<'low' | 'medium' | 'high' | 'critical'>('medium');
 
   useEffect(() => {
     loadData();
@@ -341,7 +349,11 @@ export default function CommunityScreen() {
             {/* Action Buttons */}
             <View className="flex-row gap-3 mb-6">
               <TouchableOpacity
-                onPress={() => setShowResourceModal(true)}
+                onPress={async () => {
+                  await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  setResourceModalType('request');
+                  setShowResourceModal(true);
+                }}
                 className="flex-1 bg-red-500 rounded-xl py-4 items-center"
                 style={{ minHeight: 60 }}
               >
@@ -349,7 +361,11 @@ export default function CommunityScreen() {
                 <Text className="text-white font-bold mt-2">Request Help</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={() => setShowResourceModal(true)}
+                onPress={async () => {
+                  await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  setResourceModalType('offer');
+                  setShowResourceModal(true);
+                }}
                 className="flex-1 bg-green-500 rounded-xl py-4 items-center"
                 style={{ minHeight: 60 }}
               >
@@ -582,21 +598,266 @@ export default function CommunityScreen() {
         visible={showResourceModal}
         transparent
         animationType="slide"
-        onRequestClose={() => setShowResourceModal(false)}
+        onRequestClose={() => {
+          setShowResourceModal(false);
+          // Reset form
+          setResourceTitle('');
+          setResourceDescription('');
+          setResourceQuantity('');
+          setResourceType('food');
+          setResourceUrgency('medium');
+        }}
       >
         <View className="flex-1 bg-black/50 justify-end">
-          <View className="bg-white rounded-t-3xl p-6 pb-12">
-            <Text className="text-2xl font-bold text-gray-900 mb-4">Resource Sharing</Text>
-            <Text className="text-gray-600 text-center mb-6">
-              This feature will allow you to request or offer resources. Coming soon!
-            </Text>
-            <TouchableOpacity
-              onPress={() => setShowResourceModal(false)}
-              className="bg-gray-100 rounded-xl py-4 items-center"
-              style={{ minHeight: 60 }}
-            >
-              <Text className="text-gray-700 font-semibold text-lg">Close</Text>
-            </TouchableOpacity>
+          <View className="bg-white rounded-t-3xl p-6 pb-12 max-h-[90%]">
+            <View className="flex-row items-center justify-between mb-4">
+              <Text className="text-2xl font-bold text-gray-900">
+                {resourceModalType === 'request' ? 'Request Resource' : 'Offer Resource'}
+              </Text>
+              <Pressable
+                onPress={() => {
+                  setShowResourceModal(false);
+                  setResourceTitle('');
+                  setResourceDescription('');
+                  setResourceQuantity('');
+                  setResourceType('food');
+                  setResourceUrgency('medium');
+                }}
+                className="bg-gray-100 rounded-full p-2"
+              >
+                <Text className="text-gray-700 font-semibold">✕</Text>
+              </Pressable>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {/* Type Toggle */}
+              <View className="flex-row gap-2 mb-4">
+                <TouchableOpacity
+                  onPress={() => {
+                    Haptics.selectionAsync();
+                    setResourceModalType('request');
+                  }}
+                  className={`flex-1 py-3 rounded-xl border-2 ${
+                    resourceModalType === 'request'
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-200 bg-white'
+                  }`}
+                  style={{ minHeight: 50 }}
+                >
+                  <Text
+                    className={`text-center font-semibold ${
+                      resourceModalType === 'request' ? 'text-blue-700' : 'text-gray-700'
+                    }`}
+                  >
+                    Request
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => {
+                    Haptics.selectionAsync();
+                    setResourceModalType('offer');
+                  }}
+                  className={`flex-1 py-3 rounded-xl border-2 ${
+                    resourceModalType === 'offer'
+                      ? 'border-green-500 bg-green-50'
+                      : 'border-gray-200 bg-white'
+                  }`}
+                  style={{ minHeight: 50 }}
+                >
+                  <Text
+                    className={`text-center font-semibold ${
+                      resourceModalType === 'offer' ? 'text-green-700' : 'text-gray-700'
+                    }`}
+                  >
+                    Offer
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Resource Type */}
+              <Text className="text-base font-semibold text-gray-900 mb-2">Resource Type</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4">
+                {(['food', 'water', 'medical', 'shelter', 'transport', 'other'] as const).map((type) => (
+                  <TouchableOpacity
+                    key={type}
+                    onPress={() => {
+                      Haptics.selectionAsync();
+                      setResourceType(type);
+                    }}
+                    className={`px-4 py-2 rounded-full mr-2 border-2 ${
+                      resourceType === type
+                        ? 'border-blue-500 bg-blue-50'
+                        : 'border-gray-200 bg-white'
+                    }`}
+                  >
+                    <Text
+                      className={`font-semibold capitalize ${
+                        resourceType === type ? 'text-blue-700' : 'text-gray-700'
+                      }`}
+                    >
+                      {type}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+
+              {/* Title */}
+              <Text className="text-base font-semibold text-gray-900 mb-2">Title</Text>
+              <TextInput
+                className="bg-gray-100 rounded-xl px-4 py-3 text-gray-900 border border-gray-200 mb-4"
+                placeholder="e.g., Need clean water"
+                placeholderTextColor="#9CA3AF"
+                value={resourceTitle}
+                onChangeText={setResourceTitle}
+                style={{ minHeight: 50 }}
+              />
+
+              {/* Description */}
+              <Text className="text-base font-semibold text-gray-900 mb-2">Description</Text>
+              <TextInput
+                className="bg-gray-100 rounded-xl px-4 py-3 text-gray-900 border border-gray-200 mb-4"
+                placeholder="Provide more details..."
+                placeholderTextColor="#9CA3AF"
+                value={resourceDescription}
+                onChangeText={setResourceDescription}
+                multiline
+                numberOfLines={4}
+                style={{ minHeight: 100, textAlignVertical: 'top' }}
+              />
+
+              {/* Quantity */}
+              <Text className="text-base font-semibold text-gray-900 mb-2">Quantity (Optional)</Text>
+              <TextInput
+                className="bg-gray-100 rounded-xl px-4 py-3 text-gray-900 border border-gray-200 mb-4"
+                placeholder="e.g., 10 liters, 5 boxes"
+                placeholderTextColor="#9CA3AF"
+                value={resourceQuantity}
+                onChangeText={setResourceQuantity}
+                style={{ minHeight: 50 }}
+              />
+
+              {/* Urgency (only for requests) */}
+              {resourceModalType === 'request' && (
+                <>
+                  <Text className="text-base font-semibold text-gray-900 mb-2">Urgency</Text>
+                  <View className="flex-row gap-2 mb-4">
+                    {(['low', 'medium', 'high', 'critical'] as const).map((urgency) => (
+                      <TouchableOpacity
+                        key={urgency}
+                        onPress={() => {
+                          Haptics.selectionAsync();
+                          setResourceUrgency(urgency);
+                        }}
+                        className={`flex-1 py-3 rounded-xl border-2 ${
+                          resourceUrgency === urgency
+                            ? `border-${getUrgencyColor(urgency)} bg-${getUrgencyColor(urgency)}/10`
+                            : 'border-gray-200 bg-white'
+                        }`}
+                        style={{
+                          minHeight: 50,
+                          borderColor: resourceUrgency === urgency ? getUrgencyColor(urgency) : '#E5E7EB',
+                          backgroundColor: resourceUrgency === urgency ? `${getUrgencyColor(urgency)}20` : '#FFFFFF',
+                        }}
+                      >
+                        <Text
+                          className="text-center font-semibold capitalize"
+                          style={{
+                            color: resourceUrgency === urgency ? getUrgencyColor(urgency) : '#374151',
+                          }}
+                        >
+                          {urgency}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </>
+              )}
+
+              {/* Submit Button */}
+              <TouchableOpacity
+                onPress={async () => {
+                  if (!resourceTitle.trim() || !resourceDescription.trim()) {
+                    return;
+                  }
+
+                  await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+                  try {
+                    if (!userLocation) {
+                      const location = await getCurrentLocation();
+                      if (!location) {
+                        alert('Unable to get location. Please enable location services.');
+                        return;
+                      }
+                      setUserLocation(location);
+                    }
+
+                    if (resourceModalType === 'request') {
+                      const request = await communityService.createResourceRequest({
+                        userId: 'current-user',
+                        type: resourceType,
+                        title: resourceTitle,
+                        description: resourceDescription,
+                        location: userLocation!,
+                        urgency: resourceUrgency,
+                        quantity: resourceQuantity || undefined,
+                      });
+                      setResourceRequests((prev) => [request, ...prev]);
+                    } else {
+                      const offer = await communityService.createResourceOffer({
+                        userId: 'current-user',
+                        type: resourceType,
+                        title: resourceTitle,
+                        description: resourceDescription,
+                        location: userLocation!,
+                        quantity: resourceQuantity || undefined,
+                      });
+                      setResourceOffers((prev) => [offer, ...prev]);
+                    }
+
+                    // Reset form and close modal
+                    setResourceTitle('');
+                    setResourceDescription('');
+                    setResourceQuantity('');
+                    setResourceType('food');
+                    setResourceUrgency('medium');
+                    setShowResourceModal(false);
+                    setActiveTab('resources');
+                  } catch (error) {
+                    console.error('Error creating resource:', error);
+                    alert('Failed to create resource. Please try again.');
+                  }
+                }}
+                disabled={!resourceTitle.trim() || !resourceDescription.trim()}
+                className={`rounded-xl py-4 items-center ${
+                  resourceTitle.trim() && resourceDescription.trim()
+                    ? resourceModalType === 'request'
+                      ? 'bg-blue-500'
+                      : 'bg-green-500'
+                    : 'bg-gray-300'
+                }`}
+                style={{ minHeight: 60 }}
+              >
+                <Text className="text-white font-bold text-lg">
+                  {resourceModalType === 'request' ? 'Submit Request' : 'Submit Offer'}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => {
+                  setShowResourceModal(false);
+                  setResourceTitle('');
+                  setResourceDescription('');
+                  setResourceQuantity('');
+                  setResourceType('food');
+                  setResourceUrgency('medium');
+                }}
+                className="bg-gray-100 rounded-xl py-4 items-center mt-3"
+                style={{ minHeight: 60 }}
+              >
+                <Text className="text-gray-700 font-semibold text-lg">Cancel</Text>
+              </TouchableOpacity>
+            </ScrollView>
           </View>
         </View>
       </Modal>

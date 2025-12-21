@@ -1,7 +1,8 @@
+import { useRealtimeUpdates } from '@/hooks/useRealtimeUpdates';
 import * as Haptics from 'expo-haptics';
 import { AlertTriangle, Clock, Info, MapPin, Search, Share2, Siren, X } from 'lucide-react-native';
 import React, { useEffect, useMemo, useState } from 'react';
-import { FlatList, Modal, ScrollView, Share, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { FlatList, Modal, SafeAreaView, ScrollView, Share, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
 import { alertsData, NewsItem } from '../../src/data/alertsData';
 
@@ -27,6 +28,30 @@ export default function NewsScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterType>('All');
   const [selectedAlert, setSelectedAlert] = useState<NewsItem | null>(null);
+  const [alerts, setAlerts] = useState<NewsItem[]>(alertsData);
+
+  // Real-time updates for alerts
+  const { isConnected } = useRealtimeUpdates({
+    types: ['alert'],
+    onUpdate: (update) => {
+      // Add new alert to the list
+      if (update.type === 'alert' && update.data) {
+        const newAlert: NewsItem = {
+          id: update.id,
+          title: update.data.title || 'New Alert',
+          content: update.data.body || update.data.message || '',
+          location: update.data.location || 'Unknown',
+          severity: update.data.severity || 'INFO',
+          source: update.data.source || 'System',
+          timestamp: new Date(update.timestamp).toISOString(),
+        };
+        setAlerts((prev) => [newAlert, ...prev]);
+      }
+    },
+    showNotifications: true,
+    notificationTitle: (update) => update.data?.title || 'New Alert',
+    notificationBody: (update) => update.data?.body || update.data?.message || 'A new alert has been issued.',
+  });
 
   // Pulse Animation for Critical Alert
   const pulseOpacity = useSharedValue(1);
@@ -48,13 +73,13 @@ export default function NewsScreen() {
 
   // Filter Logic
   const filteredAlerts = useMemo(() => {
-    return alertsData.filter((alert) => {
+    return alerts.filter((alert) => {
       const matchesSearch = alert.location.toLowerCase().includes(searchQuery.toLowerCase()) || 
                             alert.title.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesFilter = activeFilter === 'All' || alert.severity.toUpperCase() === activeFilter.toUpperCase();
       return matchesSearch && matchesFilter;
     });
-  }, [searchQuery, activeFilter]);
+  }, [alerts, searchQuery, activeFilter]);
 
   // Find the most recent CRITICAL alert for the Featured section (from filtered results)
   const featuredAlert = useMemo(() => {

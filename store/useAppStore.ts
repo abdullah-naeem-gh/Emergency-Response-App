@@ -1,3 +1,4 @@
+import { AccessibilitySettings, AccessibilityTheme } from '@/services/AccessibilityService';
 import { create } from 'zustand';
 
 export type AppMode = 'PEACE' | 'PANIC' | 'PREDICTIVE';
@@ -22,6 +23,9 @@ interface AppState {
   volunteerTasksDone: number;
   volunteerLevel: 'Rookie' | 'Helper' | 'Hero' | 'Legend';
   
+  // Accessibility
+  accessibilitySettings: AccessibilitySettings;
+  
   // Actions
   setMode: (mode: AppMode) => void;
   setRedZone: (inZone: boolean) => void;
@@ -31,7 +35,23 @@ interface AppState {
   incrementVolunteerTasks: () => void;
   setLanguage: (language: Language) => void;
   toggleLanguage: () => void;
+  updateAccessibilitySettings: (settings: Partial<AccessibilitySettings>) => void;
 }
+
+const defaultAccessibilitySettings: AccessibilitySettings = {
+  theme: 'default',
+  textToSpeech: false,
+  hapticFeedback: true,
+  hapticIntensity: 'medium',
+  fontSize: 'medium',
+  screenReader: false,
+  reduceMotion: false,
+  highContrast: false,
+  speakAloud: false,
+  hearingAidMode: false,
+  visualIndicators: true,
+  simplifiedUI: false,
+};
 
 export const useAppStore = create<AppState>((set) => ({
   mode: 'PEACE',
@@ -41,6 +61,7 @@ export const useAppStore = create<AppState>((set) => ({
   language: 'en',
   volunteerTasksDone: 0,
   volunteerLevel: 'Rookie',
+  accessibilitySettings: defaultAccessibilitySettings,
 
   setMode: (mode) => set({ mode }),
   setRedZone: (isRedZone) => set({ isRedZone }),
@@ -60,5 +81,8 @@ export const useAppStore = create<AppState>((set) => ({
   }),
   setLanguage: (language) => set({ language }),
   toggleLanguage: () => set((state) => ({ language: state.language === 'en' ? 'ur' : 'en' })),
+  updateAccessibilitySettings: (settings) => set((state) => ({
+    accessibilitySettings: { ...state.accessibilitySettings, ...settings },
+  })),
 }));
 

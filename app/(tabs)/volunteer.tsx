@@ -1,3 +1,4 @@
+import { AnimatedPressable } from '@/components/AnimatedPressable';
 import { EnhancedTask, TeamMessage, volunteerService } from '@/services/VolunteerService';
 import * as Haptics from 'expo-haptics';
 import * as Location from 'expo-location';
@@ -25,6 +26,7 @@ import {
   View,
 } from 'react-native';
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RescueTask, tasksData } from '../../src/data/tasksData';
 import { useAppStore } from '../../store/useAppStore';
 
@@ -85,6 +87,7 @@ type TaskViewMode = 'open' | 'my_tasks';
 
 export default function VolunteerScreen() {
   const { volunteerTasksDone, volunteerLevel, incrementVolunteerTasks } = useAppStore();
+  const insets = useSafeAreaInsets();
   const [viewMode, setViewMode] = useState<ViewMode>('map');
   const [taskViewMode, setTaskViewMode] = useState<TaskViewMode>('open');
   const [selectedTask, setSelectedTask] = useState<SelectedTask | null>(null);
@@ -97,6 +100,10 @@ export default function VolunteerScreen() {
   const [userLocation, setUserLocation] = useState<{ lat: number; long: number } | null>(null);
   const [locationPermission, setLocationPermission] = useState<boolean>(false);
   const [routeInfo, setRouteInfo] = useState<{ distance: number; estimatedTime: number } | null>(null);
+
+  // Calculate bottom sheet position above tab bar
+  const TAB_BAR_HEIGHT = 56; // Standard tab bar height
+  const bottomSheetBottom = TAB_BAR_HEIGHT + insets.bottom + 8; // Tab bar + safe area + padding
 
   const loadMyTasks = useCallback(async () => {
     const tasks = await volunteerService.getUserTasks('current-user');
@@ -215,16 +222,16 @@ export default function VolunteerScreen() {
     
     const enhancedTask = await volunteerService.acceptTask(selectedTask.id, 'current-user');
     if (enhancedTask) {
-      incrementVolunteerTasks();
+    incrementVolunteerTasks();
       await loadMyTasks();
-      Alert.alert(
-        'Task Accepted!',
-        `You've accepted the ${getTaskTypeName(selectedTask.type)} task. Thank you for helping!`,
+    Alert.alert(
+      'Task Accepted!',
+      `You've accepted the ${getTaskTypeName(selectedTask.type)} task. Thank you for helping!`,
         [{ text: 'OK', onPress: () => {
           setSelectedTask(null);
           setTaskViewMode('my_tasks');
         }}]
-      );
+    );
     }
   };
 
@@ -299,7 +306,7 @@ export default function VolunteerScreen() {
     const currentTask = myTasks.find((t) => t.id === selectedTask.id);
 
     return (
-      <View style={styles.bottomSheet}>
+      <View style={[styles.bottomSheet, { bottom: bottomSheetBottom }]}>
         <View style={styles.bottomSheetHandle} />
         <ScrollView showsVerticalScrollIndicator={false}>
           <Text style={styles.bottomSheetTitle}>
@@ -326,48 +333,58 @@ export default function VolunteerScreen() {
               </View>
               <View style={styles.actionButtons}>
                 {currentTask.status === 'ACCEPTED' && (
-                  <TouchableOpacity
+                  <AnimatedPressable
                     style={[styles.actionButton, { backgroundColor: '#007AFF' }]}
                     onPress={() => handleUpdateTaskStatus('IN_PROGRESS')}
-                    activeOpacity={0.8}>
+                    hapticFeedback={true}
+                    hapticStyle={Haptics.ImpactFeedbackStyle.Medium}
+                  >
                     <PlayCircle size={20} color="#FFFFFF" />
                     <Text style={styles.actionButtonText}>Start Task</Text>
-                  </TouchableOpacity>
+                  </AnimatedPressable>
                 )}
                 {currentTask.status === 'IN_PROGRESS' && (
-                  <TouchableOpacity
+                  <AnimatedPressable
                     style={[styles.actionButton, { backgroundColor: '#32D74B' }]}
                     onPress={() => setShowTaskDetails(true)}
-                    activeOpacity={0.8}>
+                    hapticFeedback={true}
+                    hapticStyle={Haptics.ImpactFeedbackStyle.Medium}
+                  >
                     <CheckCircle size={20} color="#FFFFFF" />
                     <Text style={styles.actionButtonText}>Complete Task</Text>
-                  </TouchableOpacity>
+                  </AnimatedPressable>
                 )}
-                <TouchableOpacity
+                <AnimatedPressable
                   style={[styles.actionButton, { backgroundColor: '#5856D6' }]}
                   onPress={handleOpenNavigation}
-                  activeOpacity={0.8}>
+                  hapticFeedback={true}
+                  hapticStyle={Haptics.ImpactFeedbackStyle.Light}
+                >
                   <Navigation size={20} color="#FFFFFF" />
                   <Text style={styles.actionButtonText}>Navigate</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
+                </AnimatedPressable>
+                <AnimatedPressable
                   style={[styles.actionButton, { backgroundColor: '#FF9500' }]}
                   onPress={() => setShowTeamChat(true)}
-                  activeOpacity={0.8}>
+                  hapticFeedback={true}
+                  hapticStyle={Haptics.ImpactFeedbackStyle.Light}
+                >
                   <MessageCircle size={20} color="#FFFFFF" />
                   <Text style={styles.actionButtonText}>Team Chat</Text>
-                </TouchableOpacity>
+                </AnimatedPressable>
               </View>
             </>
           )}
 
           {!isMyTask && (
-            <TouchableOpacity
+            <AnimatedPressable
               style={styles.acceptButton}
               onPress={handleAcceptTask}
-              activeOpacity={0.8}>
+              hapticFeedback={true}
+              hapticStyle={Haptics.ImpactFeedbackStyle.Medium}
+            >
               <Text style={styles.acceptButtonText}>Accept Task</Text>
-            </TouchableOpacity>
+            </AnimatedPressable>
           )}
         </ScrollView>
       </View>
@@ -419,24 +436,24 @@ export default function VolunteerScreen() {
 
       {/* Map or List View */}
       {viewMode === 'map' ? (
-        <MapView
-          style={styles.map}
-          initialRegion={initialRegion}
-          showsUserLocation={locationPermission}
-          showsMyLocationButton={false}
+      <MapView
+        style={styles.map}
+        initialRegion={initialRegion}
+        showsUserLocation={locationPermission}
+        showsMyLocationButton={false}
           toolbarEnabled={false}
           provider={PROVIDER_GOOGLE}>
           {displayTasks.map((task) => (
-            <Marker
-              key={task.id}
-              coordinate={{
-                latitude: task.coords.lat,
-                longitude: task.coords.long,
-              }}
-              pinColor={getMarkerColor(task.type)}
-              onPress={() => handleMarkerPress(task)}
-            />
-          ))}
+          <Marker
+            key={task.id}
+            coordinate={{
+              latitude: task.coords.lat,
+              longitude: task.coords.long,
+            }}
+            pinColor={getMarkerColor(task.type)}
+            onPress={() => handleMarkerPress(task)}
+          />
+        ))}
           {selectedTask && userLocation && routeInfo && (
             <Polyline
               coordinates={[
@@ -447,56 +464,58 @@ export default function VolunteerScreen() {
               strokeWidth={3}
             />
           )}
-        </MapView>
+      </MapView>
       ) : (
-        <FlatList
+    <FlatList
           data={displayTasks.sort((a, b) => a.distance - b.distance)}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContainer}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.listItem}
-              onPress={() => handleMarkerPress(item)}
-              activeOpacity={0.7}>
-              <View
-                style={[
-                  styles.taskTypeIndicator,
-                  { backgroundColor: getMarkerColor(item.type) },
-                ]}
-              />
-              <View style={styles.listItemContent}>
-                <Text style={styles.listItemTitle}>{getTaskTypeName(item.type)}</Text>
-                <Text style={styles.listItemDistance}>
-                  {item.distance > 0 ? `${item.distance}km away` : 'Distance unknown'}
-                </Text>
+      keyExtractor={(item) => item.id}
+      contentContainerStyle={styles.listContainer}
+      renderItem={({ item }) => (
+        <TouchableOpacity
+          style={styles.listItem}
+          onPress={() => handleMarkerPress(item)}
+          activeOpacity={0.7}>
+          <View
+            style={[
+              styles.taskTypeIndicator,
+              { backgroundColor: getMarkerColor(item.type) },
+            ]}
+          />
+          <View style={styles.listItemContent}>
+            <Text style={styles.listItemTitle}>{getTaskTypeName(item.type)}</Text>
+            <Text style={styles.listItemDistance}>
+              {item.distance > 0 ? `${item.distance}km away` : 'Distance unknown'}
+            </Text>
                 {item.status && (
                   <Text style={styles.listItemStatus}>
                     Status: {item.status.replace('_', ' ')}
                   </Text>
                 )}
-                <Text style={styles.listItemUrgency}>
-                  {item.urgency === 'HIGH' ? '🔴 High Urgency' : '🟡 Medium Urgency'}
-                </Text>
-              </View>
-            </TouchableOpacity>
-          )}
-        />
+            <Text style={styles.listItemUrgency}>
+              {item.urgency === 'HIGH' ? '🔴 High Urgency' : '🟡 Medium Urgency'}
+            </Text>
+          </View>
+        </TouchableOpacity>
+      )}
+    />
       )}
 
       {/* Bottom Sheet Overlay */}
       {viewMode === 'map' && renderBottomSheet()}
 
       {/* Floating Action Button */}
-      <TouchableOpacity
+      <AnimatedPressable
         style={styles.fab}
         onPress={toggleViewMode}
-        activeOpacity={0.8}>
+        hapticFeedback={true}
+        hapticStyle={Haptics.ImpactFeedbackStyle.Light}
+      >
         {viewMode === 'map' ? (
           <List size={24} color="#FFFFFF" />
         ) : (
           <MapPin size={24} color="#FFFFFF" />
         )}
-      </TouchableOpacity>
+      </AnimatedPressable>
 
       {/* Task Details Modal */}
       <Modal
@@ -522,12 +541,14 @@ export default function VolunteerScreen() {
               multiline
               numberOfLines={4}
             />
-            <TouchableOpacity
+            <AnimatedPressable
               style={styles.completeButton}
               onPress={() => handleUpdateTaskStatus('COMPLETED')}
-              activeOpacity={0.8}>
+              hapticFeedback={true}
+              hapticStyle={Haptics.ImpactFeedbackStyle.Medium}
+            >
               <Text style={styles.completeButtonText}>Mark as Completed</Text>
-            </TouchableOpacity>
+            </AnimatedPressable>
           </View>
         </View>
       </Modal>
@@ -544,7 +565,7 @@ export default function VolunteerScreen() {
               <Text style={styles.modalTitle}>Team Chat</Text>
               <TouchableOpacity onPress={() => setShowTeamChat(false)}>
                 <X size={24} color="#FFFFFF" />
-              </TouchableOpacity>
+      </TouchableOpacity>
             </View>
             <ScrollView style={styles.chatContainer}>
               {teamMessages.slice().reverse().map((msg) => (
@@ -566,12 +587,15 @@ export default function VolunteerScreen() {
                 onChangeText={setChatMessage}
                 onSubmitEditing={handleSendChatMessage}
               />
-              <TouchableOpacity
+              <AnimatedPressable
                 onPress={handleSendChatMessage}
                 disabled={!chatMessage.trim()}
-                style={[styles.sendButton, !chatMessage.trim() && { opacity: 0.5 }]}>
+                style={[styles.sendButton, !chatMessage.trim() && { opacity: 0.5 }]}
+                hapticFeedback={true}
+                hapticStyle={Haptics.ImpactFeedbackStyle.Light}
+              >
                 <Send size={20} color="#FFFFFF" />
-              </TouchableOpacity>
+              </AnimatedPressable>
             </View>
           </View>
         </View>
@@ -780,7 +804,6 @@ const styles = StyleSheet.create({
   },
   bottomSheet: {
     position: 'absolute',
-    bottom: 0,
     left: 0,
     right: 0,
     backgroundColor: '#1C1C1E',
@@ -792,7 +815,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.25,
     shadowRadius: 8,
-    elevation: 10,
+    elevation: 20,
+    zIndex: 1000,
   },
   bottomSheetHandle: {
     width: 40,

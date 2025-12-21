@@ -1,3 +1,4 @@
+import { useAccessibility } from '@/hooks/useAccessibility';
 import { useAppStore } from '@/store/useAppStore';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
@@ -12,6 +13,7 @@ interface CustomHeaderProps {
 
 export default function CustomHeader({ onMenuPress }: CustomHeaderProps) {
   const { mode } = useAppStore();
+  const { themeColors, getFontSize } = useAccessibility();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -44,7 +46,7 @@ export default function CustomHeader({ onMenuPress }: CustomHeaderProps) {
   return (
     <View 
       style={{ 
-        backgroundColor: '#ffffff', 
+        backgroundColor: themeColors.card, 
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -53,6 +55,8 @@ export default function CustomHeader({ onMenuPress }: CustomHeaderProps) {
         paddingBottom: 16,
         minHeight: 72,
         zIndex: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: themeColors.border,
       }}
     >
       {/* Left: App Mode Badge */}
@@ -67,7 +71,7 @@ export default function CustomHeader({ onMenuPress }: CustomHeaderProps) {
         }}>
           <Text style={{
             color: mode === 'PEACE' ? '#15803d' : '#854d0e', // green-700 : yellow-800
-            fontSize: 12,
+            fontSize: getFontSize(12),
             fontWeight: '700',
             textTransform: 'uppercase',
             letterSpacing: 0.5,
@@ -82,30 +86,34 @@ export default function CustomHeader({ onMenuPress }: CustomHeaderProps) {
         <Pressable
           onPress={handleAvatarPress}
           style={{
-            backgroundColor: '#f3f4f6', // gray-100
+            backgroundColor: themeColors.card === themeColors.background ? '#f3f4f6' : themeColors.card,
             borderRadius: 9999,
             padding: 8,
             minHeight: 44,
             minWidth: 44,
             alignItems: 'center',
             justifyContent: 'center',
+            borderWidth: 1,
+            borderColor: themeColors.border,
           }}
         >
-          <User size={24} color="#374151" />
+          <User size={24} color={themeColors.text} />
         </Pressable>
         <Pressable
           onPress={handleMenuPress}
           style={{
-            backgroundColor: '#f3f4f6', // gray-100
+            backgroundColor: themeColors.card === themeColors.background ? '#f3f4f6' : themeColors.card,
             borderRadius: 9999,
             padding: 8,
             minHeight: 44,
             minWidth: 44,
             alignItems: 'center',
             justifyContent: 'center',
+            borderWidth: 1,
+            borderColor: themeColors.border,
           }}
         >
-          <Menu size={24} color="#374151" />
+          <Menu size={24} color={themeColors.text} />
         </Pressable>
       </View>
     </View>

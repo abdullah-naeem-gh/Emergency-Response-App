@@ -5,10 +5,12 @@ import { useEffect, useState } from 'react';
 import 'react-native-reanimated';
 import '../global.css';
 
+import { AccessibilityProvider } from '@/components/AccessibilityProvider';
 import { GlobalSensorListener } from '@/components/GlobalSensorListener';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { PredictiveModal } from '@/components/PredictiveModal';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { notificationService } from '@/services/NotificationService';
 import { reportService } from '@/services/ReportService';
 import { useAppStore } from '@/store/useAppStore';
 import NetInfo from '@react-native-community/netinfo';
@@ -31,6 +33,34 @@ export default function RootLayout() {
       setShowPredictiveModal(false);
     }
   }, [mode, isRedZone]);
+
+  // Initialize notification service
+  useEffect(() => {
+    notificationService.initialize().then((token) => {
+      if (token) {
+        console.log('Notification service initialized');
+      }
+    });
+
+    // Set up notification listeners
+    notificationService.setupListeners(
+      (notification) => {
+        console.log('Notification received:', notification);
+      },
+      (response) => {
+        console.log('Notification tapped:', response);
+        // Handle navigation based on notification data
+        const data = response.notification.request.content.data;
+        if (data?.type === 'alert' && data?.alertId) {
+          // Navigate to alert detail
+        }
+      }
+    );
+
+    return () => {
+      notificationService.removeListeners();
+    };
+  }, []);
 
   // Process pending reports when coming back online
   useEffect(() => {
@@ -64,19 +94,21 @@ export default function RootLayout() {
   };
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <GlobalSensorListener />
-      <OfflineBanner />
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="(panic)" options={{ gestureEnabled: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', headerShown: true }} />
-      </Stack>
-      <PredictiveModal 
-        visible={showPredictiveModal} 
-        onClose={handleClosePredictiveModal}
-      />
-      <StatusBar style={mode === 'PANIC' ? 'light' : 'dark'} />
-    </ThemeProvider>
+    <AccessibilityProvider>
+      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <GlobalSensorListener />
+        <OfflineBanner />
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="(panic)" options={{ gestureEnabled: false }} />
+          <Stack.Screen name="modal" options={{ presentation: 'modal', headerShown: true }} />
+        </Stack>
+        <PredictiveModal 
+          visible={showPredictiveModal} 
+          onClose={handleClosePredictiveModal}
+        />
+        <StatusBar style={mode === 'PANIC' ? 'light' : 'dark'} />
+      </ThemeProvider>
+    </AccessibilityProvider>
   );
 }

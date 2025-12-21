@@ -1,7 +1,14 @@
+import { AnimatedPressable } from '@/components/AnimatedPressable';
 import { EnhancedReportForm } from '@/components/EnhancedReportForm';
+import { SimplifiedUIWrapper } from '@/components/SimplifiedUIWrapper';
+import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
+import { VisualIndicator } from '@/components/VisualIndicator';
+import { useAccessibility } from '@/hooks/useAccessibility';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import {
+  AlertCircle,
   AlertTriangle,
   BookOpen,
   Bot,
@@ -9,8 +16,15 @@ import {
   Heart,
   History,
   Map,
+  MapPin,
   Mic,
-  Search
+  Newspaper,
+  Phone,
+  PhoneCall,
+  Search,
+  Shield,
+  User,
+  Users
 } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
@@ -36,6 +50,7 @@ interface ActionButton {
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { themeColors } = useAccessibility();
   const [showEnhancedForm, setShowEnhancedForm] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -88,6 +103,41 @@ export default function HomeScreen() {
     router.push('/(tabs)/explore');
   };
 
+  const handleViewNews = async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push('/(tabs)/news');
+  };
+
+  const handleViewDirectory = async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push('/(tabs)/directory');
+  };
+
+  const handleViewEmergencyDirectory = async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    router.push('/(tabs)/directory');
+  };
+
+  const handleViewProfile = async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push('/(tabs)/profile');
+  };
+
+  const handleViewEvacuation = async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push('/(tabs)/evacuation');
+  };
+
+  const handleViewCommunity = async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push('/(tabs)/community');
+  };
+
+  const handleViewPreparedness = async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push('/(tabs)/preparedness');
+  };
+
   const actionButtons: ActionButton[] = [
     {
       id: 'report',
@@ -124,7 +174,7 @@ export default function HomeScreen() {
   ];
 
   return (
-    <View className="flex-1 bg-white">
+    <ThemedView className="flex-1">
       <ScrollView 
         className="flex-1" 
         contentContainerStyle={{ paddingBottom: 100, paddingTop: 80 }}
@@ -132,9 +182,9 @@ export default function HomeScreen() {
       >
         {/* Greeting Section */}
         <View className="px-6 pt-0 pb-4">
-          <Text className="text-5xl font-bold text-gray-900 leading-tight" style={{ lineHeight: 56 }}>
+          <ThemedText className="text-5xl font-bold leading-tight" baseSize={48} style={{ lineHeight: 56 }}>
             Hi,{'\n'}How can we help you today?
-          </Text>
+          </ThemedText>
         </View>
 
         {/* Quick Links Section - Horizontal Row */}
@@ -145,9 +195,11 @@ export default function HomeScreen() {
             contentContainerStyle={{ paddingHorizontal: 24, gap: 12 }}
           >
             {/* Weather Card */}
-            <Pressable
+            <AnimatedPressable
               onPress={handleViewWeather}
               className="bg-white rounded-xl p-3"
+              hapticFeedback={true}
+              hapticStyle={Haptics.ImpactFeedbackStyle.Light}
               style={{
                 width: 120,
                 shadowColor: '#000',
@@ -180,12 +232,14 @@ export default function HomeScreen() {
                   Forecast
                 </Text>
               </View>
-            </Pressable>
+            </AnimatedPressable>
 
             {/* Reports History Card */}
-            <Pressable
+            <AnimatedPressable
               onPress={handleViewReports}
               className="bg-white rounded-xl p-3"
+              hapticFeedback={true}
+              hapticStyle={Haptics.ImpactFeedbackStyle.Light}
               style={{
                 width: 120,
                 shadowColor: '#000',
@@ -218,12 +272,14 @@ export default function HomeScreen() {
                   History
                 </Text>
               </View>
-            </Pressable>
+            </AnimatedPressable>
 
             {/* Explore Card */}
-            <Pressable
+            <AnimatedPressable
               onPress={handleViewExplore}
               className="bg-white rounded-xl p-3"
+              hapticFeedback={true}
+              hapticStyle={Haptics.ImpactFeedbackStyle.Light}
               style={{
                 width: 120,
                 shadowColor: '#000',
@@ -256,7 +312,287 @@ export default function HomeScreen() {
                   Articles
                 </Text>
               </View>
-            </Pressable>
+            </AnimatedPressable>
+
+            {/* News & Alerts Card */}
+            <AnimatedPressable
+              onPress={handleViewNews}
+              className="bg-white rounded-xl p-3"
+              hapticFeedback={true}
+              hapticStyle={Haptics.ImpactFeedbackStyle.Light}
+              style={{
+                width: 120,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.1,
+                shadowRadius: 2,
+                elevation: 2,
+                borderWidth: 1,
+                borderColor: '#e5e7eb',
+              }}
+            >
+              <View className="items-center">
+                <View
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 20,
+                    backgroundColor: '#fee2e2',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: 8,
+                  }}
+                >
+                  <Newspaper size={20} color="#ef4444" />
+                </View>
+                <Text className="text-sm font-semibold text-gray-900 text-center">
+                  News
+                </Text>
+                <Text className="text-xs text-gray-500 text-center mt-1" numberOfLines={1}>
+                  Alerts
+                </Text>
+              </View>
+            </AnimatedPressable>
+
+            {/* Emergency Directory Card */}
+            <AnimatedPressable
+              onPress={handleViewEmergencyDirectory}
+              className="bg-white rounded-xl p-3"
+              hapticFeedback={true}
+              hapticStyle={Haptics.ImpactFeedbackStyle.Medium}
+              style={{
+                width: 120,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.1,
+                shadowRadius: 2,
+                elevation: 2,
+                borderWidth: 1,
+                borderColor: '#fee2e2', // light red border for emergency
+              }}
+            >
+              <View className="items-center">
+                <View
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 20,
+                    backgroundColor: '#fee2e2', // light red
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: 8,
+                  }}
+                >
+                  <PhoneCall size={20} color="#ef4444" />
+                </View>
+                <Text className="text-sm font-semibold text-gray-900 text-center">
+                  Emergency
+                </Text>
+                <Text className="text-xs text-gray-500 text-center mt-1" numberOfLines={1}>
+                  Directory
+                </Text>
+              </View>
+            </AnimatedPressable>
+
+            {/* Directory Card */}
+            <AnimatedPressable
+              onPress={handleViewDirectory}
+              className="bg-white rounded-xl p-3"
+              hapticFeedback={true}
+              hapticStyle={Haptics.ImpactFeedbackStyle.Light}
+              style={{
+                width: 120,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.1,
+                shadowRadius: 2,
+                elevation: 2,
+                borderWidth: 1,
+                borderColor: '#e5e7eb',
+              }}
+            >
+              <View className="items-center">
+                <View
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 20,
+                    backgroundColor: '#ede9fe',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: 8,
+                  }}
+                >
+                  <Phone size={20} color="#8b5cf6" />
+                </View>
+                <Text className="text-sm font-semibold text-gray-900 text-center">
+                  Directory
+                </Text>
+                <Text className="text-xs text-gray-500 text-center mt-1" numberOfLines={1}>
+                  Contacts
+                </Text>
+              </View>
+            </AnimatedPressable>
+
+            {/* Preparedness Card */}
+            <AnimatedPressable
+              onPress={handleViewPreparedness}
+              className="bg-white rounded-xl p-3"
+              hapticFeedback={true}
+              hapticStyle={Haptics.ImpactFeedbackStyle.Light}
+              style={{
+                width: 120,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.1,
+                shadowRadius: 2,
+                elevation: 2,
+                borderWidth: 1,
+                borderColor: '#e5e7eb',
+              }}
+            >
+              <View className="items-center">
+                <View
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 20,
+                    backgroundColor: '#d1fae5',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: 8,
+                  }}
+                >
+                  <Shield size={20} color="#10b981" />
+                </View>
+                <Text className="text-sm font-semibold text-gray-900 text-center">
+                  Prepare
+                </Text>
+                <Text className="text-xs text-gray-500 text-center mt-1" numberOfLines={1}>
+                  Safety
+                </Text>
+              </View>
+            </AnimatedPressable>
+
+            {/* Evacuation Routes Card */}
+            <AnimatedPressable
+              onPress={handleViewEvacuation}
+              className="bg-white rounded-xl p-3"
+              hapticFeedback={true}
+              hapticStyle={Haptics.ImpactFeedbackStyle.Light}
+              style={{
+                width: 120,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.1,
+                shadowRadius: 2,
+                elevation: 2,
+                borderWidth: 1,
+                borderColor: '#e5e7eb',
+              }}
+            >
+              <View className="items-center">
+                <View
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 20,
+                    backgroundColor: '#ede9fe',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: 8,
+                  }}
+                >
+                  <MapPin size={20} color="#8b5cf6" />
+                </View>
+                <Text className="text-sm font-semibold text-gray-900 text-center">
+                  Evacuate
+                </Text>
+                <Text className="text-xs text-gray-500 text-center mt-1" numberOfLines={1}>
+                  Routes
+                </Text>
+              </View>
+            </AnimatedPressable>
+
+            {/* Community Card */}
+            <AnimatedPressable
+              onPress={handleViewCommunity}
+              className="bg-white rounded-xl p-3"
+              hapticFeedback={true}
+              hapticStyle={Haptics.ImpactFeedbackStyle.Light}
+              style={{
+                width: 120,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.1,
+                shadowRadius: 2,
+                elevation: 2,
+                borderWidth: 1,
+                borderColor: '#e5e7eb',
+              }}
+            >
+              <View className="items-center">
+                <View
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 20,
+                    backgroundColor: '#fce7f3',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: 8,
+                  }}
+                >
+                  <Users size={20} color="#ec4899" />
+                </View>
+                <Text className="text-sm font-semibold text-gray-900 text-center">
+                  Community
+                </Text>
+                <Text className="text-xs text-gray-500 text-center mt-1" numberOfLines={1}>
+                  Connect
+                </Text>
+              </View>
+            </AnimatedPressable>
+
+            {/* Profile Card */}
+            <AnimatedPressable
+              onPress={handleViewProfile}
+              className="bg-white rounded-xl p-3"
+              hapticFeedback={true}
+              hapticStyle={Haptics.ImpactFeedbackStyle.Light}
+              style={{
+                width: 120,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.1,
+                shadowRadius: 2,
+                elevation: 2,
+                borderWidth: 1,
+                borderColor: '#e5e7eb',
+              }}
+            >
+              <View className="items-center">
+                <View
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 20,
+                    backgroundColor: '#f3f4f6',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: 8,
+                  }}
+                >
+                  <User size={20} color="#6b7280" />
+                </View>
+                <Text className="text-sm font-semibold text-gray-900 text-center">
+                  Profile
+                </Text>
+                <Text className="text-xs text-gray-500 text-center mt-1" numberOfLines={1}>
+                  Stats
+                </Text>
+              </View>
+            </AnimatedPressable>
           </ScrollView>
         </View>
 
@@ -266,10 +602,12 @@ export default function HomeScreen() {
             {actionButtons.map((button) => {
               const IconComponent = button.icon;
               return (
-                <Pressable
+                <AnimatedPressable
                   key={button.id}
                   onPress={button.onPress}
-                  className="rounded-2xl active:opacity-80"
+                  className="rounded-2xl"
+                  hapticFeedback={true}
+                  hapticStyle={Haptics.ImpactFeedbackStyle.Medium}
                   style={{
                     width: BUTTON_SIZE,
                     minHeight: BUTTON_SIZE,
@@ -305,7 +643,7 @@ export default function HomeScreen() {
                       {button.label}
                     </Text>
                   </View>
-                </Pressable>
+                </AnimatedPressable>
               );
             })}
           </View>
@@ -323,19 +661,21 @@ export default function HomeScreen() {
             }}
           >
             <Search size={20} color="#1f2937" />
-            <TextInput
-              className="flex-1 ml-3 text-base"
-              style={{ color: '#111827' }}
-              placeholder="Search for guides, alerts, or ask anything"
-              placeholderTextColor="#6b7280"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              onSubmitEditing={handleSearch}
-              returnKeyType="search"
-            />
-            <Pressable
+                    <TextInput
+                      className="flex-1 ml-3 text-base"
+                      style={{ color: themeColors.text }}
+                      placeholder="Search for guides, alerts, or ask anything"
+                      placeholderTextColor={themeColors.text + '80'}
+                      value={searchQuery}
+                      onChangeText={setSearchQuery}
+                      onSubmitEditing={handleSearch}
+                      returnKeyType="search"
+                    />
+            <AnimatedPressable
               onPress={handleVoiceInput}
               className="ml-2"
+              hapticFeedback={true}
+              hapticStyle={Haptics.ImpactFeedbackStyle.Light}
               style={{
                 width: 36,
                 height: 36,
@@ -347,7 +687,7 @@ export default function HomeScreen() {
               }}
             >
               <Mic size={20} color="#1f2937" />
-            </Pressable>
+            </AnimatedPressable>
           </View>
         </View>
 
@@ -363,6 +703,6 @@ export default function HomeScreen() {
           setShowEnhancedForm(false);
         }}
       />
-    </View>
+    </ThemedView>
   );
 }

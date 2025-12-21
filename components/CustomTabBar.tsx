@@ -1,18 +1,18 @@
+import { AnimatedPressable } from '@/components/AnimatedPressable';
+import { useAccessibility } from '@/hooks/useAccessibility';
 import { useAppStore } from '@/store/useAppStore';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import * as Haptics from 'expo-haptics';
 import { usePathname, useRouter } from 'expo-router';
 import { AlertCircle, BookOpen, Bot, Home, MapPin } from 'lucide-react-native';
 import React from 'react';
-import { Dimensions, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Dimensions, StyleSheet, Text, View } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
 const { width } = Dimensions.get('window');
 const TAB_HEIGHT = 56; // Standard navbar height
-const BUTTON_RADIUS = 28; // Radius of the floating button (half of 56)
-const NOTCH_WIDTH = 90; // Width of the curve
-const NOTCH_DEPTH = 30; // Depth of the curve
 
 interface TabItem {
   name: string;
@@ -29,10 +29,64 @@ const tabs: TabItem[] = [
   { name: 'chat', route: '/(tabs)/chatbot', icon: Bot, label: 'Chat' },
 ];
 
+interface TabButtonProps {
+  tab: TabItem;
+  active: boolean;
+  onPress: () => void;
+  themeColors: ReturnType<typeof useAccessibility>['themeColors'];
+}
+
+const TabButton: React.FC<TabButtonProps> = ({ tab, active, onPress, themeColors }) => {
+  const Icon = tab.icon;
+  const iconScale = useSharedValue(active ? 1.1 : 1);
+
+  React.useEffect(() => {
+    iconScale.value = withSpring(active ? 1.1 : 1, { damping: 15, stiffness: 300 });
+  }, [active, iconScale]);
+
+  const iconAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: iconScale.value }],
+    };
+  });
+
+  return (
+    <AnimatedPressable
+      onPress={onPress}
+      style={styles.tabItem}
+      hapticFeedback={true}
+      hapticStyle={Haptics.ImpactFeedbackStyle.Light}
+      scaleOnPress={!active} // Don't scale if already active
+    >
+      <Animated.View style={[styles.iconWrapper, iconAnimatedStyle]}>
+        <View style={[styles.iconContainer, active && styles.activeIconContainer]}>
+          {active && <View style={styles.iconFillBackground} />}
+                  <Icon 
+                    size={active ? 26 : 24} // Slightly larger when active
+                    color={active ? themeColors.text : themeColors.text + '80'} // theme text when active, semi-transparent when inactive
+                  />
+        </View>
+      </Animated.View>
+      <Text 
+        style={[
+          styles.label,
+          { 
+            color: active ? themeColors.text : themeColors.text + '80',
+            fontWeight: active ? '700' : '500' // Bolder when active
+          }
+        ]}
+      >
+        {tab.label}
+      </Text>
+    </AnimatedPressable>
+  );
+};
+
 export default function CustomTabBar(props: BottomTabBarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { mode } = useAppStore();
+  const { themeColors } = useAccessibility();
   const insets = useSafeAreaInsets();
 
   // Hide tab bar in panic mode
@@ -66,7 +120,21 @@ export default function CustomTabBar(props: BottomTabBarProps) {
 
   const isActive = (tab: TabItem) => {
     if (tab.name === 'home') {
-      return pathname === '/(tabs)' || pathname === '/(tabs)/' || pathname === '/(tabs)/index';
+      return (
+        pathname === '/(tabs)' || 
+        pathname === '/(tabs)/' || 
+        pathname === '/(tabs)/index' ||
+        pathname === '/'
+      );
+    }
+    if (tab.name === 'map') {
+      return pathname === '/(tabs)/volunteer' || pathname?.includes('/volunteer');
+    }
+    if (tab.name === 'guides') {
+      return pathname === '/(tabs)/guides' || pathname?.includes('/guides');
+    }
+    if (tab.name === 'chat') {
+      return pathname === '/(tabs)/chatbot' || pathname?.includes('/chatbot');
     }
     return pathname === tab.route || pathname?.startsWith(tab.route);
   };
@@ -106,8 +174,8 @@ export default function CustomTabBar(props: BottomTabBarProps) {
         <Svg width={width} height={TAB_HEIGHT + insets.bottom} style={styles.shadow}>
           <Path
             d={getTabPath()}
-            fill="white"
-            stroke="#e5e7eb" // gray-200 for subtle border
+            fill={themeColors.card}
+            stroke={themeColors.border}
             strokeWidth={1}
           />
         </Svg>
@@ -122,41 +190,30 @@ export default function CustomTabBar(props: BottomTabBarProps) {
 
           if (isSOS) {
             return (
-              <Pressable
+              <AnimatedPressable
                 key={tab.name}
                 onPress={() => handleTabPress(tab)}
                 style={styles.sosTabItem}
+                hapticFeedback={true}
+                hapticStyle={Haptics.ImpactFeedbackStyle.Medium}
               >
                 <View style={styles.sosButtonWrapper}>
                   <View style={styles.sosButton}>
                     <Icon size={28} color="white" />
                   </View>
                 </View>
-              </Pressable>
+              </AnimatedPressable>
             );
           }
 
           return (
-            <Pressable
+            <TabButton
               key={tab.name}
+              tab={tab}
+              active={active}
               onPress={() => handleTabPress(tab)}
-              style={styles.tabItem}
-            >
-              <View style={[styles.iconContainer, active && styles.activeIconContainer]}>
-                <Icon 
-                  size={24} 
-                  color={active ? '#2563eb' : '#9ca3af'} // blue-600 : gray-400
-                />
-              </View>
-              <Text 
-                style={[
-                  styles.label,
-                  { color: active ? '#2563eb' : '#9ca3af' }
-                ]}
-              >
-                {tab.label}
-              </Text>
-            </Pressable>
+              themeColors={themeColors}
+            />
           );
         })}
       </View>
@@ -204,13 +261,30 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 4,
   },
+  iconWrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
   iconContainer: {
     padding: 6,
     borderRadius: 12,
     marginTop: 0,
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 40,
+    height: 40,
   },
   activeIconContainer: {
-    backgroundColor: '#eff6ff', // blue-50
+    // Active state styling - icon will be slightly larger
+  },
+  iconFillBackground: {
+    position: 'absolute',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    // Will be set dynamically based on theme
   },
   label: {
     fontSize: 10,

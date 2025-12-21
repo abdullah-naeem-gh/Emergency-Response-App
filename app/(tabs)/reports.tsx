@@ -1,3 +1,4 @@
+import { AnimatedPressable } from '@/components/AnimatedPressable';
 import { CrowdReport, crowdReportService, ReportStatus } from '@/services/CrowdReportService';
 import { reportService } from '@/services/ReportService';
 import * as Haptics from 'expo-haptics';
@@ -85,7 +86,7 @@ const ReportCard: React.FC<ReportCardProps> = ({ report, onPress, onEdit, onDele
   };
 
   return (
-    <Pressable
+    <AnimatedPressable
       onPress={onPress}
       className="bg-white rounded-2xl p-4 mb-3"
       style={{
@@ -95,6 +96,8 @@ const ReportCard: React.FC<ReportCardProps> = ({ report, onPress, onEdit, onDele
         shadowRadius: 4,
         elevation: 3,
       }}
+      hapticFeedback={true}
+      hapticStyle={Haptics.ImpactFeedbackStyle.Light}
     >
       <View className="flex-row items-start justify-between mb-2">
         <View className="flex-1">
@@ -151,22 +154,26 @@ const ReportCard: React.FC<ReportCardProps> = ({ report, onPress, onEdit, onDele
         </View>
         <View className="flex-row items-center">
           {onEdit && (
-            <Pressable
+            <AnimatedPressable
               onPress={onEdit}
               className="p-2 mr-1"
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              hapticFeedback={true}
+              hapticStyle={Haptics.ImpactFeedbackStyle.Light}
             >
               <Edit size={18} color="#6B7280" />
-            </Pressable>
+            </AnimatedPressable>
           )}
           {onDelete && (
-            <Pressable
+            <AnimatedPressable
               onPress={onDelete}
               className="p-2"
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              hapticFeedback={true}
+              hapticStyle={Haptics.ImpactFeedbackStyle.Medium}
             >
               <Trash2 size={18} color="#EF4444" />
-            </Pressable>
+            </AnimatedPressable>
           )}
         </View>
       </View>
@@ -174,7 +181,7 @@ const ReportCard: React.FC<ReportCardProps> = ({ report, onPress, onEdit, onDele
       <Text className="text-gray-400 text-xs mt-2">
         {new Date(report.timestamp).toLocaleString()}
       </Text>
-    </Pressable>
+    </AnimatedPressable>
   );
 };
 
@@ -303,7 +310,7 @@ export default function ReportsHistoryScreen() {
           const statusColor = getStatusColor(option.id === 'all' ? undefined : option.id);
           
           return (
-            <TouchableOpacity
+            <AnimatedPressable
               key={option.id}
               onPress={() => handleFilterChange(option.id)}
               className={`rounded-full flex-row items-center justify-center ${
@@ -317,6 +324,8 @@ export default function ReportsHistoryScreen() {
                 borderColor: filter === option.id ? statusColor : '#E5E7EB',
                 flexShrink: 0,
               }}
+              hapticFeedback={true}
+              hapticStyle={Haptics.ImpactFeedbackStyle.Light}
             >
               {option.id !== 'all' && (
                 <StatusIcon size={14} color={statusColor} style={{ marginRight: 6 }} />
@@ -330,7 +339,7 @@ export default function ReportsHistoryScreen() {
               >
                 {option.label}
               </Text>
-            </TouchableOpacity>
+            </AnimatedPressable>
           );
         })}
       </ScrollView>
