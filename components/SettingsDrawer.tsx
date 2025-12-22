@@ -635,42 +635,41 @@ export default function SettingsDrawer({ visible, onClose }: SettingsDrawerProps
         onRequestClose={() => setShowPrivacyModal(false)}
       >
         <View className="flex-1 bg-black/50 justify-end">
-          <View className="bg-white rounded-t-3xl max-h-[90%]">
-            <View className="flex-row items-center justify-between px-6 py-4 border-b border-gray-200">
-              <Text className="text-gray-900 text-2xl font-bold">Privacy Policy</Text>
+          <View style={{ backgroundColor: themeColors.card, borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '90%' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 24, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: themeColors.border }}>
+              <ThemedText className="text-2xl font-bold">Privacy Policy</ThemedText>
               <Pressable
                 onPress={() => setShowPrivacyModal(false)}
-                className="bg-gray-100 rounded-full p-2"
-                style={{ minHeight: 44, minWidth: 44 }}
+                style={{ backgroundColor: themeColors.background, borderRadius: 9999, padding: 8, minHeight: 44, minWidth: 44 }}
               >
-                <X size={20} color="#374151" />
+                <X size={20} color={themeColors.text} />
               </Pressable>
             </View>
-            <ScrollView className="px-6 py-4" showsVerticalScrollIndicator={false}>
-              <Text className="text-gray-500 text-sm mb-4">Last updated: January 2024</Text>
+            <ScrollView style={{ paddingHorizontal: 24, paddingVertical: 16 }} showsVerticalScrollIndicator={false}>
+              <ThemedText className="text-sm mb-4" style={{ opacity: 0.6 }}>Last updated: January 2024</ThemedText>
               <View className="mb-4">
-                <Text className="text-gray-900 text-lg font-semibold mb-2">Data Collection</Text>
-                <Text className="text-gray-700 text-base mb-4">
+                <ThemedText className="text-lg font-semibold mb-2">Data Collection</ThemedText>
+                <ThemedText className="text-base mb-4" style={{ opacity: 0.8 }}>
                   Muhafiz collects location data, incident reports, and usage information to provide emergency services. All data is encrypted and stored securely.
-                </Text>
+                </ThemedText>
               </View>
               <View className="mb-4">
-                <Text className="text-gray-900 text-lg font-semibold mb-2">Data Usage</Text>
-                <Text className="text-gray-700 text-base mb-4">
+                <ThemedText className="text-lg font-semibold mb-2">Data Usage</ThemedText>
+                <ThemedText className="text-base mb-4" style={{ opacity: 0.8 }}>
                   Your data is used solely for emergency response purposes, improving services, and connecting you with volunteers and emergency services.
-                </Text>
+                </ThemedText>
               </View>
               <View className="mb-4">
-                <Text className="text-gray-900 text-lg font-semibold mb-2">Your Rights</Text>
-                <Text className="text-gray-700 text-base mb-4">
+                <ThemedText className="text-lg font-semibold mb-2">Your Rights</ThemedText>
+                <ThemedText className="text-base mb-4" style={{ opacity: 0.8 }}>
                   You have the right to access, modify, or delete your personal data at any time through the app settings or by contacting us.
-                </Text>
+                </ThemedText>
               </View>
               <View className="mb-4">
-                <Text className="text-gray-900 text-lg font-semibold mb-2">Contact</Text>
-                <Text className="text-gray-700 text-base">
+                <ThemedText className="text-lg font-semibold mb-2">Contact</ThemedText>
+                <ThemedText className="text-base" style={{ opacity: 0.8 }}>
                   For privacy concerns, contact us at privacy@muhafiz.app
-                </Text>
+                </ThemedText>
               </View>
             </ScrollView>
           </View>
@@ -685,42 +684,41 @@ export default function SettingsDrawer({ visible, onClose }: SettingsDrawerProps
         onRequestClose={() => setShowTermsModal(false)}
       >
         <View className="flex-1 bg-black/50 justify-end">
-          <View className="bg-white rounded-t-3xl max-h-[90%]">
-            <View className="flex-row items-center justify-between px-6 py-4 border-b border-gray-200">
-              <Text className="text-gray-900 text-2xl font-bold">Terms of Service</Text>
+          <View style={{ backgroundColor: themeColors.card, borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '90%' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 24, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: themeColors.border }}>
+              <ThemedText className="text-2xl font-bold">Terms of Service</ThemedText>
               <Pressable
                 onPress={() => setShowTermsModal(false)}
-                className="bg-gray-100 rounded-full p-2"
-                style={{ minHeight: 44, minWidth: 44 }}
+                style={{ backgroundColor: themeColors.background, borderRadius: 9999, padding: 8, minHeight: 44, minWidth: 44 }}
               >
-                <X size={20} color="#374151" />
+                <X size={20} color={themeColors.text} />
               </Pressable>
             </View>
-            <ScrollView className="px-6 py-4" showsVerticalScrollIndicator={false}>
-              <Text className="text-gray-500 text-sm mb-4">Last updated: January 2024</Text>
+            <ScrollView style={{ paddingHorizontal: 24, paddingVertical: 16 }} showsVerticalScrollIndicator={false}>
+              <ThemedText className="text-sm mb-4" style={{ opacity: 0.6 }}>Last updated: January 2024</ThemedText>
               <View className="mb-4">
-                <Text className="text-gray-900 text-lg font-semibold mb-2">Acceptance of Terms</Text>
-                <Text className="text-gray-700 text-base mb-4">
+                <ThemedText className="text-lg font-semibold mb-2">Acceptance of Terms</ThemedText>
+                <ThemedText className="text-base mb-4" style={{ opacity: 0.8 }}>
                   By using Muhafiz, you agree to these terms and conditions. Please read them carefully.
-                </Text>
+                </ThemedText>
               </View>
               <View className="mb-4">
-                <Text className="text-gray-900 text-lg font-semibold mb-2">Use of Service</Text>
-                <Text className="text-gray-700 text-base mb-4">
+                <ThemedText className="text-lg font-semibold mb-2">Use of Service</ThemedText>
+                <ThemedText className="text-base mb-4" style={{ opacity: 0.8 }}>
                   Muhafiz is provided for emergency response purposes. You agree to use the service responsibly and only report genuine emergencies.
-                </Text>
+                </ThemedText>
               </View>
               <View className="mb-4">
-                <Text className="text-gray-900 text-lg font-semibold mb-2">User Responsibilities</Text>
-                <Text className="text-gray-700 text-base mb-4">
+                <ThemedText className="text-lg font-semibold mb-2">User Responsibilities</ThemedText>
+                <ThemedText className="text-base mb-4" style={{ opacity: 0.8 }}>
                   Users must provide accurate information, respect other users, and not misuse the emergency reporting system.
-                </Text>
+                </ThemedText>
               </View>
               <View className="mb-4">
-                <Text className="text-gray-900 text-lg font-semibold mb-2">Limitation of Liability</Text>
-                <Text className="text-gray-700 text-base">
+                <ThemedText className="text-lg font-semibold mb-2">Limitation of Liability</ThemedText>
+                <ThemedText className="text-base" style={{ opacity: 0.8 }}>
                   Muhafiz is provided &quot;as is&quot;. We are not liable for any damages resulting from use of the service.
-                </Text>
+                </ThemedText>
               </View>
             </ScrollView>
           </View>
@@ -735,58 +733,53 @@ export default function SettingsDrawer({ visible, onClose }: SettingsDrawerProps
         onRequestClose={() => setShowAboutModal(false)}
       >
         <View className="flex-1 bg-black/50 justify-end">
-          <View className="bg-white rounded-t-3xl max-h-[90%]">
-            <View className="flex-row items-center justify-between px-6 py-4 border-b border-gray-200">
-              <Text className="text-gray-900 text-2xl font-bold">About Muhafiz</Text>
+          <View style={{ backgroundColor: themeColors.card, borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '90%' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 24, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: themeColors.border }}>
+              <ThemedText className="text-2xl font-bold">About Muhafiz</ThemedText>
               <Pressable
                 onPress={() => setShowAboutModal(false)}
-                className="bg-gray-100 rounded-full p-2"
-                style={{ minHeight: 44, minWidth: 44 }}
+                style={{ backgroundColor: themeColors.background, borderRadius: 9999, padding: 8, minHeight: 44, minWidth: 44 }}
               >
-                <X size={20} color="#374151" />
+                <X size={20} color={themeColors.text} />
               </Pressable>
             </View>
-            <ScrollView className="px-6 py-4" showsVerticalScrollIndicator={false}>
+            <ScrollView style={{ paddingHorizontal: 24, paddingVertical: 16 }} showsVerticalScrollIndicator={false}>
               <View className="items-center mb-6">
-                <View className="bg-blue-500 rounded-full w-24 h-24 items-center justify-center mb-4">
+                <View style={{ backgroundColor: themeColors.primary, borderRadius: 9999, width: 96, height: 96, alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
                   <Shield size={48} color="white" />
                 </View>
-                <Text className="text-gray-900 text-2xl font-bold mb-2">Muhafiz</Text>
-                <Text className="text-gray-500 text-base">Version 1.0.0</Text>
+                <ThemedText className="text-2xl font-bold mb-2">Muhafiz</ThemedText>
+                <ThemedText className="text-base" style={{ opacity: 0.6 }}>Version 1.0.0</ThemedText>
               </View>
               <View className="mb-4">
-                <Text className="text-gray-900 text-lg font-semibold mb-2">Our Mission</Text>
-                <Text className="text-gray-700 text-base mb-4">
+                <ThemedText className="text-lg font-semibold mb-2">Our Mission</ThemedText>
+                <ThemedText className="text-base mb-4" style={{ opacity: 0.8 }}>
                   Muhafiz is an intelligent emergency response app designed to keep communities safe during disasters. We connect people in need with volunteers and emergency services.
-                </Text>
+                </ThemedText>
               </View>
               <View className="mb-4">
-                <Text className="text-gray-900 text-lg font-semibold mb-2">Features</Text>
-                <Text className="text-gray-700 text-base mb-2">
+                <ThemedText className="text-lg font-semibold mb-2">Features</ThemedText>
+                <ThemedText className="text-base mb-2" style={{ opacity: 0.8 }}>
                   • Real-time emergency reporting
-                </Text>
-                <Text className="text-gray-700 text-base mb-2">
+                </ThemedText>
+                <ThemedText className="text-base mb-2" style={{ opacity: 0.8 }}>
                   • Crowd-sourced incident mapping
-                </Text>
-                <Text className="text-gray-700 text-base mb-2">
+                </ThemedText>
+                <ThemedText className="text-base mb-2" style={{ opacity: 0.8 }}>
                   • Volunteer coordination
-                </Text>
-                <Text className="text-gray-700 text-base mb-2">
-                </Text>
-                <Text className="text-gray-700 text-base mb-4">
-                </Text>
+                </ThemedText>
               </View>
               <View className="mb-4">
-                <Text className="text-gray-900 text-lg font-semibold mb-2">Contact</Text>
-                <Text className="text-gray-700 text-base mb-2">
+                <ThemedText className="text-lg font-semibold mb-2">Contact</ThemedText>
+                <ThemedText className="text-base mb-2" style={{ opacity: 0.8 }}>
                   Email: info@muhafiz.app
-                </Text>
-                <Text className="text-gray-700 text-base mb-2">
+                </ThemedText>
+                <ThemedText className="text-base mb-2" style={{ opacity: 0.8 }}>
                   Website: www.muhafiz.app
-                </Text>
-                <Text className="text-gray-700 text-base">
+                </ThemedText>
+                <ThemedText className="text-base" style={{ opacity: 0.8 }}>
                   © 2024 Muhafiz. All rights reserved.
-                </Text>
+                </ThemedText>
               </View>
             </ScrollView>
           </View>
@@ -801,49 +794,48 @@ export default function SettingsDrawer({ visible, onClose }: SettingsDrawerProps
         onRequestClose={() => setShowSettingsModal(false)}
       >
         <View className="flex-1 bg-black/50 justify-end">
-          <View className="bg-white rounded-t-3xl max-h-[90%]">
-            <View className="flex-row items-center justify-between px-6 py-4 border-b border-gray-200">
-              <Text className="text-gray-900 text-2xl font-bold">App Settings</Text>
+          <View style={{ backgroundColor: themeColors.card, borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '90%' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 24, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: themeColors.border }}>
+              <ThemedText className="text-2xl font-bold">App Settings</ThemedText>
               <Pressable
                 onPress={() => setShowSettingsModal(false)}
-                className="bg-gray-100 rounded-full p-2"
-                style={{ minHeight: 44, minWidth: 44 }}
+                style={{ backgroundColor: themeColors.background, borderRadius: 9999, padding: 8, minHeight: 44, minWidth: 44 }}
               >
-                <X size={20} color="#374151" />
+                <X size={20} color={themeColors.text} />
               </Pressable>
             </View>
-            <ScrollView className="px-6 py-4" showsVerticalScrollIndicator={false}>
+            <ScrollView style={{ paddingHorizontal: 24, paddingVertical: 16 }} showsVerticalScrollIndicator={false}>
               <View className="mb-4">
-                <Text className="text-gray-900 text-lg font-semibold mb-3">General</Text>
+                <ThemedText className="text-lg font-semibold mb-3">General</ThemedText>
                 
-                <View className="bg-white rounded-xl p-4 flex-row items-center justify-between mb-3 border border-gray-200">
+                <View style={{ backgroundColor: themeColors.card, borderRadius: 12, padding: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, borderWidth: 1, borderColor: themeColors.border }}>
                   <View className="flex-row items-center gap-3 flex-1">
-                    <Globe size={24} color="#3b82f6" />
+                    <Globe size={24} color={themeColors.primary} />
                     <View className="flex-1">
-                      <Text className="text-gray-900 text-base font-medium">Language</Text>
-                      <Text className="text-gray-500 text-sm">
+                      <ThemedText className="text-base font-medium">Language</ThemedText>
+                      <ThemedText className="text-sm" style={{ opacity: 0.7 }}>
                         {language === 'en' ? 'English' : 'اردو (Urdu)'}
-                      </Text>
+                      </ThemedText>
                     </View>
                   </View>
                   <Pressable
                     onPress={handleLanguageToggle}
-                    className="bg-blue-500 px-4 py-2 rounded-lg"
+                    style={{ backgroundColor: themeColors.primary, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 }}
                   >
-                    <Text className="text-white text-sm font-semibold">
+                    <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: '600' }}>
                       {language === 'en' ? 'اردو' : 'EN'}
                     </Text>
                   </Pressable>
                 </View>
 
-                <View className="bg-white rounded-xl p-4 flex-row items-center justify-between mb-3 border border-gray-200">
+                <View style={{ backgroundColor: themeColors.card, borderRadius: 12, padding: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, borderWidth: 1, borderColor: themeColors.border }}>
                   <View className="flex-row items-center gap-3 flex-1">
                     <Bell size={24} color="#f59e0b" />
                     <View className="flex-1">
-                      <Text className="text-gray-900 text-base font-medium">Notifications</Text>
-                      <Text className="text-gray-500 text-sm">
+                      <ThemedText className="text-base font-medium">Notifications</ThemedText>
+                      <ThemedText className="text-sm" style={{ opacity: 0.7 }}>
                         Emergency alerts & updates
-                      </Text>
+                      </ThemedText>
                     </View>
                   </View>
                   <Switch
@@ -860,7 +852,7 @@ export default function SettingsDrawer({ visible, onClose }: SettingsDrawerProps
                         }
                       }
                     }}
-                    trackColor={{ false: '#d1d5db', true: '#f59e0b' }}
+                    trackColor={{ false: themeColors.border, true: '#f59e0b' }}
                     thumbColor="#ffffff"
                   />
                 </View>
@@ -872,10 +864,13 @@ export default function SettingsDrawer({ visible, onClose }: SettingsDrawerProps
                     // In a real app, this would open location settings
                     alert('Location services are required for emergency features. Please enable them in your device settings.');
                   }}
-                  className="bg-white rounded-xl p-4 mb-3 border border-gray-200"
-                  hapticFeedback={true}
-                  hapticStyle={Haptics.ImpactFeedbackStyle.Light}
-                  style={{ 
+                  style={{
+                    backgroundColor: themeColors.card,
+                    borderRadius: 12,
+                    padding: 16,
+                    marginBottom: 12,
+                    borderWidth: 1,
+                    borderColor: themeColors.border,
                     minHeight: 60,
                     shadowColor: '#000',
                     shadowOffset: { width: 0, height: 1 },
@@ -883,21 +878,28 @@ export default function SettingsDrawer({ visible, onClose }: SettingsDrawerProps
                     shadowRadius: 2,
                     elevation: 2,
                   }}
+                  hapticFeedback={true}
+                  hapticStyle={Haptics.ImpactFeedbackStyle.Light}
                 >
                   <View className="flex-row items-center gap-3 flex-1">
                     <MapPin size={24} color="#8b5cf6" />
                     <View className="flex-1">
-                      <Text className="text-gray-900 text-base font-medium">Location Services</Text>
-                      <Text className="text-gray-500 text-sm">
+                      <ThemedText className="text-base font-medium">Location Services</ThemedText>
+                      <ThemedText className="text-sm" style={{ opacity: 0.7 }}>
                         Required for emergency features
-                      </Text>
+                      </ThemedText>
                     </View>
                   </View>
                 </AnimatedPressable>
 
                 {/* Audio Quality */}
-                <View className="bg-white rounded-xl p-4 mb-3 border border-gray-200"
-                  style={{ 
+                <View style={{
+                    backgroundColor: themeColors.card,
+                    borderRadius: 12,
+                    padding: 16,
+                    marginBottom: 12,
+                    borderWidth: 1,
+                    borderColor: themeColors.border,
                     minHeight: 60,
                     shadowColor: '#000',
                     shadowOffset: { width: 0, height: 1 },
@@ -909,29 +911,36 @@ export default function SettingsDrawer({ visible, onClose }: SettingsDrawerProps
                   <View className="flex-row items-center gap-3 flex-1">
                     <Volume2 size={24} color="#ef4444" />
                     <View className="flex-1">
-                      <Text className="text-gray-900 text-base font-medium">Audio Quality</Text>
-                      <Text className="text-gray-500 text-sm">
+                      <ThemedText className="text-base font-medium">Audio Quality</ThemedText>
+                      <ThemedText className="text-sm" style={{ opacity: 0.7 }}>
                         High (recommended for emergencies)
-                      </Text>
+                      </ThemedText>
                     </View>
                   </View>
                 </View>
               </View>
 
               <View className="mb-4">
-                <Text className="text-gray-900 text-lg font-semibold mb-3">Data & Storage</Text>
+                <ThemedText className="text-lg font-semibold mb-3">Data & Storage</ThemedText>
                 
                 <Pressable
                   onPress={handleDownloadOfflineData}
                   disabled={isDownloading}
-                  className={`rounded-xl p-4 border border-gray-200 mb-3 ${isDownloading ? 'bg-gray-50' : 'bg-white'}`}
+                  style={{
+                    borderRadius: 12,
+                    padding: 16,
+                    borderWidth: 1,
+                    borderColor: themeColors.border,
+                    marginBottom: 12,
+                    backgroundColor: isDownloading ? themeColors.background : themeColors.card,
+                  }}
                 >
                   <View className="flex-row items-center justify-between mb-3">
                     <View className="flex-row items-center gap-3">
                       <Download size={24} color="#10b981" />
-                      <Text className="text-gray-900 text-base font-medium">
+                      <ThemedText className="text-base font-medium">
                         Download Offline Data
-                      </Text>
+                      </ThemedText>
                     </View>
                     {isDownloading && (
                       <ActivityIndicator size="small" color="#10b981" />
@@ -939,45 +948,47 @@ export default function SettingsDrawer({ visible, onClose }: SettingsDrawerProps
                   </View>
                   
                   {isDownloading && (
-                    <View className="bg-gray-200 rounded-full h-2 overflow-hidden mb-2">
+                    <View style={{ backgroundColor: themeColors.border, borderRadius: 9999, height: 8, overflow: 'hidden', marginBottom: 8 }}>
                       <Animated.View 
-                        className="bg-green-500 h-full rounded-full"
-                        style={progressStyle}
+                        style={[
+                          { backgroundColor: '#22C55E', height: '100%', borderRadius: 9999 },
+                          progressStyle
+                        ]}
                       />
                     </View>
                   )}
                   
                   {isDownloading && (
-                    <Text className="text-gray-500 text-sm">
+                    <ThemedText className="text-sm" style={{ opacity: 0.7 }}>
                       {Math.round(downloadProgress)}% downloaded
-                    </Text>
+                    </ThemedText>
                   )}
                   
                   {!isDownloading && downloadProgress === 0 && (
-                    <Text className="text-gray-500 text-sm">
+                    <ThemedText className="text-sm" style={{ opacity: 0.7 }}>
                       Download guides, contacts, and emergency data for offline use
-                    </Text>
+                    </ThemedText>
                   )}
                 </Pressable>
               </View>
 
               <View className="mb-4">
-                <Text className="text-gray-900 text-lg font-semibold mb-3">Permissions</Text>
-                <Text className="text-gray-700 text-base mb-2">
+                <ThemedText className="text-lg font-semibold mb-3">Permissions</ThemedText>
+                <ThemedText className="text-base mb-2" style={{ opacity: 0.8 }}>
                   Muhafiz requires the following permissions:
-                </Text>
-                <Text className="text-gray-700 text-base mb-2">
+                </ThemedText>
+                <ThemedText className="text-base mb-2" style={{ opacity: 0.8 }}>
                   • Location: For emergency reporting and navigation
-                </Text>
-                <Text className="text-gray-700 text-base mb-2">
+                </ThemedText>
+                <ThemedText className="text-base mb-2" style={{ opacity: 0.8 }}>
                   • Camera: For incident photos
-                </Text>
-                <Text className="text-gray-700 text-base mb-2">
+                </ThemedText>
+                <ThemedText className="text-base mb-2" style={{ opacity: 0.8 }}>
                   • Microphone: For voice recordings in panic mode
-                </Text>
-                <Text className="text-gray-700 text-base">
+                </ThemedText>
+                <ThemedText className="text-base" style={{ opacity: 0.8 }}>
                   • Notifications: For emergency alerts
-                </Text>
+                </ThemedText>
               </View>
             </ScrollView>
           </View>
@@ -992,24 +1003,23 @@ export default function SettingsDrawer({ visible, onClose }: SettingsDrawerProps
         onRequestClose={() => setShowAccessibilityModal(false)}
       >
         <View className="flex-1 bg-black/50 justify-end">
-          <View className="bg-white rounded-t-3xl max-h-[90%]">
-            <View className="flex-row items-center justify-between px-6 py-4 border-b border-gray-200">
-              <Text className="text-gray-900 text-2xl font-bold">Accessibility</Text>
+          <View style={{ backgroundColor: themeColors.card, borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '90%' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 24, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: themeColors.border }}>
+              <ThemedText className="text-2xl font-bold">Accessibility</ThemedText>
               <Pressable
                 onPress={() => setShowAccessibilityModal(false)}
-                className="bg-gray-100 rounded-full p-2"
-                style={{ minHeight: 44, minWidth: 44 }}
+                style={{ backgroundColor: themeColors.background, borderRadius: 9999, padding: 8, minHeight: 44, minWidth: 44 }}
               >
-                <X size={20} color="#374151" />
+                <X size={20} color={themeColors.text} />
               </Pressable>
             </View>
-            <ScrollView className="px-6 py-4" showsVerticalScrollIndicator={false}>
+            <ScrollView style={{ paddingHorizontal: 24, paddingVertical: 16 }} showsVerticalScrollIndicator={false}>
               {/* Themes Section */}
               <View className="mb-6">
-                <Text className="text-gray-900 text-lg font-semibold mb-3">Visual Themes</Text>
-                <Text className="text-gray-600 text-sm mb-4">
+                <ThemedText className="text-lg font-semibold mb-3">Visual Themes</ThemedText>
+                <ThemedText className="text-sm mb-4" style={{ opacity: 0.7 }}>
                   Choose a theme that works best for your needs
-                </Text>
+                </ThemedText>
                 
                 {[
                   { id: 'default' as AccessibilityTheme, label: 'Default', desc: 'Standard theme' },
@@ -1026,34 +1036,35 @@ export default function SettingsDrawer({ visible, onClose }: SettingsDrawerProps
                       updateAccessibilitySettings({ theme: theme.id });
                       accessibilityService.updateSettings({ theme: theme.id });
                     }}
-                    className={`rounded-xl p-4 mb-3 border-2 ${
-                      accessibilitySettings.theme === theme.id
-                        ? 'border-purple-500 bg-purple-50'
-                        : 'border-gray-200 bg-white'
-                    }`}
+                    style={{
+                      borderRadius: 12,
+                      padding: 16,
+                      marginBottom: 12,
+                      borderWidth: 2,
+                      backgroundColor: accessibilitySettings.theme === theme.id ? themeColors.primary + '20' : themeColors.card,
+                      borderColor: accessibilitySettings.theme === theme.id ? themeColors.primary : themeColors.border,
+                    }}
                   >
-                    <Text className={`text-base font-semibold mb-1 ${
-                      accessibilitySettings.theme === theme.id ? 'text-purple-700' : 'text-gray-900'
-                    }`}>
+                    <ThemedText className="text-base font-semibold mb-1" style={{ color: accessibilitySettings.theme === theme.id ? themeColors.primary : themeColors.text }}>
                       {theme.label}
-                    </Text>
-                    <Text className="text-gray-600 text-sm">{theme.desc}</Text>
+                    </ThemedText>
+                    <ThemedText className="text-sm" style={{ opacity: 0.7 }}>{theme.desc}</ThemedText>
                   </Pressable>
                 ))}
               </View>
 
               {/* Text & Speech Section */}
               <View className="mb-6">
-                <Text className="text-gray-900 text-lg font-semibold mb-3">Text & Speech</Text>
+                <ThemedText className="text-lg font-semibold mb-3">Text & Speech</ThemedText>
                 
-                <View className="bg-white rounded-xl p-4 flex-row items-center justify-between mb-3 border border-gray-200">
+                <View style={{ backgroundColor: themeColors.card, borderRadius: 12, padding: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, borderWidth: 1, borderColor: themeColors.border }}>
                   <View className="flex-row items-center gap-3 flex-1">
-                    <Volume2 size={24} color="#3b82f6" />
+                    <Volume2 size={24} color={themeColors.primary} />
                     <View className="flex-1">
-                      <Text className="text-gray-900 text-base font-medium">Text-to-Speech</Text>
-                      <Text className="text-gray-500 text-sm">
+                      <ThemedText className="text-base font-medium">Text-to-Speech</ThemedText>
+                      <ThemedText className="text-sm" style={{ opacity: 0.7 }}>
                         Read text aloud
-                      </Text>
+                      </ThemedText>
                     </View>
                   </View>
                   <Switch
@@ -1063,19 +1074,19 @@ export default function SettingsDrawer({ visible, onClose }: SettingsDrawerProps
                       updateAccessibilitySettings({ textToSpeech: value });
                       accessibilityService.updateSettings({ textToSpeech: value });
                     }}
-                    trackColor={{ false: '#d1d5db', true: '#3b82f6' }}
+                    trackColor={{ false: themeColors.border, true: themeColors.primary }}
                     thumbColor="#ffffff"
                   />
                 </View>
 
-                <View className="bg-white rounded-xl p-4 flex-row items-center justify-between mb-3 border border-gray-200">
+                <View style={{ backgroundColor: themeColors.card, borderRadius: 12, padding: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, borderWidth: 1, borderColor: themeColors.border }}>
                   <View className="flex-row items-center gap-3 flex-1">
                     <Volume2 size={24} color="#10b981" />
                     <View className="flex-1">
-                      <Text className="text-gray-900 text-base font-medium">Speak Aloud</Text>
-                      <Text className="text-gray-500 text-sm">
+                      <ThemedText className="text-base font-medium">Speak Aloud</ThemedText>
+                      <ThemedText className="text-sm" style={{ opacity: 0.7 }}>
                         Auto-read screen content
-                      </Text>
+                      </ThemedText>
                     </View>
                   </View>
                   <Switch
@@ -1085,13 +1096,13 @@ export default function SettingsDrawer({ visible, onClose }: SettingsDrawerProps
                       updateAccessibilitySettings({ speakAloud: value });
                       accessibilityService.updateSettings({ speakAloud: value });
                     }}
-                    trackColor={{ false: '#d1d5db', true: '#10b981' }}
+                    trackColor={{ false: themeColors.border, true: '#10b981' }}
                     thumbColor="#ffffff"
                   />
                 </View>
 
-                <View className="bg-white rounded-xl p-4 mb-3 border border-gray-200">
-                  <Text className="text-gray-900 text-base font-medium mb-3">Font Size</Text>
+                <View style={{ backgroundColor: themeColors.card, borderRadius: 12, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: themeColors.border }}>
+                  <ThemedText className="text-base font-medium mb-3">Font Size</ThemedText>
                   <View className="flex-row gap-2">
                     {(['small', 'medium', 'large', 'extra_large'] as const).map((size) => (
                       <Pressable
@@ -1101,17 +1112,18 @@ export default function SettingsDrawer({ visible, onClose }: SettingsDrawerProps
                           updateAccessibilitySettings({ fontSize: size });
                           accessibilityService.updateSettings({ fontSize: size });
                         }}
-                        className={`flex-1 py-3 rounded-lg border-2 ${
-                          accessibilitySettings.fontSize === size
-                            ? 'border-purple-500 bg-purple-50'
-                            : 'border-gray-200 bg-white'
-                        }`}
+                        style={{
+                          flex: 1,
+                          paddingVertical: 12,
+                          borderRadius: 8,
+                          borderWidth: 2,
+                          backgroundColor: accessibilitySettings.fontSize === size ? themeColors.primary + '20' : themeColors.card,
+                          borderColor: accessibilitySettings.fontSize === size ? themeColors.primary : themeColors.border,
+                        }}
                       >
-                        <Text className={`text-center font-semibold ${
-                          accessibilitySettings.fontSize === size ? 'text-purple-700' : 'text-gray-700'
-                        }`}>
+                        <ThemedText className="text-center font-semibold" style={{ color: accessibilitySettings.fontSize === size ? themeColors.primary : themeColors.text }}>
                           {size === 'small' ? 'S' : size === 'medium' ? 'M' : size === 'large' ? 'L' : 'XL'}
-                        </Text>
+                        </ThemedText>
                       </Pressable>
                     ))}
                   </View>
@@ -1120,16 +1132,16 @@ export default function SettingsDrawer({ visible, onClose }: SettingsDrawerProps
 
               {/* Haptic Feedback Section */}
               <View className="mb-6">
-                <Text className="text-gray-900 text-lg font-semibold mb-3">Haptic Feedback</Text>
+                <ThemedText className="text-lg font-semibold mb-3">Haptic Feedback</ThemedText>
                 
-                <View className="bg-white rounded-xl p-4 flex-row items-center justify-between mb-3 border border-gray-200">
+                <View style={{ backgroundColor: themeColors.card, borderRadius: 12, padding: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, borderWidth: 1, borderColor: themeColors.border }}>
                   <View className="flex-row items-center gap-3 flex-1">
                     <Zap size={24} color="#f59e0b" />
                     <View className="flex-1">
-                      <Text className="text-gray-900 text-base font-medium">Haptic Feedback</Text>
-                      <Text className="text-gray-500 text-sm">
+                      <ThemedText className="text-base font-medium">Haptic Feedback</ThemedText>
+                      <ThemedText className="text-sm" style={{ opacity: 0.7 }}>
                         Vibration on interactions
-                      </Text>
+                      </ThemedText>
                     </View>
                   </View>
                   <Switch
@@ -1139,14 +1151,14 @@ export default function SettingsDrawer({ visible, onClose }: SettingsDrawerProps
                       updateAccessibilitySettings({ hapticFeedback: value });
                       accessibilityService.updateSettings({ hapticFeedback: value });
                     }}
-                    trackColor={{ false: '#d1d5db', true: '#f59e0b' }}
+                    trackColor={{ false: themeColors.border, true: '#f59e0b' }}
                     thumbColor="#ffffff"
                   />
                 </View>
 
                 {accessibilitySettings.hapticFeedback && (
-                  <View className="bg-white rounded-xl p-4 mb-3 border border-gray-200">
-                    <Text className="text-gray-900 text-base font-medium mb-3">Haptic Intensity</Text>
+                  <View style={{ backgroundColor: themeColors.card, borderRadius: 12, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: themeColors.border }}>
+                    <ThemedText className="text-base font-medium mb-3">Haptic Intensity</ThemedText>
                     <View className="flex-row gap-2">
                       {(['light', 'medium', 'heavy'] as const).map((intensity) => (
                         <Pressable
@@ -1157,17 +1169,18 @@ export default function SettingsDrawer({ visible, onClose }: SettingsDrawerProps
                             accessibilityService.updateSettings({ hapticIntensity: intensity });
                             await accessibilityService.triggerHaptic(intensity);
                           }}
-                          className={`flex-1 py-3 rounded-lg border-2 ${
-                            accessibilitySettings.hapticIntensity === intensity
-                              ? 'border-purple-500 bg-purple-50'
-                              : 'border-gray-200 bg-white'
-                          }`}
+                          style={{
+                            flex: 1,
+                            paddingVertical: 12,
+                            borderRadius: 8,
+                            borderWidth: 2,
+                            backgroundColor: accessibilitySettings.hapticIntensity === intensity ? themeColors.primary + '20' : themeColors.card,
+                            borderColor: accessibilitySettings.hapticIntensity === intensity ? themeColors.primary : themeColors.border,
+                          }}
                         >
-                          <Text className={`text-center font-semibold capitalize ${
-                            accessibilitySettings.hapticIntensity === intensity ? 'text-purple-700' : 'text-gray-700'
-                          }`}>
+                          <ThemedText className="text-center font-semibold capitalize" style={{ color: accessibilitySettings.hapticIntensity === intensity ? themeColors.primary : themeColors.text }}>
                             {intensity}
-                          </Text>
+                          </ThemedText>
                         </Pressable>
                       ))}
                     </View>
