@@ -74,7 +74,7 @@ class AccessibilityService {
   /**
    * Get theme colors based on selected theme
    */
-  getThemeColors(): {
+  getThemeColors(theme?: AccessibilityTheme): {
     background: string;
     text: string;
     primary: string;
@@ -83,7 +83,8 @@ class AccessibilityService {
     border: string;
     card: string;
   } {
-    switch (this.settings.theme) {
+    const selectedTheme = theme || this.settings.theme;
+    switch (selectedTheme) {
       case 'high_contrast_yellow_black':
         return {
           background: '#000000',

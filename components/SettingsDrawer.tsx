@@ -139,7 +139,7 @@ export default function SettingsDrawer({ visible, onClose }: SettingsDrawerProps
 
   const renderMenuItem = (item: MenuItem) => {
     const Icon = item.icon;
-    const iconColor = item.color || '#6b7280';
+    const iconColor = item.color || themeColors.text;
 
     return (
       <AnimatedPressable
@@ -151,8 +151,16 @@ export default function SettingsDrawer({ visible, onClose }: SettingsDrawerProps
             item.onPress();
           }
         }}
-        className="bg-white rounded-xl p-4 flex-row items-center justify-between mb-3 border border-gray-200"
-        style={{ 
+        style={{
+          backgroundColor: themeColors.card,
+          borderRadius: 12,
+          padding: 16,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: 12,
+          borderWidth: 1,
+          borderColor: themeColors.border,
           minHeight: 60,
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 1 },
@@ -165,10 +173,10 @@ export default function SettingsDrawer({ visible, onClose }: SettingsDrawerProps
       >
         <View className="flex-row items-center gap-3 flex-1">
           <Icon size={24} color={iconColor} />
-          <Text className="text-gray-900 text-base flex-1 font-medium">{item.label}</Text>
+          <ThemedText className="text-base flex-1 font-medium">{item.label}</ThemedText>
           {item.badge && (
-            <View className="bg-red-500 rounded-full px-2 py-1">
-              <Text className="text-white text-xs font-bold">{item.badge}</Text>
+            <View style={{ backgroundColor: '#EF4444', borderRadius: 9999, paddingHorizontal: 8, paddingVertical: 4 }}>
+              <Text style={{ color: '#FFFFFF', fontSize: 12, fontWeight: '700' }}>{item.badge}</Text>
             </View>
           )}
         </View>
@@ -194,31 +202,37 @@ export default function SettingsDrawer({ visible, onClose }: SettingsDrawerProps
             <ThemedText className="text-2xl font-bold" baseSize={24}>Menu</ThemedText>
             <Pressable
               onPress={handleClose}
-              className="bg-gray-100 rounded-full p-2"
-              style={{ minHeight: 44, minWidth: 44 }}
+              style={{ backgroundColor: themeColors.background, borderRadius: 9999, padding: 8, minHeight: 44, minWidth: 44 }}
             >
-              <X size={20} color="#374151" />
+              <X size={20} color={themeColors.text} />
             </Pressable>
           </View>
 
-          <ScrollView className="bg-white px-6 py-4" showsVerticalScrollIndicator={false}>
+          <ScrollView style={{ backgroundColor: themeColors.card, paddingHorizontal: 24, paddingVertical: 16 }} showsVerticalScrollIndicator={false}>
             {/* Accessibility Section - Moved to top for visibility */}
             <View className="mb-6">
-              <Text className="text-gray-900 text-lg font-semibold mb-3">Accessibility</Text>
+              <ThemedText className="text-lg font-semibold mb-3">Accessibility</ThemedText>
               
               <AnimatedPressable
                 onPress={async () => {
                   setShowAccessibilityModal(true);
                 }}
-                className="bg-white rounded-xl p-4 flex-row items-center justify-between mb-3 border-2 border-purple-200"
-                style={{ 
+                style={{
+                  backgroundColor: themeColors.primary + '20',
+                  borderRadius: 12,
+                  padding: 16,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: 12,
+                  borderWidth: 2,
+                  borderColor: themeColors.primary + '40',
                   minHeight: 60,
-                  shadowColor: '#8b5cf6',
+                  shadowColor: themeColors.primary,
                   shadowOffset: { width: 0, height: 2 },
                   shadowOpacity: 0.15,
                   shadowRadius: 4,
                   elevation: 3,
-                  backgroundColor: '#faf5ff', // light purple background
                 }}
                 hapticFeedback={true}
                 hapticStyle={Haptics.ImpactFeedbackStyle.Medium}
@@ -229,7 +243,7 @@ export default function SettingsDrawer({ visible, onClose }: SettingsDrawerProps
                       width: 48,
                       height: 48,
                       borderRadius: 24,
-                      backgroundColor: '#8b5cf6',
+                      backgroundColor: themeColors.primary,
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}
@@ -237,10 +251,10 @@ export default function SettingsDrawer({ visible, onClose }: SettingsDrawerProps
                     <Eye size={24} color="#ffffff" />
                   </View>
                   <View className="flex-1">
-                    <Text className="text-gray-900 text-base font-semibold">Accessibility Settings</Text>
-                    <Text className="text-gray-600 text-sm">
+                    <ThemedText className="text-base font-semibold">Accessibility Settings</ThemedText>
+                    <ThemedText className="text-sm" style={{ opacity: 0.7 }}>
                       Themes, text-to-speech, haptics & more
-                    </Text>
+                    </ThemedText>
                   </View>
                 </View>
                 <View
@@ -248,7 +262,7 @@ export default function SettingsDrawer({ visible, onClose }: SettingsDrawerProps
                     width: 8,
                     height: 8,
                     borderRadius: 4,
-                    backgroundColor: '#8b5cf6',
+                    backgroundColor: themeColors.primary,
                   }}
                 />
               </AnimatedPressable>
@@ -256,21 +270,27 @@ export default function SettingsDrawer({ visible, onClose }: SettingsDrawerProps
 
             {/* Navigation Section */}
             <View className="mb-6">
-              <Text className="text-gray-900 text-lg font-semibold mb-3">Navigation</Text>
+              <ThemedText className="text-lg font-semibold mb-3">Navigation</ThemedText>
               {navigationItems.map(renderMenuItem)}
             </View>
 
             {/* Settings Section */}
             <View className="mb-6">
-              <Text className="text-gray-900 text-lg font-semibold mb-3">Settings</Text>
+              <ThemedText className="text-lg font-semibold mb-3">Settings</ThemedText>
               
               {/* Language Toggle */}
               <AnimatedPressable
                 onPress={handleLanguageToggle}
-                className="bg-white rounded-xl p-4 flex-row items-center justify-between mb-3 border border-gray-200"
-                hapticFeedback={true}
-                hapticStyle={Haptics.ImpactFeedbackStyle.Medium}
-                style={{ 
+                style={{
+                  backgroundColor: themeColors.card,
+                  borderRadius: 12,
+                  padding: 16,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: 12,
+                  borderWidth: 1,
+                  borderColor: themeColors.border,
                   minHeight: 60,
                   shadowColor: '#000',
                   shadowOffset: { width: 0, height: 1 },
@@ -278,26 +298,36 @@ export default function SettingsDrawer({ visible, onClose }: SettingsDrawerProps
                   shadowRadius: 2,
                   elevation: 2,
                 }}
+                hapticFeedback={true}
+                hapticStyle={Haptics.ImpactFeedbackStyle.Medium}
               >
                 <View className="flex-row items-center gap-3 flex-1">
-                  <Globe size={24} color="#3b82f6" />
+                  <Globe size={24} color={themeColors.primary} />
                   <View className="flex-1">
-                    <Text className="text-gray-900 text-base font-medium">Language</Text>
-                    <Text className="text-gray-500 text-sm">
+                    <ThemedText className="text-base font-medium">Language</ThemedText>
+                    <ThemedText className="text-sm" style={{ opacity: 0.7 }}>
                     {language === 'en' ? 'English' : 'اردو (Urdu)'}
-                  </Text>
+                  </ThemedText>
                   </View>
                 </View>
-                <View className="bg-blue-500 px-4 py-2 rounded-lg">
-                  <Text className="text-white text-sm font-semibold">
+                <View style={{ backgroundColor: themeColors.primary, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 }}>
+                  <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: '600' }}>
                     {language === 'en' ? 'اردو' : 'EN'}
                   </Text>
                 </View>
               </AnimatedPressable>
 
               {/* Notifications Toggle */}
-              <View className="bg-white rounded-xl p-4 flex-row items-center justify-between mb-3 border border-gray-200"
-                style={{ 
+              <View style={{
+                  backgroundColor: themeColors.card,
+                  borderRadius: 12,
+                  padding: 16,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: 12,
+                  borderWidth: 1,
+                  borderColor: themeColors.border,
                   minHeight: 60,
                   shadowColor: '#000',
                   shadowOffset: { width: 0, height: 1 },
@@ -309,10 +339,10 @@ export default function SettingsDrawer({ visible, onClose }: SettingsDrawerProps
                 <View className="flex-row items-center gap-3 flex-1">
                   <Bell size={24} color="#f59e0b" />
                   <View className="flex-1">
-                    <Text className="text-gray-900 text-base font-medium">Notifications</Text>
-                    <Text className="text-gray-500 text-sm">
+                    <ThemedText className="text-base font-medium">Notifications</ThemedText>
+                    <ThemedText className="text-sm" style={{ opacity: 0.7 }}>
                       Emergency alerts & updates
-                    </Text>
+                    </ThemedText>
                   </View>
                 </View>
                 <Switch
@@ -321,7 +351,7 @@ export default function SettingsDrawer({ visible, onClose }: SettingsDrawerProps
                     Haptics.selectionAsync();
                     setNotificationsEnabled(value);
                   }}
-                  trackColor={{ false: '#d1d5db', true: '#f59e0b' }}
+                  trackColor={{ false: themeColors.border, true: '#f59e0b' }}
                   thumbColor="#ffffff"
                 />
               </View>
@@ -331,8 +361,16 @@ export default function SettingsDrawer({ visible, onClose }: SettingsDrawerProps
                 onPress={async () => {
                   setShowSettingsModal(true);
                 }}
-                className="bg-white rounded-xl p-4 flex-row items-center justify-between mb-3 border border-gray-200"
-                style={{ 
+                style={{
+                  backgroundColor: themeColors.card,
+                  borderRadius: 12,
+                  padding: 16,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: 12,
+                  borderWidth: 1,
+                  borderColor: themeColors.border,
                   minHeight: 60,
                   shadowColor: '#000',
                   shadowOffset: { width: 0, height: 1 },
@@ -344,22 +382,24 @@ export default function SettingsDrawer({ visible, onClose }: SettingsDrawerProps
                 hapticStyle={Haptics.ImpactFeedbackStyle.Light}
               >
                 <View className="flex-row items-center gap-3 flex-1">
-                  <Settings size={24} color="#6b7280" />
-                  <Text className="text-gray-900 text-base font-medium">App Settings</Text>
+                  <Settings size={24} color={themeColors.text} style={{ opacity: 0.7 }} />
+                  <ThemedText className="text-base font-medium">App Settings</ThemedText>
                 </View>
               </AnimatedPressable>
             </View>
 
             {/* Offline Data Section */}
             <View className="mb-6">
-              <Text className="text-gray-900 text-lg font-semibold mb-3">Offline Data</Text>
+              <ThemedText className="text-lg font-semibold mb-3">Offline Data</ThemedText>
               <AnimatedPressable
                 onPress={handleDownloadOfflineData}
                 disabled={isDownloading}
-                className={`rounded-xl p-4 border border-gray-200 ${isDownloading ? 'bg-gray-50' : 'bg-white'}`}
-                hapticFeedback={true}
-                hapticStyle={Haptics.ImpactFeedbackStyle.Medium}
-                style={{ 
+                style={{
+                  borderRadius: 12,
+                  padding: 16,
+                  borderWidth: 1,
+                  borderColor: themeColors.border,
+                  backgroundColor: isDownloading ? themeColors.background : themeColors.card,
                   minHeight: 60,
                   shadowColor: '#000',
                   shadowOffset: { width: 0, height: 1 },
@@ -367,13 +407,15 @@ export default function SettingsDrawer({ visible, onClose }: SettingsDrawerProps
                   shadowRadius: 2,
                   elevation: 2,
                 }}
+                hapticFeedback={true}
+                hapticStyle={Haptics.ImpactFeedbackStyle.Medium}
               >
                 <View className="flex-row items-center justify-between mb-3">
                   <View className="flex-row items-center gap-3">
                     <Download size={24} color="#10b981" />
-                    <Text className="text-gray-900 text-base font-medium">
+                    <ThemedText className="text-base font-medium">
                       Download Offline Data
-                    </Text>
+                    </ThemedText>
                   </View>
                   {isDownloading && (
                     <ActivityIndicator size="small" color="#10b981" />
@@ -382,38 +424,48 @@ export default function SettingsDrawer({ visible, onClose }: SettingsDrawerProps
                 
                 {/* Progress Bar */}
                 {isDownloading && (
-                  <View className="bg-gray-200 rounded-full h-2 overflow-hidden">
+                  <View style={{ backgroundColor: themeColors.border, borderRadius: 9999, height: 8, overflow: 'hidden' }}>
                     <Animated.View 
-                      className="bg-green-500 h-full rounded-full"
-                      style={progressStyle}
+                      style={[
+                        { backgroundColor: '#22C55E', height: '100%', borderRadius: 9999 },
+                        progressStyle
+                      ]}
                     />
                   </View>
                 )}
                 
                 {isDownloading && (
-                  <Text className="text-gray-500 text-sm mt-2">
+                  <ThemedText className="text-sm mt-2" style={{ opacity: 0.7 }}>
                     {Math.round(downloadProgress)}% downloaded
-                  </Text>
+                  </ThemedText>
                 )}
                 
                 {!isDownloading && downloadProgress === 0 && (
-                  <Text className="text-gray-500 text-sm mt-2">
+                  <ThemedText className="text-sm mt-2" style={{ opacity: 0.7 }}>
                     Download guides, contacts, and emergency data for offline use
-                  </Text>
+                  </ThemedText>
                 )}
               </AnimatedPressable>
             </View>
 
             {/* Help & Support Section */}
             <View className="mb-6">
-              <Text className="text-gray-900 text-lg font-semibold mb-3">Help & Support</Text>
+              <ThemedText className="text-lg font-semibold mb-3">Help & Support</ThemedText>
               
               <AnimatedPressable
                 onPress={async () => {
                   setShowHelpModal(true);
                 }}
-                className="bg-white rounded-xl p-4 flex-row items-center justify-between mb-3 border border-gray-200"
-                style={{ 
+                style={{
+                  backgroundColor: themeColors.card,
+                  borderRadius: 12,
+                  padding: 16,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: 12,
+                  borderWidth: 1,
+                  borderColor: themeColors.border,
                   minHeight: 60,
                   shadowColor: '#000',
                   shadowOffset: { width: 0, height: 1 },
@@ -425,8 +477,8 @@ export default function SettingsDrawer({ visible, onClose }: SettingsDrawerProps
                 hapticStyle={Haptics.ImpactFeedbackStyle.Light}
               >
                 <View className="flex-row items-center gap-3 flex-1">
-                  <HelpCircle size={24} color="#3b82f6" />
-                  <Text className="text-gray-900 text-base font-medium">Help Center</Text>
+                  <HelpCircle size={24} color={themeColors.primary} />
+                  <ThemedText className="text-base font-medium">Help Center</ThemedText>
                 </View>
               </AnimatedPressable>
 
@@ -434,8 +486,16 @@ export default function SettingsDrawer({ visible, onClose }: SettingsDrawerProps
                 onPress={async () => {
                   setShowPrivacyModal(true);
                 }}
-                className="bg-white rounded-xl p-4 flex-row items-center justify-between mb-3 border border-gray-200"
-                style={{ 
+                style={{
+                  backgroundColor: themeColors.card,
+                  borderRadius: 12,
+                  padding: 16,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: 12,
+                  borderWidth: 1,
+                  borderColor: themeColors.border,
                   minHeight: 60,
                   shadowColor: '#000',
                   shadowOffset: { width: 0, height: 1 },
@@ -448,7 +508,7 @@ export default function SettingsDrawer({ visible, onClose }: SettingsDrawerProps
               >
                 <View className="flex-row items-center gap-3 flex-1">
                   <Shield size={24} color="#10b981" />
-                  <Text className="text-gray-900 text-base font-medium">Privacy Policy</Text>
+                  <ThemedText className="text-base font-medium">Privacy Policy</ThemedText>
                 </View>
               </AnimatedPressable>
 
@@ -456,8 +516,16 @@ export default function SettingsDrawer({ visible, onClose }: SettingsDrawerProps
                 onPress={async () => {
                   setShowTermsModal(true);
                 }}
-                className="bg-white rounded-xl p-4 flex-row items-center justify-between mb-3 border border-gray-200"
-                style={{ 
+                style={{
+                  backgroundColor: themeColors.card,
+                  borderRadius: 12,
+                  padding: 16,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: 12,
+                  borderWidth: 1,
+                  borderColor: themeColors.border,
                   minHeight: 60,
                   shadowColor: '#000',
                   shadowOffset: { width: 0, height: 1 },
@@ -469,8 +537,8 @@ export default function SettingsDrawer({ visible, onClose }: SettingsDrawerProps
                 hapticStyle={Haptics.ImpactFeedbackStyle.Light}
               >
                 <View className="flex-row items-center gap-3 flex-1">
-                  <FileText size={24} color="#6b7280" />
-                  <Text className="text-gray-900 text-base font-medium">Terms of Service</Text>
+                  <FileText size={24} color={themeColors.text} style={{ opacity: 0.7 }} />
+                  <ThemedText className="text-base font-medium">Terms of Service</ThemedText>
                 </View>
               </AnimatedPressable>
 
@@ -478,8 +546,16 @@ export default function SettingsDrawer({ visible, onClose }: SettingsDrawerProps
                 onPress={async () => {
                   setShowAboutModal(true);
                 }}
-                className="bg-white rounded-xl p-4 flex-row items-center justify-between mb-3 border border-gray-200"
-                style={{ 
+                style={{
+                  backgroundColor: themeColors.card,
+                  borderRadius: 12,
+                  padding: 16,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: 12,
+                  borderWidth: 1,
+                  borderColor: themeColors.border,
                   minHeight: 60,
                   shadowColor: '#000',
                   shadowOffset: { width: 0, height: 1 },
@@ -491,8 +567,8 @@ export default function SettingsDrawer({ visible, onClose }: SettingsDrawerProps
                 hapticStyle={Haptics.ImpactFeedbackStyle.Light}
               >
                 <View className="flex-row items-center gap-3 flex-1">
-                  <Info size={24} color="#6b7280" />
-                  <Text className="text-gray-900 text-base font-medium">About Muhafiz</Text>
+                  <Info size={24} color={themeColors.text} style={{ opacity: 0.7 }} />
+                  <ThemedText className="text-base font-medium">About Muhafiz</ThemedText>
                 </View>
               </AnimatedPressable>
             </View>
@@ -508,44 +584,43 @@ export default function SettingsDrawer({ visible, onClose }: SettingsDrawerProps
         onRequestClose={() => setShowHelpModal(false)}
       >
         <View className="flex-1 bg-black/50 justify-end">
-          <View className="bg-white rounded-t-3xl max-h-[90%]">
-            <View className="flex-row items-center justify-between px-6 py-4 border-b border-gray-200">
-              <Text className="text-gray-900 text-2xl font-bold">Help Center</Text>
+          <View style={{ backgroundColor: themeColors.card, borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '90%' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 24, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: themeColors.border }}>
+              <ThemedText className="text-2xl font-bold">Help Center</ThemedText>
               <Pressable
                 onPress={() => setShowHelpModal(false)}
-                className="bg-gray-100 rounded-full p-2"
-                style={{ minHeight: 44, minWidth: 44 }}
+                style={{ backgroundColor: themeColors.background, borderRadius: 9999, padding: 8, minHeight: 44, minWidth: 44 }}
               >
-                <X size={20} color="#374151" />
+                <X size={20} color={themeColors.text} />
               </Pressable>
             </View>
-            <ScrollView className="px-6 py-4" showsVerticalScrollIndicator={false}>
+            <ScrollView style={{ paddingHorizontal: 24, paddingVertical: 16 }} showsVerticalScrollIndicator={false}>
               <View className="mb-4">
-                <Text className="text-gray-900 text-lg font-semibold mb-2">Getting Started</Text>
-                <Text className="text-gray-700 text-base mb-4">
+                <ThemedText className="text-lg font-semibold mb-2">Getting Started</ThemedText>
+                <ThemedText className="text-base mb-4" style={{ opacity: 0.8 }}>
                   Muhafiz helps you stay safe during emergencies. Use the SOS button to send emergency alerts, report incidents, and connect with volunteers.
-                </Text>
+                </ThemedText>
               </View>
               <View className="mb-4">
-                <Text className="text-gray-900 text-lg font-semibold mb-2">Emergency Features</Text>
-                <Text className="text-gray-700 text-base mb-2">
-                  • <Text className="font-semibold">Panic Mode:</Text> Shake your device or use the SOS button to activate emergency mode
-                </Text>
-                <Text className="text-gray-700 text-base mb-2">
-                  • <Text className="font-semibold">Report Incidents:</Text> Submit reports with photos, location, and details
-                </Text>
-                <Text className="text-gray-700 text-base mb-2">
-                  • <Text className="font-semibold">Crowd Map:</Text> View real-time incident reports from your community
-                </Text>
-                <Text className="text-gray-700 text-base mb-4">
-                  • <Text className="font-semibold">Volunteer:</Text> Help others by accepting rescue tasks
-                </Text>
+                <ThemedText className="text-lg font-semibold mb-2">Emergency Features</ThemedText>
+                <ThemedText className="text-base mb-2" style={{ opacity: 0.8 }}>
+                  • <ThemedText className="font-semibold">Panic Mode:</ThemedText> Shake your device or use the SOS button to activate emergency mode
+                </ThemedText>
+                <ThemedText className="text-base mb-2" style={{ opacity: 0.8 }}>
+                  • <ThemedText className="font-semibold">Report Incidents:</ThemedText> Submit reports with photos, location, and details
+                </ThemedText>
+                <ThemedText className="text-base mb-2" style={{ opacity: 0.8 }}>
+                  • <ThemedText className="font-semibold">Crowd Map:</ThemedText> View real-time incident reports from your community
+                </ThemedText>
+                <ThemedText className="text-base mb-4" style={{ opacity: 0.8 }}>
+                  • <ThemedText className="font-semibold">Volunteer:</ThemedText> Help others by accepting rescue tasks
+                </ThemedText>
               </View>
               <View className="mb-4">
-                <Text className="text-gray-900 text-lg font-semibold mb-2">Need More Help?</Text>
-                <Text className="text-gray-700 text-base">
+                <ThemedText className="text-lg font-semibold mb-2">Need More Help?</ThemedText>
+                <ThemedText className="text-base" style={{ opacity: 0.8 }}>
                   Contact our support team at support@muhafiz.app or visit our website for detailed guides and tutorials.
-                </Text>
+                </ThemedText>
               </View>
             </ScrollView>
           </View>

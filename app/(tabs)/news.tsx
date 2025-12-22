@@ -387,6 +387,6 @@ export default function NewsScreen() {
           </View>
         </Modal>
       </View>
-    </View>
+    </ThemedView>
   );
 }

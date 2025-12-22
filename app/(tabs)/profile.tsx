@@ -1,3 +1,6 @@
+import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
+import { useAccessibility } from '@/hooks/useAccessibility';
 import { useAppStore } from '@/store/useAppStore';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
@@ -39,6 +42,7 @@ interface Achievement {
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const { themeColors } = useAccessibility();
   const { volunteerTasksDone, volunteerLevel } = useAppStore();
   const [stats, setStats] = useState<StatCard[]>([]);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
@@ -133,9 +137,9 @@ export default function ProfileScreen() {
   };
 
   return (
-    <View className="flex-1 bg-gray-50">
+    <ThemedView className="flex-1">
       {/* Header */}
-      <View className="bg-white px-6 pt-4 pb-4 border-b border-gray-200">
+      <View style={{ backgroundColor: themeColors.card, paddingHorizontal: 24, paddingTop: 16, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: themeColors.border }}>
         <View className="flex-row items-center justify-between">
           <View className="flex-row items-center flex-1">
             <Pressable
@@ -151,11 +155,11 @@ export default function ProfileScreen() {
                 justifyContent: 'center',
               }}
             >
-              <ArrowLeft size={24} color="#374151" />
+              <ArrowLeft size={24} color={themeColors.text} />
             </Pressable>
             <View className="flex-1">
-              <Text className="text-4xl font-bold text-gray-900 mb-1">Profile</Text>
-              <Text className="text-gray-600 text-sm">Your contribution stats</Text>
+              <ThemedText className="text-4xl font-bold mb-1">Profile</ThemedText>
+              <ThemedText className="text-sm" style={{ opacity: 0.7 }}>Your contribution stats</ThemedText>
             </View>
           </View>
           <Pressable
@@ -170,7 +174,7 @@ export default function ProfileScreen() {
               justifyContent: 'center',
             }}
           >
-            <Settings size={24} color="#374151" />
+            <Settings size={24} color={themeColors.text} />
           </Pressable>
         </View>
       </View>
@@ -182,17 +186,17 @@ export default function ProfileScreen() {
       >
         {/* User Info Card */}
         <View className="px-6 mb-6">
-          <View className="bg-white rounded-2xl p-6 border border-gray-200">
+          <View style={{ backgroundColor: themeColors.card, borderRadius: 16, padding: 24, borderWidth: 1, borderColor: themeColors.border }}>
             <View className="flex-row items-center mb-4">
-              <View className="w-20 h-20 rounded-full bg-blue-100 items-center justify-center mr-4">
+              <View style={{ width: 80, height: 80, borderRadius: 9999, backgroundColor: '#DBEAFE', alignItems: 'center', justifyContent: 'center', marginRight: 16 }}>
                 <User size={40} color="#3B82F6" />
               </View>
               <View className="flex-1">
-                <Text className="text-2xl font-bold text-gray-900">Anonymous User</Text>
-                <Text className="text-gray-600 text-sm mt-1">Device ID: {Date.now().toString().slice(-8)}</Text>
+                <ThemedText className="text-2xl font-bold">Anonymous User</ThemedText>
+                <ThemedText className="text-sm mt-1" style={{ opacity: 0.7 }}>Device ID: {Date.now().toString().slice(-8)}</ThemedText>
                 <View className="flex-row items-center mt-2">
                   <Award size={16} color="#F59E0B" />
-                  <Text className="text-gray-700 font-semibold ml-2">{volunteerLevel}</Text>
+                  <ThemedText className="font-semibold ml-2">{volunteerLevel}</ThemedText>
                 </View>
               </View>
             </View>
@@ -201,15 +205,19 @@ export default function ProfileScreen() {
 
         {/* Statistics Grid */}
         <View className="px-6 mb-6">
-          <Text className="text-xl font-bold text-gray-900 mb-4">Statistics</Text>
+          <ThemedText className="text-xl font-bold mb-4">Statistics</ThemedText>
           <View className="flex-row flex-wrap justify-between gap-4">
             {stats.map((stat) => {
               const Icon = stat.icon;
               return (
                 <View
                   key={stat.id}
-                  className="bg-white rounded-xl p-4 border border-gray-200"
                   style={{
+                    backgroundColor: themeColors.card,
+                    borderRadius: 12,
+                    padding: 16,
+                    borderWidth: 1,
+                    borderColor: themeColors.border,
                     width: (width - 72) / 2,
                     shadowColor: '#000',
                     shadowOffset: { width: 0, height: 1 },
@@ -219,13 +227,12 @@ export default function ProfileScreen() {
                   }}
                 >
                   <View
-                    className="w-12 h-12 rounded-xl items-center justify-center mb-3"
-                    style={{ backgroundColor: stat.bgColor }}
+                    style={{ width: 48, height: 48, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginBottom: 12, backgroundColor: stat.bgColor }}
                   >
                     <Icon size={24} color={stat.color} />
                   </View>
-                  <Text className="text-2xl font-bold text-gray-900 mb-1">{stat.value}</Text>
-                  <Text className="text-gray-600 text-sm">{stat.label}</Text>
+                  <ThemedText className="text-2xl font-bold mb-1">{stat.value}</ThemedText>
+                  <ThemedText className="text-sm" style={{ opacity: 0.7 }}>{stat.label}</ThemedText>
                 </View>
               );
             })}
@@ -234,14 +241,21 @@ export default function ProfileScreen() {
 
         {/* Achievements Section */}
         <View className="px-6 mb-6">
-          <Text className="text-xl font-bold text-gray-900 mb-4">Achievements</Text>
+          <ThemedText className="text-xl font-bold mb-4">Achievements</ThemedText>
           {achievements.map((achievement) => {
             const Icon = achievement.icon;
             return (
               <TouchableOpacity
                 key={achievement.id}
-                className="bg-white rounded-xl p-4 mb-3 flex-row items-center border border-gray-200"
                 style={{
+                  backgroundColor: themeColors.card,
+                  borderRadius: 12,
+                  padding: 16,
+                  marginBottom: 12,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  borderWidth: 1,
+                  borderColor: themeColors.border,
                   shadowColor: '#000',
                   shadowOffset: { width: 0, height: 1 },
                   shadowOpacity: 0.1,
@@ -251,37 +265,39 @@ export default function ProfileScreen() {
                 }}
               >
                 <View
-                  className={`w-14 h-14 rounded-xl items-center justify-center mr-4 ${
-                    achievement.unlocked ? '' : 'bg-gray-100'
-                  }`}
                   style={{
-                    backgroundColor: achievement.unlocked ? '#FEF3C7' : '#F3F4F6',
+                    width: 56,
+                    height: 56,
+                    borderRadius: 12,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginRight: 16,
+                    backgroundColor: achievement.unlocked ? '#FEF3C7' : themeColors.background,
                   }}
                 >
                   <Icon
                     size={28}
-                    color={achievement.unlocked ? '#F59E0B' : '#9CA3AF'}
+                    color={achievement.unlocked ? '#F59E0B' : themeColors.text}
+                    style={{ opacity: achievement.unlocked ? 1 : 0.5 }}
                   />
                 </View>
                 <View className="flex-1">
-                  <Text
-                    className={`text-base font-semibold ${
-                      achievement.unlocked ? 'text-gray-900' : 'text-gray-500'
-                    }`}
+                  <ThemedText
+                    className="text-base font-semibold"
+                    style={{ opacity: achievement.unlocked ? 1 : 0.6 }}
                   >
                     {achievement.title}
-                  </Text>
-                  <Text
-                    className={`text-sm mt-1 ${
-                      achievement.unlocked ? 'text-gray-600' : 'text-gray-400'
-                    }`}
+                  </ThemedText>
+                  <ThemedText
+                    className="text-sm mt-1"
+                    style={{ opacity: achievement.unlocked ? 0.7 : 0.5 }}
                   >
                     {achievement.description}
-                  </Text>
+                  </ThemedText>
                   {achievement.unlocked && achievement.unlockedDate && (
-                    <Text className="text-xs text-gray-400 mt-1">
+                    <ThemedText className="text-xs mt-1" style={{ opacity: 0.6 }}>
                       Unlocked {new Date(achievement.unlockedDate).toLocaleDateString()}
-                    </Text>
+                    </ThemedText>
                   )}
                 </View>
                 {achievement.unlocked && (
@@ -294,36 +310,36 @@ export default function ProfileScreen() {
 
         {/* Contribution Timeline */}
         <View className="px-6 mb-6">
-          <Text className="text-xl font-bold text-gray-900 mb-4">Recent Activity</Text>
-          <View className="bg-white rounded-2xl p-6 border border-gray-200">
-            <View className="flex-row items-center mb-4 pb-4 border-b border-gray-200">
-              <View className="w-10 h-10 rounded-full bg-green-100 items-center justify-center mr-3">
+          <ThemedText className="text-xl font-bold mb-4">Recent Activity</ThemedText>
+          <View style={{ backgroundColor: themeColors.card, borderRadius: 16, padding: 24, borderWidth: 1, borderColor: themeColors.border }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: themeColors.border }}>
+              <View style={{ width: 40, height: 40, borderRadius: 9999, backgroundColor: '#D1FAE5', alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
                 <CheckCircle size={20} color="#10B981" />
               </View>
               <View className="flex-1">
-                <Text className="text-base font-semibold text-gray-900">Report Verified</Text>
-                <Text className="text-gray-600 text-sm">Flood report in Karachi</Text>
-                <Text className="text-gray-400 text-xs mt-1">2 days ago</Text>
+                <ThemedText className="text-base font-semibold">Report Verified</ThemedText>
+                <ThemedText className="text-sm" style={{ opacity: 0.7 }}>Flood report in Karachi</ThemedText>
+                <ThemedText className="text-xs mt-1" style={{ opacity: 0.6 }}>2 days ago</ThemedText>
               </View>
             </View>
-            <View className="flex-row items-center mb-4 pb-4 border-b border-gray-200">
-              <View className="w-10 h-10 rounded-full bg-blue-100 items-center justify-center mr-3">
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: themeColors.border }}>
+              <View style={{ width: 40, height: 40, borderRadius: 9999, backgroundColor: '#DBEAFE', alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
                 <Heart size={20} color="#3B82F6" />
               </View>
               <View className="flex-1">
-                <Text className="text-base font-semibold text-gray-900">Task Completed</Text>
-                <Text className="text-gray-600 text-sm">Volunteer task #12</Text>
-                <Text className="text-gray-400 text-xs mt-1">5 days ago</Text>
+                <ThemedText className="text-base font-semibold">Task Completed</ThemedText>
+                <ThemedText className="text-sm" style={{ opacity: 0.7 }}>Volunteer task #12</ThemedText>
+                <ThemedText className="text-xs mt-1" style={{ opacity: 0.6 }}>5 days ago</ThemedText>
               </View>
             </View>
             <View className="flex-row items-center">
-              <View className="w-10 h-10 rounded-full bg-orange-100 items-center justify-center mr-3">
+              <View style={{ width: 40, height: 40, borderRadius: 9999, backgroundColor: '#FED7AA', alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
                 <FileText size={20} color="#F59E0B" />
               </View>
               <View className="flex-1">
-                <Text className="text-base font-semibold text-gray-900">Report Submitted</Text>
-                <Text className="text-gray-600 text-sm">Medical emergency report</Text>
-                <Text className="text-gray-400 text-xs mt-1">1 week ago</Text>
+                <ThemedText className="text-base font-semibold">Report Submitted</ThemedText>
+                <ThemedText className="text-sm" style={{ opacity: 0.7 }}>Medical emergency report</ThemedText>
+                <ThemedText className="text-xs mt-1" style={{ opacity: 0.6 }}>1 week ago</ThemedText>
               </View>
             </View>
           </View>

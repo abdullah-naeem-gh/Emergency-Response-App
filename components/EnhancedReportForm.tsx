@@ -1,3 +1,6 @@
+import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
+import { useAccessibility } from '@/hooks/useAccessibility';
 import { crowdReportService, CrowdReport } from '@/services/CrowdReportService';
 import { reportService } from '@/services/ReportService';
 import * as Haptics from 'expo-haptics';
@@ -52,6 +55,7 @@ export const EnhancedReportForm: React.FC<EnhancedReportFormProps> = ({
   onSuccess,
   initialType,
 }) => {
+  const { themeColors } = useAccessibility();
   const [selectedType, setSelectedType] = useState<string>(initialType || 'flood');
   const [severity, setSeverity] = useState<'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'>('MEDIUM');
   const [description, setDescription] = useState('');
@@ -248,16 +252,16 @@ export const EnhancedReportForm: React.FC<EnhancedReportFormProps> = ({
     >
       <View style={styles.modalOverlay}>
         <Pressable style={styles.backdrop} onPress={onClose} />
-        <View style={styles.modalContainer}>
+        <View style={[styles.modalContainer, { backgroundColor: themeColors.card }]}>
           {/* Header */}
-          <View style={styles.header}>
-            <Text style={styles.headerTitle}>Report Incident</Text>
+          <View style={[styles.header, { backgroundColor: themeColors.card, borderBottomColor: themeColors.border }]}>
+            <ThemedText className="text-2xl font-bold">Report Incident</ThemedText>
             <Pressable
               onPress={onClose}
               style={styles.closeButton}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <X size={24} color="#6B7280" />
+              <X size={24} color={themeColors.text} />
             </Pressable>
           </View>
 
@@ -269,31 +273,33 @@ export const EnhancedReportForm: React.FC<EnhancedReportFormProps> = ({
           >
             {/* Incident Type */}
             <View className="mb-6">
-              <Text className="text-base font-semibold text-gray-900 mb-3">
+              <ThemedText className="text-base font-semibold mb-3">
                 Incident Type
-              </Text>
+              </ThemedText>
               <View className="flex-row flex-wrap gap-3">
                 {INCIDENT_CATEGORIES.map((category) => (
                   <TouchableOpacity
                     key={category.id}
                     onPress={() => handleTypeSelect(category.id)}
-                    className={`px-4 py-3 rounded-xl border-2 flex-row items-center ${
-                      selectedType === category.id
-                        ? 'border-gray-900 bg-gray-50'
-                        : 'border-gray-200 bg-white'
-                    }`}
-                    style={{ minHeight: 60 }}
+                    style={{
+                      paddingHorizontal: 16,
+                      paddingVertical: 12,
+                      borderRadius: 12,
+                      borderWidth: 2,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      backgroundColor: selectedType === category.id ? themeColors.background : themeColors.card,
+                      borderColor: selectedType === category.id ? themeColors.text : themeColors.border,
+                      minHeight: 60,
+                    }}
                   >
-                    <Text className="text-2xl mr-2">{category.icon}</Text>
-                    <Text
-                      className={`font-semibold ${
-                        selectedType === category.id
-                          ? 'text-gray-900'
-                          : 'text-gray-600'
-                      }`}
+                    <Text style={{ fontSize: 24, marginRight: 8 }}>{category.icon}</Text>
+                    <ThemedText
+                      className="font-semibold"
+                      style={{ color: selectedType === category.id ? themeColors.text : themeColors.text, opacity: selectedType === category.id ? 1 : 0.7 }}
                     >
                       {category.label}
-                    </Text>
+                    </ThemedText>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -301,31 +307,30 @@ export const EnhancedReportForm: React.FC<EnhancedReportFormProps> = ({
 
             {/* Severity */}
             <View className="mb-6">
-              <Text className="text-base font-semibold text-gray-900 mb-3">
+              <ThemedText className="text-base font-semibold mb-3">
                 Severity Level
-              </Text>
+              </ThemedText>
               <View className="flex-row flex-wrap gap-3">
                 {SEVERITY_OPTIONS.map((option) => (
                   <TouchableOpacity
                     key={option.id}
                     onPress={() => handleSeveritySelect(option.id as any)}
-                    className={`px-4 py-3 rounded-xl border-2 ${
-                      severity === option.id
-                        ? 'border-gray-900 bg-gray-50'
-                        : 'border-gray-200 bg-white'
-                    }`}
                     style={{
+                      paddingHorizontal: 16,
+                      paddingVertical: 12,
+                      borderRadius: 12,
+                      borderWidth: 2,
                       minHeight: 60,
-                      borderColor: severity === option.id ? option.color : undefined,
+                      backgroundColor: severity === option.id ? themeColors.background : themeColors.card,
+                      borderColor: severity === option.id ? option.color : themeColors.border,
                     }}
                   >
-                    <Text
-                      className={`font-semibold text-center ${
-                        severity === option.id ? 'text-gray-900' : 'text-gray-600'
-                      }`}
+                    <ThemedText
+                      className="font-semibold text-center"
+                      style={{ color: severity === option.id ? option.color : themeColors.text, opacity: severity === option.id ? 1 : 0.7 }}
                     >
                       {option.label}
-                    </Text>
+                    </ThemedText>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -333,59 +338,86 @@ export const EnhancedReportForm: React.FC<EnhancedReportFormProps> = ({
 
             {/* Description */}
             <View className="mb-6">
-              <Text className="text-base font-semibold text-gray-900 mb-3">
+              <ThemedText className="text-base font-semibold mb-3">
                 Description *
-              </Text>
+              </ThemedText>
               <TextInput
-                className="bg-gray-50 rounded-xl px-4 py-3 text-gray-900 border border-gray-200"
+                style={{
+                  backgroundColor: themeColors.background,
+                  borderRadius: 12,
+                  paddingHorizontal: 16,
+                  paddingVertical: 12,
+                  color: themeColors.text,
+                  borderWidth: 1,
+                  borderColor: themeColors.border,
+                  minHeight: 100,
+                  textAlignVertical: 'top',
+                }}
                 placeholder="Describe what happened..."
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={themeColors.text + '80'}
                 value={description}
                 onChangeText={setDescription}
                 multiline
                 numberOfLines={4}
-                style={{ minHeight: 100, textAlignVertical: 'top' }}
               />
             </View>
 
             {/* Affected People */}
             <View className="mb-6">
-              <Text className="text-base font-semibold text-gray-900 mb-3">
+              <ThemedText className="text-base font-semibold mb-3">
                 Number of People Affected (Optional)
-              </Text>
+              </ThemedText>
               <TextInput
-                className="bg-gray-50 rounded-xl px-4 py-3 text-gray-900 border border-gray-200"
+                style={{
+                  backgroundColor: themeColors.background,
+                  borderRadius: 12,
+                  paddingHorizontal: 16,
+                  paddingVertical: 12,
+                  color: themeColors.text,
+                  borderWidth: 1,
+                  borderColor: themeColors.border,
+                  minHeight: 60,
+                }}
                 placeholder="Enter number"
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={themeColors.text + '80'}
                 value={affectedPeople}
                 onChangeText={setAffectedPeople}
                 keyboardType="number-pad"
-                style={{ minHeight: 60 }}
               />
             </View>
 
             {/* Location */}
             <View className="mb-6">
-              <Text className="text-base font-semibold text-gray-900 mb-3">
+              <ThemedText className="text-base font-semibold mb-3">
                 Location *
-              </Text>
+              </ThemedText>
               <TouchableOpacity
                 onPress={handleGetLocation}
                 disabled={locationLoading}
-                className="bg-blue-50 rounded-xl px-4 py-4 flex-row items-center justify-between border border-blue-200"
-                style={{ minHeight: 60 }}
+                style={{
+                  backgroundColor: themeColors.primary + '20',
+                  borderRadius: 12,
+                  paddingHorizontal: 16,
+                  paddingVertical: 16,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  borderWidth: 1,
+                  borderColor: themeColors.primary + '40',
+                  minHeight: 60,
+                }}
               >
                 <View className="flex-row items-center flex-1">
-                  <MapPin size={20} color="#3B82F6" />
-                  <Text className="text-gray-900 font-medium ml-3 flex-1">
+                  <MapPin size={20} color={themeColors.primary} />
+                  <ThemedText className="font-medium ml-3 flex-1">
                     {location
                       ? `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`
                       : 'Get Current Location'}
-                  </Text>
+                  </ThemedText>
                 </View>
                 {locationLoading && (
                   <View className="ml-2">
-                    <Text className="text-blue-600">Loading...</Text>
+                    <ThemedText style={{ color: themeColors.primary }}>Loading...</ThemedText>
                   </View>
                 )}
               </TouchableOpacity>
@@ -393,19 +425,19 @@ export const EnhancedReportForm: React.FC<EnhancedReportFormProps> = ({
 
             {/* Photo */}
             <View className="mb-6">
-              <Text className="text-base font-semibold text-gray-900 mb-3">
+              <ThemedText className="text-base font-semibold mb-3">
                 Photo (Optional)
-              </Text>
+              </ThemedText>
               {photo ? (
-                <View className="relative">
+                <View style={{ position: 'relative' }}>
                   <Image
                     source={{ uri: photo }}
-                    className="w-full h-48 rounded-xl"
+                    style={{ width: '100%', height: 192, borderRadius: 12 }}
                     resizeMode="cover"
                   />
                   <Pressable
                     onPress={() => setPhoto(null)}
-                    className="absolute top-2 right-2 bg-black/50 rounded-full p-2"
+                    style={{ position: 'absolute', top: 8, right: 8, backgroundColor: 'rgba(0, 0, 0, 0.5)', borderRadius: 9999, padding: 8 }}
                   >
                     <X size={20} color="white" />
                   </Pressable>
@@ -414,19 +446,39 @@ export const EnhancedReportForm: React.FC<EnhancedReportFormProps> = ({
                 <View className="flex-row gap-3">
                   <TouchableOpacity
                     onPress={handleTakePhoto}
-                    className="flex-1 bg-gray-50 rounded-xl px-4 py-4 items-center justify-center border border-gray-200"
-                    style={{ minHeight: 60 }}
+                    style={{
+                      flex: 1,
+                      backgroundColor: themeColors.background,
+                      borderRadius: 12,
+                      paddingHorizontal: 16,
+                      paddingVertical: 16,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderWidth: 1,
+                      borderColor: themeColors.border,
+                      minHeight: 60,
+                    }}
                   >
-                    <Camera size={24} color="#6B7280" />
-                    <Text className="text-gray-700 font-medium mt-2">Take Photo</Text>
+                    <Camera size={24} color={themeColors.text} style={{ opacity: 0.7 }} />
+                    <ThemedText className="font-medium mt-2" style={{ opacity: 0.7 }}>Take Photo</ThemedText>
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={handlePickImage}
-                    className="flex-1 bg-gray-50 rounded-xl px-4 py-4 items-center justify-center border border-gray-200"
-                    style={{ minHeight: 60 }}
+                    style={{
+                      flex: 1,
+                      backgroundColor: themeColors.background,
+                      borderRadius: 12,
+                      paddingHorizontal: 16,
+                      paddingVertical: 16,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderWidth: 1,
+                      borderColor: themeColors.border,
+                      minHeight: 60,
+                    }}
                   >
-                    <ImageIcon size={24} color="#6B7280" />
-                    <Text className="text-gray-700 font-medium mt-2">Choose Photo</Text>
+                    <ImageIcon size={24} color={themeColors.text} style={{ opacity: 0.7 }} />
+                    <ThemedText className="font-medium mt-2" style={{ opacity: 0.7 }}>Choose Photo</ThemedText>
                   </TouchableOpacity>
                 </View>
               )}
@@ -464,7 +516,6 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
   },
   modalContainer: {
-    backgroundColor: 'white',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     height: MODAL_MAX_HEIGHT,
@@ -477,12 +528,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#111827',
   },
   closeButton: {
     width: 40,

@@ -419,6 +419,6 @@ export default function ChatbotScreen() {
           </View>
         </View>
       </KeyboardAvoidingView>
-    </View>
+    </ThemedView>
   );
 }

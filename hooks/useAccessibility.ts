@@ -6,10 +6,11 @@ import { useMemo } from 'react';
  * Hook to access accessibility settings and apply them to components
  */
 export const useAccessibility = () => {
-  const { accessibilitySettings } = useAppStore();
+  // Use selector to ensure re-renders when accessibilitySettings changes
+  const accessibilitySettings = useAppStore((state) => state.accessibilitySettings);
 
   const themeColors = useMemo(() => {
-    return accessibilityService.getThemeColors();
+    return accessibilityService.getThemeColors(accessibilitySettings.theme);
   }, [accessibilitySettings.theme]);
 
   const fontSizeMultiplier = useMemo(() => {

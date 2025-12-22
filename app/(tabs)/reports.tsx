@@ -489,7 +489,7 @@ export default function ReportsHistoryScreen() {
           </View>
         </View>
       </Modal>
-    </View>
+    </ThemedView>
   );
 }
 

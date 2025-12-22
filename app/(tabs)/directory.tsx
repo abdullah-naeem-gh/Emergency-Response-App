@@ -230,6 +230,6 @@ export default function DirectoryScreen() {
           </TouchableOpacity>
         </Modal>
       </View>
-    </View>
+    </ThemedView>
   );
 }

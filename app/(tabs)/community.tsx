@@ -872,7 +872,7 @@ export default function CommunityScreen() {
           </View>
         </View>
       </Modal>
-    </View>
+    </ThemedView>
   );
 }
 

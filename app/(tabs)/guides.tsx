@@ -211,6 +211,6 @@ export default function GuidesScreen() {
           contentContainerStyle={{ paddingBottom: 20 }}
         />
       </View>
-    </View>
+    </ThemedView>
   );
 }
