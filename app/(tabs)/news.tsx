@@ -1,3 +1,6 @@
+import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
+import { useAccessibility } from '@/hooks/useAccessibility';
 import { useRealtimeUpdates } from '@/hooks/useRealtimeUpdates';
 import * as Haptics from 'expo-haptics';
 import { AlertTriangle, Clock, Info, MapPin, Search, Share2, Siren, X } from 'lucide-react-native';
@@ -25,6 +28,7 @@ const getRelativeTime = (dateString: string) => {
 type FilterType = 'All' | 'Critical' | 'Warning' | 'Info';
 
 export default function NewsScreen() {
+  const { themeColors } = useAccessibility();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterType>('All');
   const [selectedAlert, setSelectedAlert] = useState<NewsItem | null>(null);
@@ -120,13 +124,17 @@ export default function NewsScreen() {
         Haptics.selectionAsync();
         setActiveFilter(filter);
       }}
-      className={`px-4 py-2 rounded-full mr-2 border ${
-        activeFilter === filter
-          ? 'bg-black border-black'
-          : 'bg-white border-gray-300'
-      }`}
+      style={{
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderRadius: 9999,
+        marginRight: 8,
+        borderWidth: 1,
+        backgroundColor: activeFilter === filter ? themeColors.text : themeColors.card,
+        borderColor: activeFilter === filter ? themeColors.text : themeColors.border,
+      }}
     >
-      <Text className={`font-semibold ${activeFilter === filter ? 'text-white' : 'text-gray-700'}`}>
+      <Text style={{ fontWeight: '600', color: activeFilter === filter ? themeColors.background : themeColors.text }}>
         {filter}
       </Text>
     </TouchableOpacity>
@@ -151,25 +159,25 @@ export default function NewsScreen() {
   }
 
   return (
-    <View className="flex-1 bg-gray-50">
+    <ThemedView className="flex-1">
       <View className="flex-1 px-4 pt-2">
         {/* Header */}
         <View className="mb-4">
-          <Text className="text-3xl font-bold text-gray-900 mb-4">Alerts</Text>
+          <ThemedText className="text-3xl font-bold mb-4">Alerts</ThemedText>
           
           {/* Search Bar */}
-          <View className="flex-row items-center bg-white rounded-xl px-4 py-3 border border-gray-200 mb-4 shadow-sm">
-            <Search size={20} color="#6B7280" />
+          <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: themeColors.card, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, borderWidth: 1, borderColor: themeColors.border, marginBottom: 16 }}>
+            <Search size={20} color={themeColors.text} style={{ opacity: 0.7 }} />
             <TextInput
-              className="flex-1 ml-3 text-base text-gray-900"
+              style={{ flex: 1, marginLeft: 12, fontSize: 16, color: themeColors.text }}
               placeholder="Search alerts by city..."
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={themeColors.text + '80'}
               value={searchQuery}
               onChangeText={setSearchQuery}
             />
             {searchQuery.length > 0 && (
               <TouchableOpacity onPress={() => setSearchQuery('')}>
-                <X size={18} color="#9CA3AF" />
+                <X size={18} color={themeColors.text} style={{ opacity: 0.7 }} />
               </TouchableOpacity>
             )}
           </View>
@@ -190,75 +198,95 @@ export default function NewsScreen() {
               {/* Featured Critical Alert */}
               {featuredAlert && (
                 <View className="mb-6">
-                  <Text className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Featured Alert</Text>
+                  <ThemedText className="text-xs font-bold uppercase tracking-wider mb-2" style={{ opacity: 0.7 }}>Featured Alert</ThemedText>
                   <TouchableOpacity 
                     onPress={() => openModal(featuredAlert)}
-                    className="bg-red-500 rounded-2xl p-5 shadow-lg overflow-hidden relative"
-                    style={{ minHeight: 140 }}
+                    style={{ backgroundColor: '#EF4444', borderRadius: 16, padding: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 5, overflow: 'hidden', position: 'relative', minHeight: 140 }}
                   >
                     <View className="flex-row justify-between items-start mb-2">
-                      <View className="flex-row items-center bg-red-700/50 px-2 py-1 rounded-md">
+                      <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(185, 28, 28, 0.5)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }}>
                         <Animated.View style={animatedPulseStyle}>
                             <Siren size={16} color="white" />
                         </Animated.View>
-                        <Text className="text-white text-xs font-bold ml-2 uppercase">Critical Emergency</Text>
+                        <Text style={{ color: '#FFFFFF', fontSize: 12, fontWeight: '700', marginLeft: 8, textTransform: 'uppercase' }}>Critical Emergency</Text>
                       </View>
-                      <Text className="text-red-100 text-xs">{getRelativeTime(featuredAlert.timestamp)}</Text>
+                      <Text style={{ color: '#FECACA', fontSize: 12 }}>{getRelativeTime(featuredAlert.timestamp)}</Text>
                     </View>
                     
-                    <Text className="text-white text-xl font-bold mb-2 leading-tight" numberOfLines={2}>
+                    <Text style={{ color: '#FFFFFF', fontSize: 20, fontWeight: '700', marginBottom: 8, lineHeight: 24 }} numberOfLines={2}>
                         {featuredAlert.title}
                     </Text>
                     
                     <View className="flex-row items-center mt-auto">
                         <MapPin size={16} color="#FECACA" />
-                        <Text className="text-red-100 ml-1 font-medium">{featuredAlert.location}</Text>
+                        <Text style={{ color: '#FECACA', marginLeft: 4, fontWeight: '500' }}>{featuredAlert.location}</Text>
                     </View>
                   </TouchableOpacity>
                 </View>
               )}
               
-              <Text className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Recent Updates</Text>
+              <ThemedText className="text-xs font-bold uppercase tracking-wider mb-2" style={{ opacity: 0.7 }}>Recent Updates</ThemedText>
             </>
           )}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              onPress={() => openModal(item)}
-              className={`bg-white rounded-xl p-4 mb-3 shadow-sm border-l-4 ${getBorderColor(item.severity)} border-t border-r border-b border-gray-100`}
-            >
-              <View className="flex-row justify-between items-start mb-2">
-                <View className="flex-row items-center">
-                  <View className={`px-2 py-1 rounded text-xs ${
-                      item.source === 'NDMA' ? 'bg-green-100' : 'bg-gray-100'
-                  }`}>
-                    <Text className={`text-[10px] font-bold ${
-                        item.source === 'NDMA' ? 'text-green-800' : 'text-gray-600'
-                    }`}>
+          renderItem={({ item }) => {
+            const borderColor = item.severity === 'CRITICAL' ? '#EF4444' : item.severity === 'WARNING' ? '#F59E0B' : '#3B82F6';
+            return (
+              <TouchableOpacity
+                onPress={() => openModal(item)}
+                style={{
+                  backgroundColor: themeColors.card,
+                  borderRadius: 12,
+                  padding: 16,
+                  marginBottom: 12,
+                  borderLeftWidth: 4,
+                  borderLeftColor: borderColor,
+                  borderTopWidth: 1,
+                  borderRightWidth: 1,
+                  borderBottomWidth: 1,
+                  borderTopColor: themeColors.border,
+                  borderRightColor: themeColors.border,
+                  borderBottomColor: themeColors.border,
+                }}
+              >
+                <View className="flex-row justify-between items-start mb-2">
+                  <View className="flex-row items-center">
+                    <View style={{
+                      paddingHorizontal: 8,
+                      paddingVertical: 4,
+                      borderRadius: 4,
+                      backgroundColor: item.source === 'NDMA' ? '#D1FAE5' : themeColors.background,
+                    }}>
+                      <Text style={{
+                        fontSize: 10,
+                        fontWeight: '700',
+                        color: item.source === 'NDMA' ? '#065F46' : themeColors.text,
+                      }}>
                         {item.source}
-                    </Text>
+                      </Text>
+                    </View>
+                    <View style={{ marginHorizontal: 8, width: 4, height: 4, backgroundColor: themeColors.border, borderRadius: 9999 }} />
+                    <Clock size={12} color={themeColors.text} style={{ opacity: 0.6 }} />
+                    <ThemedText className="text-xs ml-1" style={{ opacity: 0.6 }}>{getRelativeTime(item.timestamp)}</ThemedText>
                   </View>
-                  <View className="mx-2 w-1 h-1 bg-gray-300 rounded-full" />
-                  <Clock size={12} color="#9CA3AF" />
-                  <Text className="text-gray-400 text-xs ml-1">{getRelativeTime(item.timestamp)}</Text>
+                  
+                  {item.severity === 'CRITICAL' && <AlertTriangle size={16} color="#EF4444" />}
+                  {item.severity === 'WARNING' && <AlertTriangle size={16} color="#F59E0B" />}
+                  {item.severity === 'INFO' && <Info size={16} color="#3B82F6" />}
                 </View>
                 
-                {item.severity === 'CRITICAL' && <AlertTriangle size={16} color="#EF4444" />}
-                {item.severity === 'WARNING' && <AlertTriangle size={16} color="#F59E0B" />}
-                {item.severity === 'INFO' && <Info size={16} color="#3B82F6" />}
-              </View>
-              
-              <Text className="text-gray-900 font-bold text-lg mb-1">{item.title}</Text>
-              <Text className="text-gray-600 text-sm mb-3" numberOfLines={2}>{item.content}</Text>
-              
-              <View className="flex-row items-center">
-                <MapPin size={14} color="#6B7280" />
-                <Text className="text-gray-500 text-xs ml-1">{item.location}</Text>
-              </View>
-            </TouchableOpacity>
-          )}
+                <ThemedText className="font-bold text-lg mb-1">{item.title}</ThemedText>
+                <ThemedText className="text-sm mb-3" style={{ opacity: 0.7 }} numberOfLines={2}>{item.content}</ThemedText>
+                
+                <View className="flex-row items-center">
+                  <MapPin size={14} color={themeColors.text} style={{ opacity: 0.7 }} />
+                  <ThemedText className="text-xs ml-1" style={{ opacity: 0.7 }}>{item.location}</ThemedText>
+                </View>
+              </TouchableOpacity>
+            );
+          }}
           ListEmptyComponent={
             <View className="items-center justify-center py-10">
-                <Text className="text-gray-400">No alerts found.</Text>
+                <ThemedText style={{ opacity: 0.6 }}>No alerts found.</ThemedText>
             </View>
           }
           contentContainerStyle={{ paddingBottom: 20 }}
@@ -271,68 +299,73 @@ export default function NewsScreen() {
           visible={!!selectedAlert}
           onRequestClose={closeModal}
         >
-          <View className="flex-1 justify-end bg-black/50">
-            <View className="bg-white rounded-t-3xl h-[85%] w-full overflow-hidden">
+          <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
+            <View style={{ backgroundColor: themeColors.card, borderTopLeftRadius: 24, borderTopRightRadius: 24, height: '85%', width: '100%', overflow: 'hidden' }}>
                 {selectedAlert && (
                     <SafeAreaView className="flex-1">
                         {/* Modal Header */}
-                        <View className="px-5 py-4 flex-row justify-between items-center border-b border-gray-100">
+                        <View style={{ paddingHorizontal: 20, paddingVertical: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: themeColors.border }}>
                             <TouchableOpacity 
                                 onPress={closeModal}
-                                className="w-10 h-10 bg-gray-100 rounded-full items-center justify-center"
+                                style={{ width: 40, height: 40, backgroundColor: themeColors.background, borderRadius: 9999, alignItems: 'center', justifyContent: 'center' }}
                             >
-                                <X size={20} color="#374151" />
+                                <X size={20} color={themeColors.text} />
                             </TouchableOpacity>
-                            <Text className="font-semibold text-gray-900">Alert Details</Text>
+                            <ThemedText className="font-semibold">Alert Details</ThemedText>
                             <TouchableOpacity 
                                 onPress={() => handleShare(selectedAlert)}
-                                className="w-10 h-10 bg-blue-50 rounded-full items-center justify-center"
+                                style={{ width: 40, height: 40, backgroundColor: themeColors.primary + '20', borderRadius: 9999, alignItems: 'center', justifyContent: 'center' }}
                             >
-                                <Share2 size={20} color="#2563EB" />
+                                <Share2 size={20} color={themeColors.primary} />
                             </TouchableOpacity>
                         </View>
 
                         <ScrollView className="flex-1 px-5 pt-4">
                             {/* Tags */}
                             <View className="flex-row items-center mb-4 flex-wrap gap-2">
-                                <View className={`px-3 py-1 rounded-full ${
-                                    selectedAlert.severity === 'CRITICAL' ? 'bg-red-100' : 
-                                    selectedAlert.severity === 'WARNING' ? 'bg-amber-100' : 'bg-blue-100'
-                                }`}>
-                                    <Text className={`text-xs font-bold ${
-                                        selectedAlert.severity === 'CRITICAL' ? 'text-red-700' : 
-                                        selectedAlert.severity === 'WARNING' ? 'text-amber-700' : 'text-blue-700'
-                                    }`}>
+                                <View style={{
+                                  paddingHorizontal: 12,
+                                  paddingVertical: 4,
+                                  borderRadius: 9999,
+                                  backgroundColor: selectedAlert.severity === 'CRITICAL' ? '#FEE2E2' : 
+                                    selectedAlert.severity === 'WARNING' ? '#FED7AA' : '#DBEAFE',
+                                }}>
+                                    <Text style={{
+                                      fontSize: 12,
+                                      fontWeight: '700',
+                                      color: selectedAlert.severity === 'CRITICAL' ? '#B91C1C' : 
+                                        selectedAlert.severity === 'WARNING' ? '#C2410C' : '#1E40AF',
+                                    }}>
                                         {selectedAlert.severity}
                                     </Text>
                                 </View>
-                                <View className="bg-gray-100 px-3 py-1 rounded-full">
-                                    <Text className="text-xs font-bold text-gray-600">{selectedAlert.source}</Text>
+                                <View style={{ backgroundColor: themeColors.background, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 9999 }}>
+                                    <ThemedText className="text-xs font-bold">{selectedAlert.source}</ThemedText>
                                 </View>
                             </View>
 
-                            <Text className="text-2xl font-bold text-gray-900 mb-4">{selectedAlert.title}</Text>
+                            <ThemedText className="text-2xl font-bold mb-4">{selectedAlert.title}</ThemedText>
                             
                             <View className="flex-row items-center mb-6">
-                                <Clock size={16} color="#6B7280" />
-                                <Text className="text-gray-500 ml-2">{new Date(selectedAlert.timestamp).toLocaleString()}</Text>
+                                <Clock size={16} color={themeColors.text} style={{ opacity: 0.7 }} />
+                                <ThemedText className="ml-2" style={{ opacity: 0.7 }}>{new Date(selectedAlert.timestamp).toLocaleString()}</ThemedText>
                             </View>
                             
                             <View className="flex-row items-start mb-6">
-                                <MapPin size={16} color="#6B7280" className="mt-1" />
-                                <Text className="text-gray-500 ml-2 flex-1">{selectedAlert.location}</Text>
+                                <MapPin size={16} color={themeColors.text} style={{ marginTop: 2, opacity: 0.7 }} />
+                                <ThemedText className="ml-2 flex-1" style={{ opacity: 0.7 }}>{selectedAlert.location}</ThemedText>
                             </View>
 
-                            <View className="bg-gray-50 p-4 rounded-xl mb-6">
-                                <Text className="text-base text-gray-800 leading-relaxed">{selectedAlert.content}</Text>
+                            <View style={{ backgroundColor: themeColors.background, padding: 16, borderRadius: 12, marginBottom: 24 }}>
+                                <ThemedText className="text-base leading-relaxed">{selectedAlert.content}</ThemedText>
                             </View>
 
                             {selectedAlert.severity === 'CRITICAL' && (
-                                <View className="bg-red-50 p-4 rounded-xl border border-red-100 flex-row items-start">
-                                    <AlertTriangle size={20} color="#EF4444" className="mt-0.5" />
-                                    <View className="ml-3 flex-1">
-                                        <Text className="font-bold text-red-800 mb-1">Take Immediate Action</Text>
-                                        <Text className="text-red-700 text-sm">
+                                <View style={{ backgroundColor: '#FEE2E2', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: '#FECACA', flexDirection: 'row', alignItems: 'flex-start' }}>
+                                    <AlertTriangle size={20} color="#EF4444" style={{ marginTop: 2 }} />
+                                    <View style={{ marginLeft: 12, flex: 1 }}>
+                                        <Text style={{ fontWeight: '700', color: '#991B1B', marginBottom: 4 }}>Take Immediate Action</Text>
+                                        <Text style={{ color: '#B91C1C', fontSize: 14 }}>
                                             Follow local evacuation orders and stay tuned to official channels.
                                         </Text>
                                     </View>
@@ -340,12 +373,12 @@ export default function NewsScreen() {
                             )}
                         </ScrollView>
 
-                        <View className="p-5 border-t border-gray-100">
+                        <View style={{ padding: 20, borderTopWidth: 1, borderTopColor: themeColors.border }}>
                              <TouchableOpacity 
                                 onPress={closeModal}
-                                className="w-full bg-gray-900 h-[60px] rounded-2xl items-center justify-center shadow-md active:bg-gray-800"
+                                style={{ width: '100%', backgroundColor: themeColors.text, height: 60, borderRadius: 16, alignItems: 'center', justifyContent: 'center' }}
                             >
-                                <Text className="text-white font-bold text-lg">Close</Text>
+                                <Text style={{ color: themeColors.background, fontWeight: '700', fontSize: 18 }}>Close</Text>
                             </TouchableOpacity>
                         </View>
                     </SafeAreaView>

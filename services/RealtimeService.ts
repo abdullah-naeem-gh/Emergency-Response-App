@@ -1,6 +1,6 @@
 import NetInfo from '@react-native-community/netinfo';
 
-export type UpdateType = 'alert' | 'crowd_report' | 'volunteer_task' | 'weather' | 'system';
+export type UpdateType = 'alert' | 'crowd_report' | 'volunteer_task' | 'system';
 
 export interface RealtimeUpdate {
   id: string;
@@ -22,6 +22,8 @@ class RealtimeService {
   private reconnectDelay = 1000;
   private useWebSocket = true; // Toggle between WebSocket and polling
   private pollingIntervalMs = 5000; // 5 seconds
+  private consecutiveFailures = 0;
+  private maxConsecutiveFailures = 3; // Stop polling after 3 consecutive failures
 
   private readonly WS_URL = process.env.EXPO_PUBLIC_WS_URL || 'wss://api.muhafiz.app/ws';
   private readonly API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://api.muhafiz.app';
@@ -142,6 +144,11 @@ class RealtimeService {
         return;
       }
 
+      // Stop polling if we've had too many consecutive failures
+      if (this.consecutiveFailures >= this.maxConsecutiveFailures) {
+        return;
+      }
+
       // Get subscribed types
       const subscribedTypes = Array.from(this.subscribers.keys());
       if (subscribedTypes.length === 0) return;
@@ -164,8 +171,30 @@ class RealtimeService {
 
       const updates: RealtimeUpdate[] = await response.json();
       updates.forEach((update) => this.handleUpdate(update));
+      
+      // Reset failure counter on success
+      this.consecutiveFailures = 0;
     } catch (error) {
-      console.error('Error fetching updates:', error);
+      this.consecutiveFailures++;
+      
+      // Only log error on first failure or if it's not a network error
+      if (this.consecutiveFailures === 1) {
+        // Silently handle expected network failures in development
+        if (error instanceof TypeError && error.message === 'Network request failed') {
+          // Suppress repeated network errors - this is expected when API is not available
+          return;
+        }
+        console.warn('Realtime service unavailable - running in offline mode');
+      }
+      
+      // Stop polling after max failures
+      if (this.consecutiveFailures >= this.maxConsecutiveFailures) {
+        if (this.pollingInterval) {
+          clearInterval(this.pollingInterval);
+          this.pollingInterval = null;
+        }
+        this.isConnected = false;
+      }
     }
   }
 

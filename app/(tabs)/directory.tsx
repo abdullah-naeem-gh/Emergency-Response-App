@@ -1,3 +1,6 @@
+import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
+import { useAccessibility } from '@/hooks/useAccessibility';
 import * as Haptics from 'expo-haptics';
 import { ChevronDown, Phone } from 'lucide-react-native';
 import React, { useMemo, useState } from 'react';
@@ -56,6 +59,7 @@ const groupContacts = (contacts: EmergencyContact[]): SectionData[] => {
 };
 
 export default function DirectoryScreen() {
+  const { themeColors } = useAccessibility();
   const [selectedCity, setSelectedCity] = useState<CityFilter>('ALL');
   const [showCityDropdown, setShowCityDropdown] = useState(false);
 
@@ -96,11 +100,11 @@ export default function DirectoryScreen() {
   const selectedCityLabel = CITY_OPTIONS.find((opt) => opt.value === selectedCity)?.label || 'All Pakistan';
 
   return (
-    <View className="flex-1 bg-gray-50">
+    <ThemedView className="flex-1">
       <View className="flex-1 px-4 pt-2">
         {/* Header */}
         <View className="mb-4">
-          <Text className="text-3xl font-bold text-gray-900 mb-4">Emergency Directory</Text>
+          <ThemedText className="text-3xl font-bold mb-4">Emergency Directory</ThemedText>
 
           {/* City Filter Dropdown */}
           <TouchableOpacity
@@ -108,11 +112,22 @@ export default function DirectoryScreen() {
               Haptics.selectionAsync();
               setShowCityDropdown(true);
             }}
-            className="bg-white rounded-xl px-4 py-3 border border-gray-200 mb-4 shadow-sm flex-row items-center justify-between"
-            style={{ minHeight: 60 }}
+            style={{
+              backgroundColor: themeColors.card,
+              borderRadius: 12,
+              paddingHorizontal: 16,
+              paddingVertical: 12,
+              borderWidth: 1,
+              borderColor: themeColors.border,
+              marginBottom: 16,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              minHeight: 60,
+            }}
           >
-            <Text className="text-base font-semibold text-gray-900">{selectedCityLabel}</Text>
-            <ChevronDown size={20} color="#6B7280" />
+            <ThemedText className="text-base font-semibold">{selectedCityLabel}</ThemedText>
+            <ChevronDown size={20} color={themeColors.text} style={{ opacity: 0.7 }} />
           </TouchableOpacity>
         </View>
 
@@ -122,41 +137,47 @@ export default function DirectoryScreen() {
           keyExtractor={(item) => item.id}
           showsVerticalScrollIndicator={false}
           renderSectionHeader={({ section: { title } }) => (
-            <View className="bg-gray-100 px-4 py-2 mb-2">
-              <Text className="text-sm font-bold text-gray-700 uppercase tracking-wider">
+            <View style={{ backgroundColor: themeColors.background, paddingHorizontal: 16, paddingVertical: 8, marginBottom: 8 }}>
+              <ThemedText className="text-sm font-bold uppercase tracking-wider">
                 {title}
-              </Text>
+              </ThemedText>
             </View>
           )}
           renderItem={({ item }) => (
             <View
-              className="bg-white rounded-xl mb-3 shadow-sm border border-gray-100 overflow-hidden"
-              style={{ minHeight: 80 }}
+              style={{
+                backgroundColor: themeColors.card,
+                borderRadius: 12,
+                marginBottom: 12,
+                borderWidth: 1,
+                borderColor: themeColors.border,
+                overflow: 'hidden',
+                minHeight: 80,
+              }}
             >
               <View className="flex-row items-center justify-between px-4 py-3">
                 <View className="flex-1 mr-3">
-                  <Text className="text-lg font-bold text-gray-900 mb-1">{item.name}</Text>
-                  <Text className="text-sm text-gray-600">{item.phone}</Text>
+                  <ThemedText className="text-lg font-bold mb-1">{item.name}</ThemedText>
+                  <ThemedText className="text-sm" style={{ opacity: 0.7 }}>{item.phone}</ThemedText>
                   {item.city !== 'ALL' && (
-                    <Text className="text-xs text-gray-500 mt-1">
+                    <ThemedText className="text-xs mt-1" style={{ opacity: 0.6 }}>
                       {item.city.charAt(0) + item.city.slice(1).toLowerCase()}
-                    </Text>
+                    </ThemedText>
                   )}
                 </View>
                 <TouchableOpacity
                   onPress={() => handleCall(item.phone)}
-                  className="bg-green-500 rounded-xl px-6 py-3 items-center justify-center active:bg-green-600"
-                  style={{ minHeight: 60, minWidth: 100 }}
+                  style={{ backgroundColor: '#22C55E', borderRadius: 12, paddingHorizontal: 24, paddingVertical: 12, alignItems: 'center', justifyContent: 'center', minHeight: 60, minWidth: 100 }}
                 >
                   <Phone size={24} color="white" />
-                  <Text className="text-white font-bold text-base mt-1">Call</Text>
+                  <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 16, marginTop: 4 }}>Call</Text>
                 </TouchableOpacity>
               </View>
             </View>
           )}
           ListEmptyComponent={
             <View className="items-center justify-center py-10">
-              <Text className="text-gray-400">No contacts found for this city.</Text>
+              <ThemedText style={{ opacity: 0.6 }}>No contacts found for this city.</ThemedText>
             </View>
           }
           contentContainerStyle={{ paddingBottom: 20 }}
@@ -170,32 +191,38 @@ export default function DirectoryScreen() {
           onRequestClose={() => setShowCityDropdown(false)}
         >
           <TouchableOpacity
-            className="flex-1 bg-black/50 justify-center items-center"
+            style={{ flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'center', alignItems: 'center' }}
             activeOpacity={1}
             onPress={() => setShowCityDropdown(false)}
           >
-            <View className="bg-white rounded-2xl w-11/12 max-w-sm overflow-hidden">
-              <View className="px-5 py-4 border-b border-gray-200">
-                <Text className="text-lg font-bold text-gray-900">Select City</Text>
+            <View style={{ backgroundColor: themeColors.card, borderRadius: 16, width: '91.666667%', maxWidth: 384, overflow: 'hidden' }}>
+              <View style={{ paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: themeColors.border }}>
+                <ThemedText className="text-lg font-bold">Select City</ThemedText>
               </View>
               {CITY_OPTIONS.map((option) => (
                 <TouchableOpacity
                   key={option.value}
                   onPress={() => handleCitySelect(option.value)}
-                  className={`px-5 py-4 border-b border-gray-100 flex-row items-center justify-between ${
-                    selectedCity === option.value ? 'bg-green-50' : 'bg-white'
-                  }`}
-                  style={{ minHeight: 60 }}
+                  style={{
+                    paddingHorizontal: 20,
+                    paddingVertical: 16,
+                    borderBottomWidth: 1,
+                    borderBottomColor: themeColors.border,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    backgroundColor: selectedCity === option.value ? '#D1FAE5' : themeColors.card,
+                    minHeight: 60,
+                  }}
                 >
-                  <Text
-                    className={`text-base font-semibold ${
-                      selectedCity === option.value ? 'text-green-700' : 'text-gray-900'
-                    }`}
+                  <ThemedText
+                    className="text-base font-semibold"
+                    style={{ color: selectedCity === option.value ? '#059669' : themeColors.text }}
                   >
                     {option.label}
-                  </Text>
+                  </ThemedText>
                   {selectedCity === option.value && (
-                    <View className="w-2 h-2 bg-green-500 rounded-full" />
+                    <View style={{ width: 8, height: 8, backgroundColor: '#22C55E', borderRadius: 9999 }} />
                   )}
                 </TouchableOpacity>
               ))}

@@ -1,3 +1,6 @@
+import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
+import { useAccessibility } from '@/hooks/useAccessibility';
 import * as Haptics from 'expo-haptics';
 import { Bot, Phone, Send } from 'lucide-react-native';
 import React, { useEffect, useRef, useState } from 'react';
@@ -132,11 +135,13 @@ interface MessageBubbleProps {
 }
 
 const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
+  const { themeColors } = useAccessibility();
+  
   if (message.isUser) {
     return (
       <View className="flex-row justify-end mb-4">
-        <View className="bg-blue-500 rounded-2xl rounded-tr-sm px-4 py-3 max-w-[80%]">
-          <Text className="text-white text-base">{message.text}</Text>
+        <View style={{ backgroundColor: themeColors.primary, borderRadius: 16, borderTopRightRadius: 4, paddingHorizontal: 16, paddingVertical: 12, maxWidth: '80%' }}>
+          <Text style={{ color: '#FFFFFF', fontSize: 16 }}>{message.text}</Text>
         </View>
       </View>
     );
@@ -144,8 +149,8 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
 
   return (
     <View className="flex-row justify-start mb-4">
-      <View className="bg-gray-200 rounded-2xl rounded-tl-sm px-4 py-3 max-w-[80%]">
-        <Text className="text-gray-900 text-base">{message.text}</Text>
+      <View style={{ backgroundColor: themeColors.background, borderRadius: 16, borderTopLeftRadius: 4, paddingHorizontal: 16, paddingVertical: 12, maxWidth: '80%', borderWidth: 1, borderColor: themeColors.border }}>
+        <ThemedText className="text-base">{message.text}</ThemedText>
         {message.data && (
           <View className="mt-3">
             {message.data.type === 'guide' && <GuideCard guide={message.data.item as Guide} />}
@@ -163,15 +168,16 @@ interface GuideCardProps {
 }
 
 const GuideCard: React.FC<GuideCardProps> = ({ guide }) => {
+  const { themeColors } = useAccessibility();
   return (
-    <View className="bg-white rounded-xl p-3 mt-2 border border-gray-300">
-      <Text className="text-gray-900 font-bold text-base mb-1">{guide.title}</Text>
-      <Text className="text-gray-600 text-sm mb-2">
+    <View style={{ backgroundColor: themeColors.card, borderRadius: 12, padding: 12, marginTop: 8, borderWidth: 1, borderColor: themeColors.border }}>
+      <ThemedText className="font-bold text-base mb-1">{guide.title}</ThemedText>
+      <ThemedText className="text-sm mb-2" style={{ opacity: 0.7 }}>
         {guide.steps.length} {guide.steps.length === 1 ? 'step' : 'steps'}
-      </Text>
+      </ThemedText>
       <View className="flex-row items-center">
-        <View className="bg-red-100 px-2 py-1 rounded">
-          <Text className="text-red-700 text-xs font-semibold">
+        <View style={{ backgroundColor: '#FEE2E2', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4 }}>
+          <Text style={{ color: '#B91C1C', fontSize: 12, fontWeight: '600' }}>
             {guide.category === 'FIRST_AID' ? 'First Aid' : guide.category}
           </Text>
         </View>
@@ -185,31 +191,33 @@ interface AlertCardProps {
 }
 
 const AlertCard: React.FC<AlertCardProps> = ({ alert }) => {
+  const { themeColors } = useAccessibility();
   const getSeverityColor = (severity: NewsItem['severity']) => {
     switch (severity) {
       case 'CRITICAL':
-        return 'bg-red-100 text-red-700';
+        return { bg: '#FEE2E2', text: '#B91C1C' };
       case 'WARNING':
-        return 'bg-orange-100 text-orange-700';
+        return { bg: '#FED7AA', text: '#C2410C' };
       case 'INFO':
-        return 'bg-blue-100 text-blue-700';
+        return { bg: '#DBEAFE', text: '#1E40AF' };
       default:
-        return 'bg-gray-100 text-gray-700';
+        return { bg: themeColors.background, text: themeColors.text };
     }
   };
 
+  const colors = getSeverityColor(alert.severity);
   return (
-    <View className="bg-white rounded-xl p-3 mt-2 border border-gray-300">
+    <View style={{ backgroundColor: themeColors.card, borderRadius: 12, padding: 12, marginTop: 8, borderWidth: 1, borderColor: themeColors.border }}>
       <View className="flex-row items-center justify-between mb-2">
-        <Text className="text-gray-900 font-bold text-base flex-1">{alert.title}</Text>
-        <View className={`px-2 py-1 rounded ${getSeverityColor(alert.severity)}`}>
-          <Text className="text-xs font-semibold">{alert.severity}</Text>
+        <ThemedText className="font-bold text-base flex-1">{alert.title}</ThemedText>
+        <View style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4, backgroundColor: colors.bg }}>
+          <Text style={{ fontSize: 12, fontWeight: '600', color: colors.text }}>{alert.severity}</Text>
         </View>
       </View>
-      <Text className="text-gray-600 text-sm mb-2" numberOfLines={2}>
+      <ThemedText className="text-sm mb-2" style={{ opacity: 0.7 }} numberOfLines={2}>
         {alert.content}
-      </Text>
-      <Text className="text-gray-500 text-xs">{alert.location}</Text>
+      </ThemedText>
+      <ThemedText className="text-xs" style={{ opacity: 0.6 }}>{alert.location}</ThemedText>
     </View>
   );
 };
@@ -219,6 +227,7 @@ interface ContactCardProps {
 }
 
 const ContactCard: React.FC<ContactCardProps> = ({ contact }) => {
+  const { themeColors } = useAccessibility();
   const handleCall = async () => {
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
@@ -233,16 +242,15 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact }) => {
   };
 
   return (
-    <View className="bg-white rounded-xl p-3 mt-2 border border-gray-300">
-      <Text className="text-gray-900 font-bold text-base mb-1">{contact.name}</Text>
-      <Text className="text-gray-600 text-sm mb-3">{contact.phone}</Text>
+    <View style={{ backgroundColor: themeColors.card, borderRadius: 12, padding: 12, marginTop: 8, borderWidth: 1, borderColor: themeColors.border }}>
+      <ThemedText className="font-bold text-base mb-1">{contact.name}</ThemedText>
+      <ThemedText className="text-sm mb-3" style={{ opacity: 0.7 }}>{contact.phone}</ThemedText>
       <TouchableOpacity
         onPress={handleCall}
-        className="bg-green-500 rounded-xl px-4 py-3 flex-row items-center justify-center"
-        style={{ minHeight: 60 }}
+        style={{ backgroundColor: '#22C55E', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', minHeight: 60 }}
       >
         <Phone size={20} color="white" />
-        <Text className="text-white font-bold text-base ml-2">Call Now</Text>
+        <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 16, marginLeft: 8 }}>Call Now</Text>
       </TouchableOpacity>
     </View>
   );
@@ -251,13 +259,14 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact }) => {
 interface TypingIndicatorProps {}
 
 const TypingIndicator: React.FC<TypingIndicatorProps> = () => {
+  const { themeColors } = useAccessibility();
   return (
     <View className="flex-row justify-start mb-4">
-      <View className="bg-gray-200 rounded-2xl rounded-tl-sm px-4 py-3">
+      <View style={{ backgroundColor: themeColors.background, borderRadius: 16, borderTopLeftRadius: 4, paddingHorizontal: 16, paddingVertical: 12, borderWidth: 1, borderColor: themeColors.border }}>
         <View className="flex-row">
-          <View className="w-2 h-2 bg-gray-500 rounded-full mr-1" />
-          <View className="w-2 h-2 bg-gray-500 rounded-full mr-1" />
-          <View className="w-2 h-2 bg-gray-500 rounded-full" />
+          <View style={{ width: 8, height: 8, backgroundColor: themeColors.text, borderRadius: 9999, marginRight: 4, opacity: 0.6 }} />
+          <View style={{ width: 8, height: 8, backgroundColor: themeColors.text, borderRadius: 9999, marginRight: 4, opacity: 0.6 }} />
+          <View style={{ width: 8, height: 8, backgroundColor: themeColors.text, borderRadius: 9999, opacity: 0.6 }} />
         </View>
       </View>
     </View>
@@ -266,6 +275,7 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = () => {
 
 export default function ChatbotScreen() {
   const insets = useSafeAreaInsets();
+  const { themeColors } = useAccessibility();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -322,16 +332,16 @@ export default function ChatbotScreen() {
   };
 
   return (
-    <View className="flex-1 bg-gray-50">
+    <ThemedView className="flex-1">
       <KeyboardAvoidingView
         className="flex-1"
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? navbarHeight + 20 : navbarHeight}
       >
         {/* Header */}
-        <View className="bg-white px-4 py-3 border-b border-gray-200 flex-row items-center">
-          <Bot size={24} color="#3B82F6" />
-          <Text className="text-xl font-bold text-gray-900 ml-2">AI Assistant</Text>
+        <View style={{ backgroundColor: themeColors.card, paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: themeColors.border, flexDirection: 'row', alignItems: 'center' }}>
+          <Bot size={24} color={themeColors.primary} />
+          <ThemedText className="text-xl font-bold ml-2">AI Assistant</ThemedText>
         </View>
 
         {/* Messages List */}
@@ -347,8 +357,12 @@ export default function ChatbotScreen() {
 
         {/* Input Bar - Positioned absolutely above navbar */}
         <View 
-          className="bg-white border-t border-gray-200 px-4 py-3"
           style={{ 
+            backgroundColor: themeColors.card,
+            borderTopWidth: 1,
+            borderTopColor: themeColors.border,
+            paddingHorizontal: 16,
+            paddingVertical: 12,
             position: 'absolute',
             bottom: navbarHeight,
             left: 0,
@@ -364,23 +378,41 @@ export default function ChatbotScreen() {
         >
           <View className="flex-row items-center">
             <TextInput
-              className="flex-1 bg-gray-100 rounded-xl px-4 py-3 text-base text-gray-900 mr-3"
+              style={{
+                flex: 1,
+                backgroundColor: themeColors.background,
+                borderRadius: 12,
+                paddingHorizontal: 16,
+                paddingVertical: 12,
+                fontSize: 16,
+                color: themeColors.text,
+                marginRight: 12,
+                minHeight: 50,
+                maxHeight: 100,
+                borderWidth: 1,
+                borderColor: themeColors.border,
+              }}
               placeholder="Ask me anything..."
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={themeColors.text + '80'}
               value={inputText}
               onChangeText={setInputText}
               onSubmitEditing={handleSend}
               returnKeyType="send"
               multiline
-              style={{ minHeight: 50, maxHeight: 100 }}
             />
             <TouchableOpacity
               onPress={handleSend}
               disabled={!inputText.trim() || isTyping}
-              className={`rounded-xl px-4 py-3 items-center justify-center ${
-                inputText.trim() && !isTyping ? 'bg-blue-500' : 'bg-gray-300'
-              }`}
-              style={{ minHeight: 60, minWidth: 60 }}
+              style={{
+                borderRadius: 12,
+                paddingHorizontal: 16,
+                paddingVertical: 12,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: inputText.trim() && !isTyping ? themeColors.primary : themeColors.border,
+                minHeight: 60,
+                minWidth: 60,
+              }}
             >
               <Send size={24} color="white" />
             </TouchableOpacity>

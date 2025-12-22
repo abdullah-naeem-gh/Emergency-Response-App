@@ -1,3 +1,6 @@
+import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
+import { useAccessibility } from '@/hooks/useAccessibility';
 import { Guide } from '@/src/data/guidesData';
 import { getGuides, searchGuides } from '@/src/services/dataService';
 import * as Haptics from 'expo-haptics';
@@ -15,6 +18,7 @@ interface GuideCardProps {
 }
 
 const GuideCard: React.FC<GuideCardProps> = ({ guide, onPress }) => {
+  const { themeColors } = useAccessibility();
   const getCategoryLabel = (category: Guide['category']) => {
     switch (category) {
       case 'FIRST_AID':
@@ -31,25 +35,34 @@ const GuideCard: React.FC<GuideCardProps> = ({ guide, onPress }) => {
   const getCategoryColor = (category: Guide['category']) => {
     switch (category) {
       case 'FIRST_AID':
-        return { bg: 'bg-red-100', text: 'text-red-700' };
+        return { bg: '#FEE2E2', text: '#B91C1C' };
       case 'EVACUATION':
-        return { bg: 'bg-orange-100', text: 'text-orange-700' };
+        return { bg: '#FED7AA', text: '#C2410C' };
       case 'SURVIVAL':
-        return { bg: 'bg-blue-100', text: 'text-blue-700' };
+        return { bg: '#DBEAFE', text: '#1E40AF' };
       default:
-        return { bg: 'bg-gray-100', text: 'text-gray-700' };
+        return { bg: themeColors.background, text: themeColors.text };
     }
   };
+
+  const colors = getCategoryColor(guide.category);
 
   return (
     <TouchableOpacity
       onPress={onPress}
-      className="bg-white rounded-2xl mb-4 overflow-hidden shadow-sm border border-gray-100"
-      style={{ minHeight: 200 }}
+      style={{
+        backgroundColor: themeColors.card,
+        borderRadius: 16,
+        marginBottom: 16,
+        overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: themeColors.border,
+        minHeight: 200,
+      }}
       activeOpacity={0.7}
     >
       {/* Placeholder Image */}
-      <View className="w-full h-32 bg-gray-200 relative">
+      <View style={{ width: '100%', height: 128, backgroundColor: themeColors.background, position: 'relative' }}>
         <Image
           source={{ uri: guide.steps[0]?.imageUrl || 'https://via.placeholder.com/300x200?text=Guide' }}
           style={{ width: '100%', height: '100%' }}
@@ -59,36 +72,31 @@ const GuideCard: React.FC<GuideCardProps> = ({ guide, onPress }) => {
         />
         {/* Offline Badge */}
         {guide.isOfflineReady && (
-          <View className="absolute top-2 right-2 bg-green-500 rounded-full px-2 py-1 flex-row items-center">
+          <View style={{ position: 'absolute', top: 8, right: 8, backgroundColor: '#22C55E', borderRadius: 9999, paddingHorizontal: 8, paddingVertical: 4, flexDirection: 'row', alignItems: 'center' }}>
             <CheckCircle size={12} color="white" />
-            <Text className="text-white text-[10px] font-bold ml-1">Offline</Text>
+            <Text style={{ color: '#FFFFFF', fontSize: 10, fontWeight: '700', marginLeft: 4 }}>Offline</Text>
           </View>
         )}
       </View>
 
       {/* Content */}
-      <View className="p-4 flex-1">
+      <View style={{ padding: 16, flex: 1 }}>
         {/* Category Tag */}
-        {(() => {
-          const colors = getCategoryColor(guide.category);
-          return (
-            <View className={`self-start px-3 py-1 rounded-full mb-2 ${colors.bg}`}>
-              <Text className={`text-xs font-bold ${colors.text}`}>
-                {getCategoryLabel(guide.category)}
-              </Text>
-            </View>
-          );
-        })()}
+        <View style={{ alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 9999, marginBottom: 8, backgroundColor: colors.bg }}>
+          <Text style={{ fontSize: 12, fontWeight: '700', color: colors.text }}>
+            {getCategoryLabel(guide.category)}
+          </Text>
+        </View>
 
         {/* Title */}
-        <Text className="text-base font-bold text-gray-900 mb-1" numberOfLines={2}>
+        <ThemedText className="text-base font-bold mb-1" numberOfLines={2}>
           {guide.title}
-        </Text>
+        </ThemedText>
 
         {/* Step Count */}
-        <Text className="text-xs text-gray-500 mt-1">
+        <ThemedText className="text-xs mt-1" style={{ opacity: 0.7 }}>
           {guide.steps.length} {guide.steps.length === 1 ? 'step' : 'steps'}
-        </Text>
+        </ThemedText>
       </View>
     </TouchableOpacity>
   );
@@ -96,6 +104,7 @@ const GuideCard: React.FC<GuideCardProps> = ({ guide, onPress }) => {
 
 export default function GuidesScreen() {
   const router = useRouter();
+  const { themeColors } = useAccessibility();
   const [activeFilter, setActiveFilter] = useState<FilterType>('All');
 
   // Filter guides based on active filter
@@ -139,17 +148,23 @@ export default function GuidesScreen() {
     <TouchableOpacity
       key={filter}
       onPress={() => handleFilterPress(filter)}
-      className={`px-5 py-3 rounded-full mr-3 border ${
-        activeFilter === filter
-          ? 'bg-gray-900 border-gray-900'
-          : 'bg-white border-gray-300'
-      }`}
-      style={{ minHeight: 44 }}
+      style={{
+        paddingHorizontal: 20,
+        paddingVertical: 12,
+        borderRadius: 9999,
+        marginRight: 12,
+        borderWidth: 1,
+        backgroundColor: activeFilter === filter ? themeColors.text : themeColors.card,
+        borderColor: activeFilter === filter ? themeColors.text : themeColors.border,
+        minHeight: 44,
+      }}
     >
       <Text
-        className={`font-semibold text-sm ${
-          activeFilter === filter ? 'text-white' : 'text-gray-700'
-        }`}
+        style={{
+          fontWeight: '600',
+          fontSize: 14,
+          color: activeFilter === filter ? themeColors.background : themeColors.text,
+        }}
       >
         {filter}
       </Text>
@@ -157,11 +172,11 @@ export default function GuidesScreen() {
   );
 
   return (
-    <View className="flex-1 bg-gray-50">
+    <ThemedView className="flex-1">
       <View className="flex-1 px-4 pt-2">
         {/* Header */}
         <View className="mb-4">
-          <Text className="text-3xl font-bold text-gray-900 mb-4">Guides</Text>
+          <ThemedText className="text-3xl font-bold mb-4">Guides</ThemedText>
 
           {/* Quick Filters */}
           <ScrollView
@@ -190,7 +205,7 @@ export default function GuidesScreen() {
           )}
           ListEmptyComponent={
             <View className="items-center justify-center py-20">
-              <Text className="text-gray-400 text-base">No guides found.</Text>
+              <ThemedText className="text-base" style={{ opacity: 0.6 }}>No guides found.</ThemedText>
             </View>
           }
           contentContainerStyle={{ paddingBottom: 20 }}

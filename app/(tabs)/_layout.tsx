@@ -95,25 +95,7 @@ export default function TabLayout() {
             }}
           />
           <Tabs.Screen
-            name="weather"
-            options={{
-              href: null,
-            }}
-          />
-          <Tabs.Screen
-            name="preparedness"
-            options={{
-              href: null,
-            }}
-          />
-          <Tabs.Screen
             name="profile"
-            options={{
-              href: null,
-            }}
-          />
-          <Tabs.Screen
-            name="evacuation"
             options={{
               href: null,
             }}

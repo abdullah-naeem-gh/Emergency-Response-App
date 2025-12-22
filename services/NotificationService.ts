@@ -1,7 +1,7 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
-export type NotificationType = 'alert' | 'crowd_report' | 'volunteer_task' | 'weather' | 'system';
+export type NotificationType = 'alert' | 'crowd_report' | 'volunteer_task' | 'system';
 
 export interface NotificationData {
   type: NotificationType;
@@ -161,19 +161,6 @@ class NotificationService {
     });
   }
 
-  /**
-   * Send weather alert notification
-   */
-  async sendWeatherAlert(title: string, body: string, data?: any): Promise<string> {
-    return this.scheduleLocalNotification({
-      type: 'weather',
-      title,
-      body,
-      data,
-      priority: 'default',
-      sound: false,
-    });
-  }
 
   /**
    * Cancel a notification

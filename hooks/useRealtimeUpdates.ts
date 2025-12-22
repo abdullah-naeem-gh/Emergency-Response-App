@@ -93,9 +93,6 @@ async function handleNotification(
       case 'volunteer_task':
         await notificationService.sendVolunteerTaskNotification(title, body, update.data);
         break;
-      case 'weather':
-        await notificationService.sendWeatherAlert(title, body, update.data);
-        break;
       default:
         await notificationService.scheduleLocalNotification({
           type: 'system',
@@ -121,8 +118,6 @@ function getDefaultNotificationTitle(update: RealtimeUpdate): string {
       return 'New Report';
     case 'volunteer_task':
       return 'Volunteer Task Update';
-    case 'weather':
-      return 'Weather Alert';
     default:
       return 'Update';
   }
@@ -143,8 +138,6 @@ function getDefaultNotificationBody(update: RealtimeUpdate): string {
       return 'A new incident has been reported nearby.';
     case 'volunteer_task':
       return 'A new volunteer task is available.';
-    case 'weather':
-      return 'A weather alert has been issued.';
     default:
       return 'You have a new update.';
   }

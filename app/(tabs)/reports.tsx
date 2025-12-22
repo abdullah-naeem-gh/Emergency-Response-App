@@ -1,4 +1,7 @@
 import { AnimatedPressable } from '@/components/AnimatedPressable';
+import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
+import { useAccessibility } from '@/hooks/useAccessibility';
 import { CrowdReport, crowdReportService, ReportStatus } from '@/services/CrowdReportService';
 import { reportService } from '@/services/ReportService';
 import * as Haptics from 'expo-haptics';
@@ -66,6 +69,7 @@ interface ReportCardProps {
 }
 
 const ReportCard: React.FC<ReportCardProps> = ({ report, onPress, onEdit, onDelete }) => {
+  const { themeColors } = useAccessibility();
   const StatusIcon = getStatusIcon(report.status);
   const statusColor = getStatusColor(report.status);
   const statusLabel = getStatusLabel(report.status);
@@ -88,13 +92,18 @@ const ReportCard: React.FC<ReportCardProps> = ({ report, onPress, onEdit, onDele
   return (
     <AnimatedPressable
       onPress={onPress}
-      className="bg-white rounded-2xl p-4 mb-3"
       style={{
+        backgroundColor: themeColors.card,
+        borderRadius: 16,
+        padding: 16,
+        marginBottom: 12,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
         elevation: 3,
+        borderWidth: 1,
+        borderColor: themeColors.border,
       }}
       hapticFeedback={true}
       hapticStyle={Haptics.ImpactFeedbackStyle.Light}
@@ -127,9 +136,9 @@ const ReportCard: React.FC<ReportCardProps> = ({ report, onPress, onEdit, onDele
               </View>
             )}
           </View>
-          <Text className="text-gray-900 text-base font-semibold mb-1">
+          <ThemedText className="text-base font-semibold mb-1">
             {report.details}
-          </Text>
+          </ThemedText>
         </View>
       </View>
 
@@ -178,15 +187,16 @@ const ReportCard: React.FC<ReportCardProps> = ({ report, onPress, onEdit, onDele
         </View>
       </View>
 
-      <Text className="text-gray-400 text-xs mt-2">
+      <ThemedText className="text-xs mt-2" style={{ opacity: 0.6 }}>
         {new Date(report.timestamp).toLocaleString()}
-      </Text>
+      </ThemedText>
     </AnimatedPressable>
   );
 };
 
 export default function ReportsHistoryScreen() {
   const router = useRouter();
+  const { themeColors } = useAccessibility();
   const [reports, setReports] = useState<CrowdReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedReport, setSelectedReport] = useState<CrowdReport | null>(null);
@@ -261,16 +271,16 @@ export default function ReportsHistoryScreen() {
 
   if (loading) {
     return (
-      <View className="flex-1 bg-gray-50 items-center justify-center">
-        <ActivityIndicator size="large" color="#3B82F6" />
-      </View>
+      <ThemedView className="flex-1 items-center justify-center">
+        <ActivityIndicator size="large" color={themeColors.primary} />
+      </ThemedView>
     );
   }
 
   return (
-    <View className="flex-1 bg-gray-50">
+    <ThemedView className="flex-1">
       {/* Header */}
-      <View className="bg-white px-6 pt-4 pb-4">
+      <View style={{ backgroundColor: themeColors.card, paddingHorizontal: 24, paddingTop: 16, paddingBottom: 16 }}>
         <View className="flex-row items-center mb-3">
           <Pressable
             onPress={async () => {
@@ -285,15 +295,15 @@ export default function ReportsHistoryScreen() {
               justifyContent: 'center',
             }}
           >
-            <ArrowLeft size={24} color="#374151" />
+            <ArrowLeft size={24} color={themeColors.text} />
           </Pressable>
           <View className="flex-1">
-            <Text className="text-4xl font-bold text-gray-900 mb-2">
+            <ThemedText className="text-4xl font-bold mb-2">
               Report History
-            </Text>
-            <Text className="text-gray-600 text-base">
+            </ThemedText>
+            <ThemedText className="text-base" style={{ opacity: 0.7 }}>
               {filteredReports.length} {filteredReports.length === 1 ? 'report' : 'reports'}
-            </Text>
+            </ThemedText>
           </View>
         </View>
       </View>
@@ -302,7 +312,7 @@ export default function ReportsHistoryScreen() {
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        className="bg-white px-6 py-3 border-b border-gray-200"
+        style={{ backgroundColor: themeColors.card, paddingHorizontal: 24, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: themeColors.border }}
         contentContainerStyle={{ gap: 8, paddingRight: 24 }}
       >
         {FILTER_OPTIONS.map((option) => {
@@ -313,15 +323,17 @@ export default function ReportsHistoryScreen() {
             <AnimatedPressable
               key={option.id}
               onPress={() => handleFilterChange(option.id)}
-              className={`rounded-full flex-row items-center justify-center ${
-                filter === option.id ? 'bg-gray-100' : 'bg-white'
-              }`}
               style={{
+                borderRadius: 9999,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
                 paddingHorizontal: 16,
                 paddingVertical: 8,
                 height: 36,
+                backgroundColor: filter === option.id ? themeColors.background : themeColors.card,
                 borderWidth: filter === option.id ? 2 : 1,
-                borderColor: filter === option.id ? statusColor : '#E5E7EB',
+                borderColor: filter === option.id ? statusColor : themeColors.border,
                 flexShrink: 0,
               }}
               hapticFeedback={true}
@@ -352,14 +364,14 @@ export default function ReportsHistoryScreen() {
       >
         {filteredReports.length === 0 ? (
           <View className="items-center justify-center py-20">
-            <Text className="text-gray-400 text-lg font-semibold mb-2">
+            <ThemedText className="text-lg font-semibold mb-2" style={{ opacity: 0.6 }}>
               No reports found
-            </Text>
-            <Text className="text-gray-500 text-sm text-center">
+            </ThemedText>
+            <ThemedText className="text-sm text-center" style={{ opacity: 0.7 }}>
               {filter === 'all'
                 ? 'You haven\'t submitted any reports yet'
                 : `No reports with status "${getStatusLabel(filter as ReportStatus)}"`}
-            </Text>
+            </ThemedText>
           </View>
         ) : (
           filteredReports.map((report) => (
@@ -380,26 +392,26 @@ export default function ReportsHistoryScreen() {
         animationType="slide"
         onRequestClose={() => setSelectedReport(null)}
       >
-        <View className="flex-1 bg-black/50 justify-end">
-          <View className="bg-white rounded-t-3xl p-6 pb-12 max-h-[90%]">
+        <View style={{ flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'flex-end' }}>
+          <View style={{ backgroundColor: themeColors.card, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 48, maxHeight: '90%' }}>
             <View className="items-center mb-4">
-              <View className="w-12 h-1 bg-gray-300 rounded-full mb-4" />
-              <Text className="text-2xl font-bold text-gray-900 mb-2">
+              <View style={{ width: 48, height: 4, backgroundColor: themeColors.border, borderRadius: 9999, marginBottom: 16 }} />
+              <ThemedText className="text-2xl font-bold mb-2">
                 Report Details
-              </Text>
+              </ThemedText>
             </View>
 
             {selectedReport && (
               <ScrollView showsVerticalScrollIndicator={false}>
                 <View className="mb-4">
-                  <Text className="text-gray-500 text-sm mb-1">Type</Text>
-                  <Text className="text-gray-900 text-lg font-semibold capitalize">
+                  <ThemedText className="text-sm mb-1" style={{ opacity: 0.7 }}>Type</ThemedText>
+                  <ThemedText className="text-lg font-semibold capitalize">
                     {selectedReport.type}
-                  </Text>
+                  </ThemedText>
                 </View>
 
                 <View className="mb-4">
-                  <Text className="text-gray-500 text-sm mb-1">Status</Text>
+                  <ThemedText className="text-sm mb-1" style={{ opacity: 0.7 }}>Status</ThemedText>
                   <View className="flex-row items-center">
                     {(() => {
                       const StatusIcon = getStatusIcon(selectedReport.status);
@@ -420,58 +432,57 @@ export default function ReportsHistoryScreen() {
                 </View>
 
                 <View className="mb-4">
-                  <Text className="text-gray-500 text-sm mb-1">Description</Text>
-                  <Text className="text-gray-900 text-base leading-6">
+                  <ThemedText className="text-sm mb-1" style={{ opacity: 0.7 }}>Description</ThemedText>
+                  <ThemedText className="text-base leading-6">
                     {selectedReport.details}
-                  </Text>
+                  </ThemedText>
                 </View>
 
                 {selectedReport.severity && (
                   <View className="mb-4">
-                    <Text className="text-gray-500 text-sm mb-1">Severity</Text>
-                    <Text className="text-gray-900 text-base font-semibold">
+                    <ThemedText className="text-sm mb-1" style={{ opacity: 0.7 }}>Severity</ThemedText>
+                    <ThemedText className="text-base font-semibold">
                       {selectedReport.severity}
-                    </Text>
+                    </ThemedText>
                   </View>
                 )}
 
                 {selectedReport.location && (
                   <View className="mb-4">
-                    <Text className="text-gray-500 text-sm mb-1">Location</Text>
+                    <ThemedText className="text-sm mb-1" style={{ opacity: 0.7 }}>Location</ThemedText>
                     <View className="flex-row items-center">
-                      <MapPin size={16} color="#6B7280" />
-                      <Text className="text-gray-900 text-base ml-2">
+                      <MapPin size={16} color={themeColors.text} style={{ opacity: 0.7 }} />
+                      <ThemedText className="text-base ml-2">
                         {selectedReport.location.latitude.toFixed(6)},{' '}
                         {selectedReport.location.longitude.toFixed(6)}
-                      </Text>
+                      </ThemedText>
                     </View>
                   </View>
                 )}
 
                 <View className="mb-4">
-                  <Text className="text-gray-500 text-sm mb-1">Submitted</Text>
-                  <Text className="text-gray-900 text-base">
+                  <ThemedText className="text-sm mb-1" style={{ opacity: 0.7 }}>Submitted</ThemedText>
+                  <ThemedText className="text-base">
                     {new Date(selectedReport.timestamp).toLocaleString()}
-                  </Text>
+                  </ThemedText>
                 </View>
 
                 {selectedReport.affectedPeople && (
                   <View className="mb-4">
-                    <Text className="text-gray-500 text-sm mb-1">
+                    <ThemedText className="text-sm mb-1" style={{ opacity: 0.7 }}>
                       People Affected
-                    </Text>
-                    <Text className="text-gray-900 text-base font-semibold">
+                    </ThemedText>
+                    <ThemedText className="text-base font-semibold">
                       {selectedReport.affectedPeople}
-                    </Text>
+                    </ThemedText>
                   </View>
                 )}
 
                 <TouchableOpacity
                   onPress={() => setSelectedReport(null)}
-                  className="bg-blue-500 rounded-xl py-4 mt-4 items-center"
-                  style={{ minHeight: 60 }}
+                  style={{ backgroundColor: themeColors.primary, borderRadius: 12, paddingVertical: 16, marginTop: 16, alignItems: 'center', minHeight: 60 }}
                 >
-                  <Text className="text-white font-bold text-lg">Close</Text>
+                  <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 18 }}>Close</Text>
                 </TouchableOpacity>
               </ScrollView>
             )}

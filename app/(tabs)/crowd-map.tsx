@@ -1,5 +1,8 @@
 import { AnimatedPressable } from '@/components/AnimatedPressable';
 import { EnhancedReportForm } from '@/components/EnhancedReportForm';
+import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
+import { useAccessibility } from '@/hooks/useAccessibility';
 import { clusterReports, CrowdReport, crowdReportService, generateHeatmapData, ReportCluster } from '@/services/CrowdReportService';
 import { useAppStore } from '@/store/useAppStore';
 import * as Haptics from 'expo-haptics';
@@ -67,6 +70,7 @@ const getStatusColor = (status?: string): string => {
 
 export default function CrowdMapScreen() {
   const { setMode, setRedZone } = useAppStore();
+  const { themeColors } = useAccessibility();
   const [reports, setReports] = useState<CrowdReport[]>([]);
   const [clusters, setClusters] = useState<ReportCluster[]>([]);
   const [loading, setLoading] = useState(true);
@@ -368,26 +372,42 @@ export default function CrowdMapScreen() {
   };
 
   return (
-    <View className="flex-1 bg-neutral-900">
+    <ThemedView className="flex-1">
       {/* Header */}
-      <View className="bg-neutral-800 px-4 py-3 flex-row items-center justify-between">
+      <View 
+        style={{ 
+          backgroundColor: themeColors.card, 
+          paddingHorizontal: 16, 
+          paddingVertical: 12, 
+          flexDirection: 'row', 
+          alignItems: 'center', 
+          justifyContent: 'space-between',
+          borderBottomWidth: 1,
+          borderBottomColor: themeColors.border,
+        }}
+      >
         <View className="flex-1">
-          <Text className="text-white text-xl font-bold">Crowd Reports</Text>
-          <Text className="text-neutral-400 text-xs">
+          <ThemedText className="text-xl font-bold">Crowd Reports</ThemedText>
+          <ThemedText className="text-xs" style={{ opacity: 0.7 }}>
             {filteredClusters.length} clusters • {filteredReports.length} reports
-          </Text>
+          </ThemedText>
         </View>
         <AnimatedPressable
           onPress={handleRefresh}
           disabled={loading}
-          className="bg-neutral-700 rounded-full p-2"
-          style={{ minHeight: 44, minWidth: 44 }}
+          style={{ 
+            backgroundColor: themeColors.border, 
+            borderRadius: 9999, 
+            padding: 8, 
+            minHeight: 44, 
+            minWidth: 44 
+          }}
           hapticFeedback={true}
           hapticStyle={Haptics.ImpactFeedbackStyle.Light}
         >
           <RefreshCw
             size={20}
-            color="white"
+            color={themeColors.text}
             style={loading ? { transform: [{ rotate: '180deg' }] } : undefined}
           />
         </AnimatedPressable>
@@ -417,23 +437,47 @@ export default function CrowdMapScreen() {
         </MapView>
 
         {/* View Mode Toggle */}
-        <View className="absolute top-4 right-4 bg-neutral-800 rounded-xl p-1 flex-row shadow-lg">
+        <View 
+          style={{
+            position: 'absolute',
+            top: 16,
+            right: 16,
+            backgroundColor: themeColors.card,
+            borderRadius: 12,
+            padding: 4,
+            flexDirection: 'row',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 4,
+            elevation: 3,
+            borderWidth: 1,
+            borderColor: themeColors.border,
+          }}
+        >
           {(['reports', 'clusters', 'heatmap'] as ViewMode[]).map((mode) => (
             <AnimatedPressable
               key={mode}
               onPress={() => handleViewModeChange(mode)}
-              className={`px-3 py-2 rounded-lg ${
-                viewMode === mode ? 'bg-blue-500' : 'bg-transparent'
-              }`}
-              style={{ minHeight: 44 }}
+              style={{ 
+                paddingHorizontal: 12, 
+                paddingVertical: 8, 
+                borderRadius: 8,
+                backgroundColor: viewMode === mode ? themeColors.primary : 'transparent',
+                minHeight: 44 
+              }}
               hapticFeedback={true}
               hapticStyle={Haptics.ImpactFeedbackStyle.Light}
             >
-              <Text className={`font-semibold text-xs ${
-                viewMode === mode ? 'text-white' : 'text-neutral-400'
-              }`}>
+              <ThemedText 
+                className="font-semibold text-xs"
+                style={{ 
+                  color: viewMode === mode ? '#FFFFFF' : themeColors.text,
+                  opacity: viewMode === mode ? 1 : 0.7,
+                }}
+              >
                 {mode === 'reports' ? 'Reports' : mode === 'clusters' ? 'Clusters' : 'Heat'}
-              </Text>
+              </ThemedText>
             </AnimatedPressable>
           ))}
         </View>
@@ -441,46 +485,77 @@ export default function CrowdMapScreen() {
         {/* Time Filter Button */}
         <AnimatedPressable
           onPress={() => setShowTimeFilter(true)}
-          className="absolute top-4 left-4 bg-neutral-800 rounded-xl px-4 py-2 flex-row items-center shadow-lg"
-          style={{ minHeight: 44 }}
+          style={{
+            position: 'absolute',
+            top: 16,
+            left: 16,
+            backgroundColor: themeColors.card,
+            borderRadius: 12,
+            paddingHorizontal: 16,
+            paddingVertical: 8,
+            flexDirection: 'row',
+            alignItems: 'center',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 4,
+            elevation: 3,
+            minHeight: 44,
+            borderWidth: 1,
+            borderColor: themeColors.border,
+          }}
           hapticFeedback={true}
           hapticStyle={Haptics.ImpactFeedbackStyle.Light}
         >
-          <Clock size={16} color="white" />
-          <Text className="text-white font-semibold text-sm ml-2">
+          <Clock size={16} color={themeColors.text} />
+          <ThemedText className="font-semibold text-sm ml-2">
             {TIME_FILTERS.find(f => f.id === timeFilter)?.label || 'All Time'}
-          </Text>
+          </ThemedText>
         </AnimatedPressable>
 
         {/* Filter Pills */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          className="absolute bottom-4 left-0 right-0 px-4"
+          style={{
+            position: 'absolute',
+            bottom: 16,
+            left: 0,
+            right: 0,
+            paddingHorizontal: 16,
+          }}
           contentContainerStyle={{ gap: 8 }}
         >
           {INCIDENT_CATEGORIES.map((category) => (
             <AnimatedPressable
               key={category.id}
               onPress={() => handleFilterChange(category.id)}
-              className={`px-4 py-2 rounded-full border ${
-                selectedFilter === category.id
-                  ? 'bg-white border-white'
-                  : 'bg-neutral-800/90 border-neutral-600'
-              }`}
-              style={{ minHeight: 36 }}
+              style={{
+                paddingHorizontal: 16,
+                paddingVertical: 8,
+                borderRadius: 9999,
+                borderWidth: 1,
+                backgroundColor: selectedFilter === category.id
+                  ? themeColors.background
+                  : themeColors.card + 'E6',
+                borderColor: selectedFilter === category.id
+                  ? themeColors.border
+                  : themeColors.border,
+                minHeight: 36,
+              }}
               hapticFeedback={true}
               hapticStyle={Haptics.ImpactFeedbackStyle.Light}
             >
-              <Text
-                className={`font-semibold text-xs ${
-                  selectedFilter === category.id
-                    ? 'text-neutral-900'
-                    : 'text-white'
-                }`}
+              <ThemedText
+                className="font-semibold text-xs"
+                style={{
+                  color: selectedFilter === category.id
+                    ? themeColors.text
+                    : themeColors.text,
+                }}
               >
                 {category.label}
-              </Text>
+              </ThemedText>
             </AnimatedPressable>
           ))}
         </ScrollView>
@@ -504,21 +579,24 @@ export default function CrowdMapScreen() {
         animationType="slide"
         onRequestClose={() => setSelectedCluster(null)}
       >
-        <View className="flex-1 bg-black/50 justify-end">
-          <View className="bg-neutral-800 rounded-t-3xl p-6 pb-12 max-h-[80%]">
+        <View style={{ flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'flex-end' }}>
+          <View style={{ backgroundColor: themeColors.card, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 48, maxHeight: '80%' }}>
             <View className="items-center mb-4">
-              <View className="w-12 h-1 bg-neutral-600 rounded-full mb-4" />
-              <Text className="text-white text-2xl font-bold mb-2">
+              <View style={{ width: 48, height: 4, backgroundColor: themeColors.border, borderRadius: 9999, marginBottom: 16 }} />
+              <ThemedText className="text-2xl font-bold mb-2">
                 Cluster Details
-              </Text>
+              </ThemedText>
             </View>
 
             {selectedCluster && (
               <>
                 <View className="flex-row items-center mb-4">
                   <View
-                    className="px-3 py-1 rounded-full mr-2"
                     style={{
+                      paddingHorizontal: 12,
+                      paddingVertical: 4,
+                      borderRadius: 9999,
+                      marginRight: 8,
                       backgroundColor: getSeverityColor(selectedCluster.severity) + '20',
                     }}
                   >
@@ -531,47 +609,56 @@ export default function CrowdMapScreen() {
                       {selectedCluster.severity}
                     </Text>
                   </View>
-                  <Text className="text-neutral-400 text-sm">
+                  <ThemedText className="text-sm" style={{ opacity: 0.7 }}>
                     {selectedCluster.reports.length} reports
-                  </Text>
-                  <Text className="text-neutral-400 text-sm mx-2">•</Text>
-                  <Text className="text-neutral-400 text-sm">
+                  </ThemedText>
+                  <ThemedText className="text-sm mx-2" style={{ opacity: 0.7 }}>•</ThemedText>
+                  <ThemedText className="text-sm" style={{ opacity: 0.7 }}>
                     {Math.round(selectedCluster.confidence * 100)}% confidence
-                  </Text>
+                  </ThemedText>
                 </View>
 
-                <Text className="text-white text-lg font-semibold mb-2">
+                <ThemedText className="text-lg font-semibold mb-2">
                   {selectedCluster.type.toUpperCase()} Incident
-                </Text>
-                <Text className="text-neutral-400 text-sm mb-4">
+                </ThemedText>
+                <ThemedText className="text-sm mb-4" style={{ opacity: 0.7 }}>
                   {new Date(selectedCluster.timestamp).toLocaleString()}
-                </Text>
+                </ThemedText>
 
-                <ScrollView className="max-h-64">
+                <ScrollView style={{ maxHeight: 256 }}>
                   {selectedCluster.reports.map((report) => (
                     <View
                       key={report.id}
-                      className="bg-neutral-700 rounded-xl p-3 mb-2"
+                      style={{
+                        backgroundColor: themeColors.background,
+                        borderRadius: 12,
+                        padding: 12,
+                        marginBottom: 8,
+                        borderWidth: 1,
+                        borderColor: themeColors.border,
+                      }}
                     >
-                      <Text className="text-white text-sm mb-1">
+                      <ThemedText className="text-sm mb-1">
                         {report.details}
-                      </Text>
+                      </ThemedText>
                       <View className="flex-row items-center justify-between">
                       <View className="flex-row items-center">
-                        <Text className="text-neutral-400 text-xs">
+                        <ThemedText className="text-xs" style={{ opacity: 0.7 }}>
                           {new Date(report.timestamp).toLocaleTimeString()}
-                        </Text>
+                        </ThemedText>
                         {report.verified && (
                           <>
-                            <Text className="text-neutral-400 text-xs mx-2">•</Text>
+                            <ThemedText className="text-xs mx-2" style={{ opacity: 0.7 }}>•</ThemedText>
                             <Text className="text-green-400 text-xs">Verified</Text>
                           </>
                           )}
                         </View>
                         {report.status && (
                           <View
-                            className="px-2 py-1 rounded-full"
                             style={{
+                              paddingHorizontal: 8,
+                              paddingVertical: 4,
+                              borderRadius: 9999,
                               backgroundColor: getStatusColor(report.status) + '20',
                             }}
                           >
@@ -590,10 +677,16 @@ export default function CrowdMapScreen() {
 
                 <TouchableOpacity
                   onPress={() => setSelectedCluster(null)}
-                  className="bg-blue-500 rounded-xl py-4 mt-4 items-center"
-                  style={{ minHeight: 60 }}
+                  style={{
+                    backgroundColor: themeColors.primary,
+                    borderRadius: 12,
+                    paddingVertical: 16,
+                    marginTop: 16,
+                    alignItems: 'center',
+                    minHeight: 60,
+                  }}
                 >
-                  <Text className="text-white font-bold text-lg">Close</Text>
+                  <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 18 }}>Close</Text>
                 </TouchableOpacity>
               </>
             )}
@@ -602,8 +695,8 @@ export default function CrowdMapScreen() {
       </Modal>
 
       {loading && (
-        <View className="absolute inset-0 bg-black/50 items-center justify-center">
-          <ActivityIndicator size="large" color="#3B82F6" />
+        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.5)', alignItems: 'center', justifyContent: 'center' }}>
+          <ActivityIndicator size="large" color={themeColors.primary} />
         </View>
       )}
 
@@ -615,21 +708,29 @@ export default function CrowdMapScreen() {
         onRequestClose={() => setShowTimeFilter(false)}
       >
         <Pressable
-          className="flex-1 bg-black/50 justify-center items-center"
+          style={{ flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'center', alignItems: 'center' }}
           onPress={() => setShowTimeFilter(false)}
         >
-          <View className="bg-neutral-800 rounded-2xl p-4 w-64">
-            <Text className="text-white text-lg font-bold mb-4">Time Filter</Text>
+          <View style={{ backgroundColor: themeColors.card, borderRadius: 16, padding: 16, width: 256, borderWidth: 1, borderColor: themeColors.border }}>
+            <ThemedText className="text-lg font-bold mb-4">Time Filter</ThemedText>
             {TIME_FILTERS.map((filter) => (
               <TouchableOpacity
                 key={filter.id}
                 onPress={() => handleTimeFilterChange(filter.id)}
-                className={`py-3 px-4 rounded-xl mb-2 ${
-                  timeFilter === filter.id ? 'bg-blue-500' : 'bg-neutral-700'
-                }`}
-                style={{ minHeight: 50 }}
+                style={{
+                  paddingVertical: 12,
+                  paddingHorizontal: 16,
+                  borderRadius: 12,
+                  marginBottom: 8,
+                  backgroundColor: timeFilter === filter.id ? themeColors.primary : themeColors.background,
+                  minHeight: 50,
+                  borderWidth: 1,
+                  borderColor: themeColors.border,
+                }}
               >
-                <Text className="text-white font-semibold">{filter.label}</Text>
+                <ThemedText className="font-semibold" style={{ color: timeFilter === filter.id ? '#FFFFFF' : themeColors.text }}>
+                  {filter.label}
+                </ThemedText>
               </TouchableOpacity>
             ))}
           </View>
@@ -642,7 +743,7 @@ export default function CrowdMapScreen() {
         onClose={() => setShowReportForm(false)}
         onSuccess={handleReportSuccess}
       />
-    </View>
+    </ThemedView>
   );
 }
 

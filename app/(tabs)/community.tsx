@@ -1,3 +1,6 @@
+import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
+import { useAccessibility } from '@/hooks/useAccessibility';
 import {
   communityService,
   ResourceOffer,
@@ -65,6 +68,7 @@ const getUrgencyColor = (urgency: string): string => {
 
 export default function CommunityScreen() {
   const router = useRouter();
+  const { themeColors } = useAccessibility();
   const [activeTab, setActiveTab] = useState<TabType>('checkin');
   const [checkIns, setCheckIns] = useState<SafetyCheckIn[]>([]);
   const [resourceRequests, setResourceRequests] = useState<ResourceRequest[]>([]);
@@ -206,16 +210,16 @@ export default function CommunityScreen() {
 
   if (loading) {
     return (
-      <View className="flex-1 bg-gray-50 items-center justify-center">
-        <ActivityIndicator size="large" color="#3B82F6" />
-      </View>
+      <ThemedView className="flex-1 items-center justify-center">
+        <ActivityIndicator size="large" color={themeColors.primary} />
+      </ThemedView>
     );
   }
 
   return (
-    <View className="flex-1 bg-gray-50">
+    <ThemedView className="flex-1">
       {/* Header */}
-      <View className="bg-white px-6 pt-4 pb-4 border-b border-gray-200">
+      <View style={{ backgroundColor: themeColors.card, paddingHorizontal: 24, paddingTop: 16, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: themeColors.border }}>
         <View className="flex-row items-center justify-between mb-3">
           <View className="flex-row items-center flex-1">
             <Pressable
@@ -231,11 +235,11 @@ export default function CommunityScreen() {
                 justifyContent: 'center',
               }}
             >
-              <ArrowLeft size={24} color="#374151" />
+              <ArrowLeft size={24} color={themeColors.text} />
             </Pressable>
             <View className="flex-1">
-              <Text className="text-4xl font-bold text-gray-900 mb-1">Community</Text>
-              <Text className="text-gray-600 text-sm">Stay connected, help each other</Text>
+              <ThemedText className="text-4xl font-bold mb-1">Community</ThemedText>
+              <ThemedText className="text-sm" style={{ opacity: 0.7 }}>Stay connected, help each other</ThemedText>
             </View>
           </View>
         </View>
@@ -256,19 +260,23 @@ export default function CommunityScreen() {
                   Haptics.selectionAsync();
                   setActiveTab(tab.id);
                 }}
-                className={`px-4 py-2 rounded-full flex-row items-center ${
-                  isActive ? 'bg-blue-500' : 'bg-gray-100'
-                }`}
-                style={{ minHeight: 36 }}
+                style={{
+                  paddingHorizontal: 16,
+                  paddingVertical: 8,
+                  borderRadius: 9999,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  backgroundColor: isActive ? themeColors.primary : themeColors.background,
+                  minHeight: 36,
+                }}
               >
-                <Icon size={16} color={isActive ? '#ffffff' : '#6B7280'} />
-                <Text
-                  className={`text-sm font-semibold ml-2 ${
-                    isActive ? 'text-white' : 'text-gray-700'
-                  }`}
+                <Icon size={16} color={isActive ? '#FFFFFF' : themeColors.text} />
+                <ThemedText
+                  className="text-sm font-semibold ml-2"
+                  style={{ color: isActive ? '#FFFFFF' : themeColors.text }}
                 >
                   {tab.label}
-                </Text>
+                </ThemedText>
               </TouchableOpacity>
             );
           })}
@@ -285,31 +293,35 @@ export default function CommunityScreen() {
             {/* Check-in Button */}
             <TouchableOpacity
               onPress={() => setShowCheckInModal(true)}
-              className="bg-blue-500 rounded-2xl p-6 mb-6 items-center"
-              style={{ minHeight: 80 }}
+              style={{ backgroundColor: themeColors.primary, borderRadius: 16, padding: 24, marginBottom: 24, alignItems: 'center', minHeight: 80 }}
             >
               <Shield size={32} color="white" />
-              <Text className="text-white text-lg font-bold mt-2">Check In</Text>
-              <Text className="text-blue-100 text-sm mt-1">
+              <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '700', marginTop: 8 }}>Check In</Text>
+              <ThemedText className="text-sm mt-1" style={{ color: '#FFFFFF', opacity: 0.9 }}>
                 Let your family know you&apos;re safe
-              </Text>
+              </ThemedText>
             </TouchableOpacity>
 
             {/* Recent Check-ins */}
-            <Text className="text-xl font-bold text-gray-900 mb-4">Recent Check-ins</Text>
+            <ThemedText className="text-xl font-bold mb-4">Recent Check-ins</ThemedText>
             {checkIns.length === 0 ? (
-              <View className="bg-white rounded-2xl p-6 items-center border border-gray-200">
-                <Shield size={48} color="#9CA3AF" />
-                <Text className="text-gray-600 text-center mt-4">
+              <View style={{ backgroundColor: themeColors.card, borderRadius: 16, padding: 24, alignItems: 'center', borderWidth: 1, borderColor: themeColors.border }}>
+                <Shield size={48} color={themeColors.text} style={{ opacity: 0.5 }} />
+                <ThemedText className="text-center mt-4" style={{ opacity: 0.7 }}>
                   No check-ins yet. Be the first to check in!
-                </Text>
+                </ThemedText>
               </View>
             ) : (
               checkIns.map((checkIn) => (
                 <View
                   key={checkIn.id}
-                  className="bg-white rounded-xl p-4 mb-3 border border-gray-200"
                   style={{
+                    backgroundColor: themeColors.card,
+                    borderRadius: 12,
+                    padding: 16,
+                    marginBottom: 12,
+                    borderWidth: 1,
+                    borderColor: themeColors.border,
                     shadowColor: '#000',
                     shadowOffset: { width: 0, height: 1 },
                     shadowOpacity: 0.1,
@@ -320,8 +332,7 @@ export default function CommunityScreen() {
                   <View className="flex-row items-center justify-between mb-2">
                     <View className="flex-row items-center">
                       <View
-                        className="w-3 h-3 rounded-full mr-2"
-                        style={{ backgroundColor: getStatusColor(checkIn.status) }}
+                        style={{ width: 12, height: 12, borderRadius: 9999, marginRight: 8, backgroundColor: getStatusColor(checkIn.status) }}
                       />
                       <Text
                         className="text-sm font-semibold capitalize"
@@ -330,14 +341,14 @@ export default function CommunityScreen() {
                         {checkIn.status.replace('_', ' ')}
                       </Text>
                     </View>
-                    <Text className="text-gray-400 text-xs">{formatTimeAgo(checkIn.timestamp)}</Text>
+                    <ThemedText className="text-xs" style={{ opacity: 0.6 }}>{formatTimeAgo(checkIn.timestamp)}</ThemedText>
                   </View>
                   {checkIn.message && (
-                    <Text className="text-gray-900 text-base mb-2">{checkIn.message}</Text>
+                    <ThemedText className="text-base mb-2">{checkIn.message}</ThemedText>
                   )}
-                  <Text className="text-gray-500 text-xs">
+                  <ThemedText className="text-xs" style={{ opacity: 0.7 }}>
                     {checkIn.location.latitude.toFixed(4)}, {checkIn.location.longitude.toFixed(4)}
-                  </Text>
+                  </ThemedText>
                 </View>
               ))
             )}

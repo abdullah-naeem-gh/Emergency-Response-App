@@ -1,3 +1,6 @@
+import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
+import { useAccessibility } from '@/hooks/useAccessibility';
 import { getGuideById } from '@/src/services/dataService';
 import * as Haptics from 'expo-haptics';
 import { Image } from 'expo-image';
@@ -15,20 +18,21 @@ interface StepItemProps {
 }
 
 const StepItem: React.FC<StepItemProps> = ({ stepNumber, text, imageUrl, isLast }) => {
+  const { themeColors } = useAccessibility();
   return (
     <View className="flex-row mb-6">
       {/* Step Number Circle and Line */}
       <View className="items-center mr-4">
-        <View className="w-10 h-10 rounded-full bg-gray-900 items-center justify-center">
-          <Text className="text-white font-bold text-lg">{stepNumber}</Text>
+        <View style={{ width: 40, height: 40, borderRadius: 9999, backgroundColor: themeColors.text, alignItems: 'center', justifyContent: 'center' }}>
+          <Text style={{ color: themeColors.background, fontWeight: '700', fontSize: 18 }}>{stepNumber}</Text>
         </View>
-        {!isLast && <View className="w-0.5 flex-1 bg-gray-300 mt-2" style={{ minHeight: 40 }} />}
+        {!isLast && <View style={{ width: 2, flex: 1, backgroundColor: themeColors.border, marginTop: 8, minHeight: 40 }} />}
       </View>
 
       {/* Step Content */}
       <View className="flex-1 pb-4">
         {/* Step Image */}
-        <View className="w-full h-48 bg-gray-200 rounded-xl mb-3 overflow-hidden">
+        <View style={{ width: '100%', height: 192, backgroundColor: themeColors.background, borderRadius: 12, marginBottom: 12, overflow: 'hidden' }}>
           <Image
             source={{ uri: imageUrl || 'https://via.placeholder.com/400x300?text=Step+' + stepNumber }}
             style={{ width: '100%', height: '100%' }}
@@ -39,9 +43,9 @@ const StepItem: React.FC<StepItemProps> = ({ stepNumber, text, imageUrl, isLast 
         </View>
 
         {/* Step Text */}
-        <Text className="text-lg text-gray-900 leading-7" style={{ fontSize: 18, lineHeight: 28 }}>
+        <ThemedText className="text-lg leading-7" style={{ fontSize: 18, lineHeight: 28 }}>
           {text}
-        </Text>
+        </ThemedText>
       </View>
     </View>
   );
@@ -49,6 +53,7 @@ const StepItem: React.FC<StepItemProps> = ({ stepNumber, text, imageUrl, isLast 
 
 export default function GuideDetailScreen() {
   const router = useRouter();
+  const { themeColors } = useAccessibility();
   const { id } = useLocalSearchParams<{ id: string }>();
   const guide = getGuideById(id || '');
 
@@ -59,18 +64,17 @@ export default function GuideDetailScreen() {
 
   if (!guide) {
     return (
-      <SafeAreaView className="flex-1 bg-gray-50" edges={['top']}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: themeColors.background }} edges={['top']}>
         <View className="flex-1 items-center justify-center px-4">
-          <Text className="text-xl font-bold text-gray-900 mb-2">Guide not found</Text>
-          <Text className="text-gray-600 text-center mb-6">
+          <ThemedText className="text-xl font-bold mb-2">Guide not found</ThemedText>
+          <ThemedText className="text-center mb-6" style={{ opacity: 0.7 }}>
             The guide you're looking for doesn't exist.
-          </Text>
+          </ThemedText>
           <TouchableOpacity
             onPress={handleBack}
-            className="bg-gray-900 rounded-xl px-6 py-4"
-            style={{ minHeight: 60 }}
+            style={{ backgroundColor: themeColors.text, borderRadius: 12, paddingHorizontal: 24, paddingVertical: 16, minHeight: 60 }}
           >
-            <Text className="text-white font-bold text-lg">Go Back</Text>
+            <Text style={{ color: themeColors.background, fontWeight: '700', fontSize: 18 }}>Go Back</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -93,31 +97,32 @@ export default function GuideDetailScreen() {
   const getCategoryColor = (category: string) => {
     switch (category) {
       case 'FIRST_AID':
-        return { bg: 'bg-red-100', text: 'text-red-700' };
+        return { bg: '#FEE2E2', text: '#B91C1C' };
       case 'EVACUATION':
-        return { bg: 'bg-orange-100', text: 'text-orange-700' };
+        return { bg: '#FED7AA', text: '#C2410C' };
       case 'SURVIVAL':
-        return { bg: 'bg-blue-100', text: 'text-blue-700' };
+        return { bg: '#DBEAFE', text: '#1E40AF' };
       default:
-        return { bg: 'bg-gray-100', text: 'text-gray-700' };
+        return { bg: themeColors.background, text: themeColors.text };
     }
   };
 
+  const colors = getCategoryColor(guide.category);
+
   return (
-    <SafeAreaView className="flex-1 bg-gray-50" edges={['top']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: themeColors.background }} edges={['top']}>
       {/* Header */}
-      <View className="bg-white border-b border-gray-200 px-4 py-3 flex-row items-center">
+      <View style={{ backgroundColor: themeColors.card, borderBottomWidth: 1, borderBottomColor: themeColors.border, paddingHorizontal: 16, paddingVertical: 12, flexDirection: 'row', alignItems: 'center' }}>
         <TouchableOpacity
           onPress={handleBack}
-          className="w-10 h-10 items-center justify-center mr-3"
-          style={{ minHeight: 44, minWidth: 44 }}
+          style={{ width: 40, height: 40, alignItems: 'center', justifyContent: 'center', marginRight: 12, minHeight: 44, minWidth: 44 }}
         >
-          <ArrowLeft size={24} color="#111827" />
+          <ArrowLeft size={24} color={themeColors.text} />
         </TouchableOpacity>
         <View className="flex-1">
-          <Text className="text-lg font-bold text-gray-900" numberOfLines={1}>
+          <ThemedText className="text-lg font-bold" numberOfLines={1}>
             {guide.title}
-          </Text>
+          </ThemedText>
         </View>
       </View>
 
@@ -125,34 +130,29 @@ export default function GuideDetailScreen() {
         <View className="px-4 py-6">
           {/* Category and Offline Badge */}
           <View className="flex-row items-center mb-6 flex-wrap gap-2">
-            {(() => {
-              const colors = getCategoryColor(guide.category);
-              return (
-                <View className={`px-4 py-2 rounded-full ${colors.bg}`}>
-                  <Text className={`text-sm font-bold ${colors.text}`}>
-                    {getCategoryLabel(guide.category)}
-                  </Text>
-                </View>
-              );
-            })()}
+            <View style={{ paddingHorizontal: 16, paddingVertical: 8, borderRadius: 9999, backgroundColor: colors.bg }}>
+              <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text }}>
+                {getCategoryLabel(guide.category)}
+              </Text>
+            </View>
             {guide.isOfflineReady && (
-              <View className="flex-row items-center bg-green-100 px-4 py-2 rounded-full">
+              <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#D1FAE5', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 9999 }}>
                 <CheckCircle size={16} color="#059669" />
-                <Text className="text-green-700 text-sm font-bold ml-2">Available Offline</Text>
+                <Text style={{ color: '#059669', fontSize: 14, fontWeight: '700', marginLeft: 8 }}>Available Offline</Text>
               </View>
             )}
           </View>
 
           {/* Title */}
-          <Text className="text-3xl font-bold text-gray-900 mb-8" style={{ fontSize: 28, lineHeight: 36 }}>
+          <ThemedText className="text-3xl font-bold mb-8" style={{ fontSize: 28, lineHeight: 36 }}>
             {guide.title}
-          </Text>
+          </ThemedText>
 
           {/* Steps */}
           <View className="mb-6">
-            <Text className="text-xl font-bold text-gray-900 mb-6" style={{ fontSize: 22 }}>
+            <ThemedText className="text-xl font-bold mb-6" style={{ fontSize: 22 }}>
               Steps
-            </Text>
+            </ThemedText>
             {guide.steps.map((step, index) => (
               <StepItem
                 key={step.stepNumber}
