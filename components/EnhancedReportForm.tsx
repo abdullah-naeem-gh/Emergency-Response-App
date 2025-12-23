@@ -4,6 +4,7 @@ import { useAccessibility } from '@/hooks/useAccessibility';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useTextInputStyles } from '@/utils/i18n';
 import { crowdReportService, CrowdReport } from '@/services/CrowdReportService';
+import { PredictiveService } from '@/services/PredictiveService';
 import { reportService } from '@/services/ReportService';
 import * as Haptics from 'expo-haptics';
 // Note: expo-image-picker needs to be installed: npx expo install expo-image-picker
@@ -219,6 +220,14 @@ export const EnhancedReportForm: React.FC<EnhancedReportFormProps> = ({
 
       // Submit to crowd report service
       await crowdReportService.addReport(report);
+
+      // Submit to Predictive Service (MongoDB Backend)
+      await PredictiveService.submitReport(
+        report.type,
+        report.details,
+        report.location.latitude,
+        report.location.longitude
+      );
 
       // Also submit to regular report service for offline queuing
       await reportService.sendReport({

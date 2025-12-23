@@ -1,5 +1,7 @@
 import { MockLocationService } from '@/services/MockLocationService';
-import { Report, reportService } from '@/services/ReportService';
+import { PredictiveService } from '@/services/PredictiveService';
+import { reportService, Report } from '@/services/ReportService';
+import { useAccessibility } from '@/hooks/useAccessibility';
 import { useAppStore } from '@/store/useAppStore';
 import * as Haptics from 'expo-haptics';
 import * as Location from 'expo-location';
@@ -10,13 +12,24 @@ import { ActivityIndicator, Alert, Modal, Pressable, Text, View } from 'react-na
 interface PredictiveModalProps {
   visible: boolean;
   onClose: () => void;
+  threatType?: string;
+  threatCount?: number;
+  threatLocation?: { latitude: number; longitude: number };
 }
 
-export const PredictiveModal: React.FC<PredictiveModalProps> = ({ visible, onClose }) => {
+export const PredictiveModal: React.FC<PredictiveModalProps> = ({ 
+  visible, 
+  onClose,
+  threatType = 'Flood',
+  threatCount = 5,
+  threatLocation
+}) => {
   const { addToQueue, setMode, setRedZone } = useAppStore();
+  const { speak } = useAccessibility();
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const hasSpokenRef = useRef(false);
 
   // Cleanup timeout on unmount or when modal closes
   useEffect(() => {
@@ -38,15 +51,27 @@ export const PredictiveModal: React.FC<PredictiveModalProps> = ({ visible, onClo
       // Reset state when modal closes
       setShowSuccess(false);
       setIsLoading(false);
+      hasSpokenRef.current = false;
     }
   }, [visible]);
+
+  // Speak the predictive alert when it appears (if user enabled TTS)
+  useEffect(() => {
+    if (!visible || hasSpokenRef.current) return;
+
+    hasSpokenRef.current = true;
+    const message = `${threatCount} people nearby reported ${threatType}. Are you experiencing this?`;
+    speak(message).catch(() => {
+      // Fail silently – never crash UI due to TTS
+    });
+  }, [visible, threatType, threatCount, speak]);
 
   const handleYes = async () => {
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
       setIsLoading(true);
 
-      // Request location permissions
+      // Request location permissions if we don't have location passed or need fresh one
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
         Alert.alert(
@@ -69,16 +94,28 @@ export const PredictiveModal: React.FC<PredictiveModalProps> = ({ visible, onClo
       const report: Report = {
         id: Date.now().toString(),
         timestamp: Date.now(),
-        type: 'flood',
-        details: `High confidence flood report at ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`,
+        type: threatType.toLowerCase(),
+        details: `Confirmed predictive alert: ${threatType} at ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`,
         location: {
           latitude,
           longitude,
         },
       };
 
+      // Send to Predictive Service (Backend)
+      await PredictiveService.submitReport(
+        report.type,
+        report.details,
+        latitude,
+        longitude,
+        true // confirmed
+      );
+
+      // Mark as responded so we don't see it again soon
+      await PredictiveService.markThreatResponded(threatType);
+
       // Send report (will queue if offline)
-      const result = await reportService.sendReport(report);
+      await reportService.sendReport(report);
       
       // Update store for UI tracking
       addToQueue(report);
@@ -96,15 +133,18 @@ export const PredictiveModal: React.FC<PredictiveModalProps> = ({ visible, onClo
       timeoutRef.current = setTimeout(() => {
         setShowSuccess(false);
         onClose();
-        setMode('PEACE');
+        // Don't switch to PEACE immediately if in real danger, but for flow:
+        // Maybe stay in Predictive but hide modal? 
+        // For now, let's keep existing behavior
+        setMode('PEACE'); 
         setRedZone(false);
         MockLocationService.simulateExitRedZone();
         timeoutRef.current = null;
       }, 2000);
 
     } catch (error) {
-      console.error('Error getting location:', error);
-      Alert.alert('Error', 'Failed to get your location. Please try again.');
+      console.error('Error confirming alert:', error);
+      Alert.alert('Error', 'Failed to send confirmation. Please try again.');
       setIsLoading(false);
     }
   };
@@ -112,6 +152,9 @@ export const PredictiveModal: React.FC<PredictiveModalProps> = ({ visible, onClo
   const handleNo = async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     
+    // Mark as responded even if NO, to prevent spam
+    await PredictiveService.markThreatResponded(threatType);
+
     // Clear any pending timeout
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
@@ -119,6 +162,7 @@ export const PredictiveModal: React.FC<PredictiveModalProps> = ({ visible, onClo
     }
     
     onClose();
+    // Logic: If user says NO, maybe they are safe?
     setMode('PEACE');
     setRedZone(false);
     MockLocationService.simulateExitRedZone();
@@ -141,7 +185,7 @@ export const PredictiveModal: React.FC<PredictiveModalProps> = ({ visible, onClo
               Report Sent!
             </Text>
             <Text className="text-neutral-600 text-center">
-              Your location has been shared with emergency services.
+              Your confirmation has been shared.
             </Text>
           </View>
         </View>
@@ -167,10 +211,10 @@ export const PredictiveModal: React.FC<PredictiveModalProps> = ({ visible, onClo
 
           {/* Content */}
           <Text className="text-2xl font-bold text-neutral-900 mb-2 text-center">
-            High Confidence Alert
+            Predictive Alert
           </Text>
           <Text className="text-neutral-600 text-center mb-6 text-base leading-6">
-            25 people reported Flood here. Confirm?
+            {threatCount} people nearby reported <Text className="font-bold">{threatType}</Text>. Are you experiencing this?
           </Text>
 
           {/* Action Buttons */}
@@ -210,4 +254,3 @@ export const PredictiveModal: React.FC<PredictiveModalProps> = ({ visible, onClo
     </Modal>
   );
 };
-
