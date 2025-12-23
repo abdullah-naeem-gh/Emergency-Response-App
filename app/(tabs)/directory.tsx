@@ -1,6 +1,7 @@
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useAccessibility } from '@/hooks/useAccessibility';
+import { useTranslation } from '@/hooks/useTranslation';
 import * as Haptics from 'expo-haptics';
 import { ChevronDown, Phone } from 'lucide-react-native';
 import React, { useMemo, useState } from 'react';
@@ -14,17 +15,11 @@ interface SectionData {
   data: EmergencyContact[];
 }
 
-const CITY_OPTIONS: { value: CityFilter; label: string }[] = [
-  { value: 'ALL', label: 'All Pakistan' },
-  { value: 'KARACHI', label: 'Karachi' },
-  { value: 'LAHORE', label: 'Lahore' },
-  { value: 'ISLAMABAD', label: 'Islamabad' },
-  { value: 'QUETTA', label: 'Quetta' },
-  { value: 'PESHAWAR', label: 'Peshawar' },
-];
+// City options will be translated in component
+const CITY_OPTIONS_IDS = ['ALL', 'KARACHI', 'LAHORE', 'ISLAMABAD', 'QUETTA', 'PESHAWAR'] as const;
 
 // Group contacts into National Services and NGOs
-const groupContacts = (contacts: EmergencyContact[]): SectionData[] => {
+const groupContacts = (contacts: EmergencyContact[], t: (key: string) => string): SectionData[] => {
   const nationalServices: EmergencyContact[] = [];
   const ngos: EmergencyContact[] = [];
   const others: EmergencyContact[] = [];
@@ -46,13 +41,13 @@ const groupContacts = (contacts: EmergencyContact[]): SectionData[] => {
 
   const sections: SectionData[] = [];
   if (nationalServices.length > 0) {
-    sections.push({ title: 'National Services', data: nationalServices });
+    sections.push({ title: t('directory.nationalServices'), data: nationalServices });
   }
   if (ngos.length > 0) {
-    sections.push({ title: 'NGOs', data: ngos });
+    sections.push({ title: t('directory.ngos'), data: ngos });
   }
   if (others.length > 0) {
-    sections.push({ title: 'Other Services', data: others });
+    sections.push({ title: t('directory.others'), data: others });
   }
 
   return sections;
@@ -60,8 +55,18 @@ const groupContacts = (contacts: EmergencyContact[]): SectionData[] => {
 
 export default function DirectoryScreen() {
   const { themeColors } = useAccessibility();
+  const { t } = useTranslation();
   const [selectedCity, setSelectedCity] = useState<CityFilter>('ALL');
   const [showCityDropdown, setShowCityDropdown] = useState(false);
+
+  const CITY_OPTIONS: { value: CityFilter; label: string }[] = [
+    { value: 'ALL', label: t('directory.allPakistan') },
+    { value: 'KARACHI', label: t('directory.karachi') },
+    { value: 'LAHORE', label: t('directory.lahore') },
+    { value: 'ISLAMABAD', label: t('directory.islamabad') },
+    { value: 'QUETTA', label: t('directory.quetta') },
+    { value: 'PESHAWAR', label: t('directory.peshawar') },
+  ];
 
   // Filter contacts by city
   const filteredContacts = useMemo(() => {
@@ -74,7 +79,7 @@ export default function DirectoryScreen() {
   }, [selectedCity]);
 
   // Group filtered contacts
-  const sections = useMemo(() => groupContacts(filteredContacts), [filteredContacts]);
+  const sections = useMemo(() => groupContacts(filteredContacts, t), [filteredContacts, t]);
 
   const handleCall = async (phone: string) => {
     try {
@@ -97,14 +102,14 @@ export default function DirectoryScreen() {
     setShowCityDropdown(false);
   };
 
-  const selectedCityLabel = CITY_OPTIONS.find((opt) => opt.value === selectedCity)?.label || 'All Pakistan';
+  const selectedCityLabel = CITY_OPTIONS.find((opt) => opt.value === selectedCity)?.label || t('directory.allPakistan');
 
   return (
     <ThemedView className="flex-1">
       <View className="flex-1 px-4 pt-2">
         {/* Header */}
         <View className="mb-4">
-          <ThemedText className="text-3xl font-bold mb-4">Emergency Directory</ThemedText>
+          <ThemedText className="text-3xl font-bold mb-4">{t('directory.title')}</ThemedText>
 
           {/* City Filter Dropdown */}
           <TouchableOpacity
@@ -170,14 +175,14 @@ export default function DirectoryScreen() {
                   style={{ backgroundColor: '#22C55E', borderRadius: 12, paddingHorizontal: 24, paddingVertical: 12, alignItems: 'center', justifyContent: 'center', minHeight: 60, minWidth: 100 }}
                 >
                   <Phone size={24} color="white" />
-                  <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 16, marginTop: 4 }}>Call</Text>
+                  <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 16, marginTop: 4 }}>{t('directory.call')}</Text>
                 </TouchableOpacity>
               </View>
             </View>
           )}
           ListEmptyComponent={
             <View className="items-center justify-center py-10">
-              <ThemedText style={{ opacity: 0.6 }}>No contacts found for this city.</ThemedText>
+              <ThemedText style={{ opacity: 0.6 }}>{t('directory.noContactsFound')}</ThemedText>
             </View>
           }
           contentContainerStyle={{ paddingBottom: 20 }}
@@ -197,7 +202,7 @@ export default function DirectoryScreen() {
           >
             <View style={{ backgroundColor: themeColors.card, borderRadius: 16, width: '91.666667%', maxWidth: 384, overflow: 'hidden' }}>
               <View style={{ paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: themeColors.border }}>
-                <ThemedText className="text-lg font-bold">Select City</ThemedText>
+                <ThemedText className="text-lg font-bold">{t('directory.selectCity')}</ThemedText>
               </View>
               {CITY_OPTIONS.map((option) => (
                 <TouchableOpacity

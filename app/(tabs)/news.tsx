@@ -1,7 +1,6 @@
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useAccessibility } from '@/hooks/useAccessibility';
-import { useRealtimeUpdates } from '@/hooks/useRealtimeUpdates';
 import * as Haptics from 'expo-haptics';
 import { AlertTriangle, Clock, Info, MapPin, Search, Share2, Siren, X } from 'lucide-react-native';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -33,29 +32,6 @@ export default function NewsScreen() {
   const [activeFilter, setActiveFilter] = useState<FilterType>('All');
   const [selectedAlert, setSelectedAlert] = useState<NewsItem | null>(null);
   const [alerts, setAlerts] = useState<NewsItem[]>(alertsData);
-
-  // Real-time updates for alerts
-  const { isConnected } = useRealtimeUpdates({
-    types: ['alert'],
-    onUpdate: (update) => {
-      // Add new alert to the list
-      if (update.type === 'alert' && update.data) {
-        const newAlert: NewsItem = {
-          id: update.id,
-          title: update.data.title || 'New Alert',
-          content: update.data.body || update.data.message || '',
-          location: update.data.location || 'Unknown',
-          severity: update.data.severity || 'INFO',
-          source: update.data.source || 'System',
-          timestamp: new Date(update.timestamp).toISOString(),
-        };
-        setAlerts((prev) => [newAlert, ...prev]);
-      }
-    },
-    showNotifications: true,
-    notificationTitle: (update) => update.data?.title || 'New Alert',
-    notificationBody: (update) => update.data?.body || update.data?.message || 'A new alert has been issued.',
-  });
 
   // Pulse Animation for Critical Alert
   const pulseOpacity = useSharedValue(1);

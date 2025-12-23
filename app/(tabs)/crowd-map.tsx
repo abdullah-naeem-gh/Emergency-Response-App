@@ -10,7 +10,8 @@ import * as Location from 'expo-location';
 import { Clock, Plus, RefreshCw } from 'lucide-react-native';
 import React, { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import MapView, { Circle, Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import { Platform } from 'react-native';
+import MapView, { Circle, Marker, PROVIDER_GOOGLE, PROVIDER_DEFAULT } from 'react-native-maps';
 
 type FilterType = 'all' | 'flood' | 'fire' | 'medical' | 'earthquake' | 'other';
 type ViewMode = 'reports' | 'clusters' | 'heatmap';
@@ -68,6 +69,116 @@ const getStatusColor = (status?: string): string => {
   }
 };
 
+// Helper function to determine if a color is light or dark
+const isLightColor = (color: string): boolean => {
+  const hex = color.replace('#', '');
+  const r = parseInt(hex.substr(0, 2), 16);
+  const g = parseInt(hex.substr(2, 2), 16);
+  const b = parseInt(hex.substr(4, 2), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.5;
+};
+
+// Helper function to get contrasting text color for a background
+const getContrastTextColor = (backgroundColor: string, themeColors: any): string => {
+  if (isLightColor(backgroundColor)) {
+    return themeColors.text || '#111827';
+  } else {
+    return '#FFFFFF';
+  }
+};
+
+// Dark map style for dark themes
+const darkMapStyle = [
+  {
+    elementType: 'geometry',
+    stylers: [{ color: '#242f3e' }],
+  },
+  {
+    elementType: 'labels.text.stroke',
+    stylers: [{ color: '#242f3e' }],
+  },
+  {
+    elementType: 'labels.text.fill',
+    stylers: [{ color: '#746855' }],
+  },
+  {
+    featureType: 'administrative.locality',
+    elementType: 'labels.text.fill',
+    stylers: [{ color: '#d59563' }],
+  },
+  {
+    featureType: 'poi',
+    elementType: 'labels.text.fill',
+    stylers: [{ color: '#d59563' }],
+  },
+  {
+    featureType: 'poi.park',
+    elementType: 'geometry',
+    stylers: [{ color: '#263c3f' }],
+  },
+  {
+    featureType: 'poi.park',
+    elementType: 'labels.text.fill',
+    stylers: [{ color: '#6b9a76' }],
+  },
+  {
+    featureType: 'road',
+    elementType: 'geometry',
+    stylers: [{ color: '#38414e' }],
+  },
+  {
+    featureType: 'road',
+    elementType: 'geometry.stroke',
+    stylers: [{ color: '#212a37' }],
+  },
+  {
+    featureType: 'road',
+    elementType: 'labels.text.fill',
+    stylers: [{ color: '#9ca5b3' }],
+  },
+  {
+    featureType: 'road.highway',
+    elementType: 'geometry',
+    stylers: [{ color: '#746855' }],
+  },
+  {
+    featureType: 'road.highway',
+    elementType: 'geometry.stroke',
+    stylers: [{ color: '#1f2835' }],
+  },
+  {
+    featureType: 'road.highway',
+    elementType: 'labels.text.fill',
+    stylers: [{ color: '#f3d19c' }],
+  },
+  {
+    featureType: 'transit',
+    elementType: 'geometry',
+    stylers: [{ color: '#2f3948' }],
+  },
+  {
+    featureType: 'transit.station',
+    elementType: 'labels.text.fill',
+    stylers: [{ color: '#d59563' }],
+  },
+  {
+    featureType: 'water',
+    elementType: 'geometry',
+    stylers: [{ color: '#17263c' }],
+  },
+  {
+    featureType: 'water',
+    elementType: 'labels.text.fill',
+    stylers: [{ color: '#515c6d' }],
+  },
+  {
+    featureType: 'water',
+    elementType: 'labels.text.stroke',
+    stylers: [{ color: '#17263c' }],
+  },
+];
+
 export default function CrowdMapScreen() {
   const { setMode, setRedZone } = useAppStore();
   const { themeColors } = useAccessibility();
@@ -87,6 +198,11 @@ export default function CrowdMapScreen() {
     latitudeDelta: 0.1,
     longitudeDelta: 0.1,
   });
+
+  // Determine if theme is dark
+  const isDarkTheme = themeColors.background === '#000000' || 
+                      themeColors.background === '#121212' || 
+                      themeColors.background === '#1a1a1a';
 
   // Load reports and clusters
   useEffect(() => {
@@ -144,13 +260,15 @@ export default function CrowdMapScreen() {
       setLoading(true);
       const allReports = await crowdReportService.getAllReports();
       
-      // Add some mock reports for demonstration with status
+      // Add comprehensive mock reports for demonstration with status
+      // Locations are spread across Karachi to create realistic clusters
       const mockReports: CrowdReport[] = [
+        // Flood cluster in Malir area (3 reports - will form a cluster)
         {
           id: '1',
           timestamp: Date.now() - 3600000,
           type: 'flood',
-          details: 'Water level rising in Malir River',
+          details: 'Water level rising in Malir River, evacuation needed',
           location: { latitude: 24.8707, longitude: 67.0111 },
           severity: 'HIGH',
           verificationCount: 5,
@@ -161,7 +279,7 @@ export default function CrowdMapScreen() {
           id: '2',
           timestamp: Date.now() - 1800000,
           type: 'flood',
-          details: 'Road blocked due to flooding',
+          details: 'Road blocked due to flooding near Malir Halt',
           location: { latitude: 24.8750, longitude: 67.0150 },
           severity: 'MEDIUM',
           verificationCount: 3,
@@ -172,7 +290,7 @@ export default function CrowdMapScreen() {
           id: '3',
           timestamp: Date.now() - 900000,
           type: 'flood',
-          details: 'Severe waterlogging in area',
+          details: 'Severe waterlogging in Malir area, vehicles stuck',
           location: { latitude: 24.8720, longitude: 67.0120 },
           severity: 'CRITICAL',
           verificationCount: 8,
@@ -181,22 +299,187 @@ export default function CrowdMapScreen() {
         },
         {
           id: '4',
+          timestamp: Date.now() - 1200000,
+          type: 'flood',
+          details: 'Drainage system overflow in Malir',
+          location: { latitude: 24.8735, longitude: 67.0135 },
+          severity: 'HIGH',
+          verificationCount: 4,
+          verified: true,
+          status: 'verified',
+        },
+        // Fire cluster in Saddar area (3 reports - will form a cluster)
+        {
+          id: '5',
           timestamp: Date.now() - 7200000,
           type: 'fire',
-          details: 'Building fire reported',
+          details: 'Building fire reported near Saddar, fire brigade called',
           location: { latitude: 24.8500, longitude: 67.0000 },
           severity: 'HIGH',
           verificationCount: 2,
           status: 'sent',
         },
         {
-          id: '5',
+          id: '6',
+          timestamp: Date.now() - 6900000,
+          type: 'fire',
+          details: 'Smoke visible from nearby building in Saddar',
+          location: { latitude: 24.8515, longitude: 67.0015 },
+          severity: 'MEDIUM',
+          verificationCount: 1,
+          status: 'sent',
+        },
+        {
+          id: '7',
+          timestamp: Date.now() - 6600000,
+          type: 'fire',
+          details: 'Electrical fire in commercial building',
+          location: { latitude: 24.8490, longitude: 67.0005 },
+          severity: 'HIGH',
+          verificationCount: 3,
+          verified: true,
+          status: 'verified',
+        },
+        // Medical emergencies scattered
+        {
+          id: '8',
           timestamp: Date.now() - 5400000,
           type: 'medical',
-          details: 'Medical emergency',
+          details: 'Medical emergency near Clifton, ambulance needed',
           location: { latitude: 24.8800, longitude: 67.0200 },
           severity: 'HIGH',
           verificationCount: 1,
+          status: 'pending',
+        },
+        {
+          id: '9',
+          timestamp: Date.now() - 3000000,
+          type: 'medical',
+          details: 'Road accident on Shahrah-e-Faisal, multiple injuries',
+          location: { latitude: 24.8650, longitude: 67.0050 },
+          severity: 'CRITICAL',
+          verificationCount: 6,
+          verified: true,
+          status: 'verified',
+        },
+        {
+          id: '10',
+          timestamp: Date.now() - 2400000,
+          type: 'medical',
+          details: 'Heart attack case in Nazimabad, urgent help needed',
+          location: { latitude: 24.9200, longitude: 67.0300 },
+          severity: 'CRITICAL',
+          verificationCount: 2,
+          status: 'sent',
+        },
+        // Earthquake reports
+        {
+          id: '11',
+          timestamp: Date.now() - 10800000,
+          type: 'earthquake',
+          details: 'Minor tremors felt in Gulshan-e-Iqbal area',
+          location: { latitude: 24.9100, longitude: 67.0800 },
+          severity: 'LOW',
+          verificationCount: 12,
+          verified: true,
+          status: 'verified',
+        },
+        {
+          id: '12',
+          timestamp: Date.now() - 10500000,
+          type: 'earthquake',
+          details: 'Earthquake tremors reported, building cracks observed',
+          location: { latitude: 24.9120, longitude: 67.0820 },
+          severity: 'MEDIUM',
+          verificationCount: 8,
+          verified: true,
+          status: 'verified',
+        },
+        {
+          id: '13',
+          timestamp: Date.now() - 10200000,
+          type: 'earthquake',
+          details: 'Structural damage reported after tremors',
+          location: { latitude: 24.9080, longitude: 67.0790 },
+          severity: 'HIGH',
+          verificationCount: 5,
+          verified: true,
+          status: 'verified',
+        },
+        // Other incidents
+        {
+          id: '14',
+          timestamp: Date.now() - 1800000,
+          type: 'other',
+          details: 'Gas leak reported in Liaquatabad, area evacuated',
+          location: { latitude: 24.9000, longitude: 67.0400 },
+          severity: 'HIGH',
+          verificationCount: 4,
+          verified: true,
+          status: 'verified',
+        },
+        {
+          id: '15',
+          timestamp: Date.now() - 3600000,
+          type: 'other',
+          details: 'Building collapse risk in old city area',
+          location: { latitude: 24.8550, longitude: 67.0100 },
+          severity: 'CRITICAL',
+          verificationCount: 7,
+          verified: true,
+          status: 'verified',
+        },
+        {
+          id: '16',
+          timestamp: Date.now() - 600000,
+          type: 'flood',
+          details: 'Flash flood warning in Korangi area',
+          location: { latitude: 24.7900, longitude: 67.1100 },
+          severity: 'MEDIUM',
+          verificationCount: 2,
+          status: 'sent',
+        },
+        {
+          id: '17',
+          timestamp: Date.now() - 4500000,
+          type: 'fire',
+          details: 'Warehouse fire in SITE area, spreading quickly',
+          location: { latitude: 24.8800, longitude: 67.0500 },
+          severity: 'CRITICAL',
+          verificationCount: 9,
+          verified: true,
+          status: 'verified',
+        },
+        {
+          id: '18',
+          timestamp: Date.now() - 4200000,
+          type: 'fire',
+          details: 'Industrial fire in SITE, multiple units affected',
+          location: { latitude: 24.8820, longitude: 67.0520 },
+          severity: 'HIGH',
+          verificationCount: 6,
+          verified: true,
+          status: 'verified',
+        },
+        {
+          id: '19',
+          timestamp: Date.now() - 1500000,
+          type: 'medical',
+          details: 'Mass casualty incident near airport, multiple ambulances needed',
+          location: { latitude: 24.9050, longitude: 67.1600 },
+          severity: 'CRITICAL',
+          verificationCount: 10,
+          verified: true,
+          status: 'verified',
+        },
+        {
+          id: '20',
+          timestamp: Date.now() - 2700000,
+          type: 'other',
+          details: 'Power outage affecting large area in Defence',
+          location: { latitude: 24.8000, longitude: 67.0300 },
+          severity: 'LOW',
+          verificationCount: 3,
           status: 'pending',
         },
       ];
@@ -416,13 +699,15 @@ export default function CrowdMapScreen() {
       {/* Map */}
       <View className="flex-1">
         <MapView
-          provider={PROVIDER_GOOGLE}
+          provider={Platform.OS === 'ios' ? PROVIDER_DEFAULT : PROVIDER_GOOGLE}
           style={StyleSheet.absoluteFillObject}
           initialRegion={mapRegion}
           onRegionChangeComplete={setMapRegion}
           showsUserLocation={!!userLocation}
           showsMyLocationButton={false}
           toolbarEnabled={false}
+          customMapStyle={Platform.OS === 'android' && isDarkTheme ? darkMapStyle : undefined}
+          mapType={isDarkTheme ? 'standard' : 'standard'}
         >
           {renderMarkers()}
           {userLocation && (
@@ -464,7 +749,9 @@ export default function CrowdMapScreen() {
                 paddingVertical: 8, 
                 borderRadius: 8,
                 backgroundColor: viewMode === mode ? themeColors.primary : 'transparent',
-                minHeight: 44 
+                minHeight: 44,
+                justifyContent: 'center',
+                alignItems: 'center',
               }}
               hapticFeedback={true}
               hapticStyle={Haptics.ImpactFeedbackStyle.Light}
@@ -472,8 +759,11 @@ export default function CrowdMapScreen() {
               <ThemedText 
                 className="font-semibold text-xs"
                 style={{ 
-                  color: viewMode === mode ? '#FFFFFF' : themeColors.text,
+                  color: viewMode === mode 
+                    ? getContrastTextColor(themeColors.primary, themeColors)
+                    : themeColors.text,
                   opacity: viewMode === mode ? 1 : 0.7,
+                  textAlign: 'center',
                 }}
               >
                 {mode === 'reports' ? 'Reports' : mode === 'clusters' ? 'Clusters' : 'Heat'}
@@ -684,9 +974,17 @@ export default function CrowdMapScreen() {
                     marginTop: 16,
                     alignItems: 'center',
                     minHeight: 60,
+                    borderWidth: 1,
+                    borderColor: themeColors.border,
                   }}
                 >
-                  <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 18 }}>Close</Text>
+                  <Text style={{ 
+                    color: getContrastTextColor(themeColors.primary, themeColors),
+                    fontWeight: '700', 
+                    fontSize: 18 
+                  }}>
+                    Close
+                  </Text>
                 </TouchableOpacity>
               </>
             )}
@@ -728,7 +1026,14 @@ export default function CrowdMapScreen() {
                   borderColor: themeColors.border,
                 }}
               >
-                <ThemedText className="font-semibold" style={{ color: timeFilter === filter.id ? '#FFFFFF' : themeColors.text }}>
+                <ThemedText 
+                  className="font-semibold" 
+                  style={{ 
+                    color: timeFilter === filter.id 
+                      ? getContrastTextColor(themeColors.primary, themeColors)
+                      : themeColors.text 
+                  }}
+                >
                   {filter.label}
                 </ThemedText>
               </TouchableOpacity>

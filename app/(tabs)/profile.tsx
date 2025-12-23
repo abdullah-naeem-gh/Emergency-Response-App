@@ -1,24 +1,22 @@
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useAccessibility } from '@/hooks/useAccessibility';
+import { useTranslation } from '@/hooks/useTranslation';
 import { useAppStore } from '@/store/useAppStore';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import {
   ArrowLeft,
   Award,
-  BarChart3,
-  Calendar,
   CheckCircle,
   FileText,
   Heart,
-  MapPin,
   Settings,
   TrendingUp,
   User
 } from 'lucide-react-native';
-import React, { useEffect, useState } from 'react';
-import { Dimensions, Pressable, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Dimensions, Pressable, ScrollView, TouchableOpacity, View } from 'react-native';
 
 const { width } = Dimensions.get('window');
 
@@ -43,21 +41,17 @@ interface Achievement {
 export default function ProfileScreen() {
   const router = useRouter();
   const { themeColors } = useAccessibility();
+  const { t } = useTranslation();
   const { volunteerTasksDone, volunteerLevel } = useAppStore();
   const [stats, setStats] = useState<StatCard[]>([]);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
 
-  useEffect(() => {
-    loadStats();
-    loadAchievements();
-  }, [volunteerTasksDone, volunteerLevel]);
-
-  const loadStats = () => {
+  const loadStats = useCallback(() => {
     // In real implementation, fetch from service
     setStats([
       {
         id: 'reports',
-        label: 'Reports Submitted',
+        label: t('profile.reportsSubmitted'),
         value: 12,
         icon: FileText,
         color: '#3B82F6',
@@ -65,7 +59,7 @@ export default function ProfileScreen() {
       },
       {
         id: 'volunteer',
-        label: 'Tasks Completed',
+        label: t('profile.tasksCompleted'),
         value: volunteerTasksDone,
         icon: Heart,
         color: '#EF4444',
@@ -73,7 +67,7 @@ export default function ProfileScreen() {
       },
       {
         id: 'verified',
-        label: 'Verified Reports',
+        label: t('profile.verifiedReports'),
         value: 8,
         icon: CheckCircle,
         color: '#10B981',
@@ -81,60 +75,65 @@ export default function ProfileScreen() {
       },
       {
         id: 'level',
-        label: 'Volunteer Level',
-        value: volunteerLevel,
+        label: t('profile.volunteerLevel'),
+        value: t(`volunteer.${volunteerLevel.toLowerCase()}`),
         icon: Award,
         color: '#F59E0B',
         bgColor: '#FEF3C7',
       },
     ]);
-  };
+  }, [t, volunteerTasksDone, volunteerLevel]);
 
-  const loadAchievements = () => {
+  const loadAchievements = useCallback(() => {
     // In real implementation, fetch from service
     setAchievements([
       {
         id: '1',
-        title: 'First Responder',
-        description: 'Submit your first report',
+        title: t('profile.firstResponder'),
+        description: t('profile.firstResponderDesc'),
         icon: FileText,
         unlocked: true,
         unlockedDate: '2024-01-15',
       },
       {
         id: '2',
-        title: 'Community Helper',
-        description: 'Complete 5 volunteer tasks',
+        title: t('profile.communityHelper'),
+        description: t('profile.communityHelperDesc'),
         icon: Heart,
         unlocked: volunteerTasksDone >= 5,
         unlockedDate: volunteerTasksDone >= 5 ? '2024-01-20' : undefined,
       },
       {
         id: '3',
-        title: 'Verified Contributor',
-        description: 'Get 3 reports verified',
+        title: t('profile.verifiedContributor'),
+        description: t('profile.verifiedContributorDesc'),
         icon: CheckCircle,
         unlocked: true,
         unlockedDate: '2024-01-18',
       },
       {
         id: '4',
-        title: 'Hero Status',
-        description: 'Complete 20 volunteer tasks',
+        title: t('profile.heroStatus'),
+        description: t('profile.heroStatusDesc'),
         icon: Award,
         unlocked: volunteerTasksDone >= 20,
         unlockedDate: volunteerTasksDone >= 20 ? '2024-01-25' : undefined,
       },
       {
         id: '5',
-        title: 'Legend',
-        description: 'Complete 50 volunteer tasks',
+        title: t('profile.legend'),
+        description: t('profile.legendDesc'),
         icon: TrendingUp,
         unlocked: volunteerTasksDone >= 50,
         unlockedDate: volunteerTasksDone >= 50 ? '2024-02-01' : undefined,
       },
     ]);
-  };
+  }, [t, volunteerTasksDone]);
+
+  useEffect(() => {
+    loadStats();
+    loadAchievements();
+  }, [loadStats, loadAchievements]);
 
   return (
     <ThemedView className="flex-1">
@@ -158,8 +157,8 @@ export default function ProfileScreen() {
               <ArrowLeft size={24} color={themeColors.text} />
             </Pressable>
             <View className="flex-1">
-              <ThemedText className="text-4xl font-bold mb-1">Profile</ThemedText>
-              <ThemedText className="text-sm" style={{ opacity: 0.7 }}>Your contribution stats</ThemedText>
+              <ThemedText className="text-4xl font-bold mb-1">{t('profile.title')}</ThemedText>
+              <ThemedText className="text-sm" style={{ opacity: 0.7 }}>{t('profile.yourContributionStats')}</ThemedText>
             </View>
           </View>
           <Pressable
@@ -192,11 +191,11 @@ export default function ProfileScreen() {
                 <User size={40} color="#3B82F6" />
               </View>
               <View className="flex-1">
-                <ThemedText className="text-2xl font-bold">Anonymous User</ThemedText>
-                <ThemedText className="text-sm mt-1" style={{ opacity: 0.7 }}>Device ID: {Date.now().toString().slice(-8)}</ThemedText>
+                <ThemedText className="text-2xl font-bold">{t('profile.anonymousUser')}</ThemedText>
+                <ThemedText className="text-sm mt-1" style={{ opacity: 0.7 }}>{t('profile.deviceId')}: {Date.now().toString().slice(-8)}</ThemedText>
                 <View className="flex-row items-center mt-2">
                   <Award size={16} color="#F59E0B" />
-                  <ThemedText className="font-semibold ml-2">{volunteerLevel}</ThemedText>
+                  <ThemedText className="font-semibold ml-2">{t(`volunteer.${volunteerLevel.toLowerCase()}`)}</ThemedText>
                 </View>
               </View>
             </View>
@@ -205,7 +204,7 @@ export default function ProfileScreen() {
 
         {/* Statistics Grid */}
         <View className="px-6 mb-6">
-          <ThemedText className="text-xl font-bold mb-4">Statistics</ThemedText>
+          <ThemedText className="text-xl font-bold mb-4">{t('profile.statistics')}</ThemedText>
           <View className="flex-row flex-wrap justify-between gap-4">
             {stats.map((stat) => {
               const Icon = stat.icon;
@@ -241,7 +240,7 @@ export default function ProfileScreen() {
 
         {/* Achievements Section */}
         <View className="px-6 mb-6">
-          <ThemedText className="text-xl font-bold mb-4">Achievements</ThemedText>
+          <ThemedText className="text-xl font-bold mb-4">{t('profile.achievements')}</ThemedText>
           {achievements.map((achievement) => {
             const Icon = achievement.icon;
             return (
@@ -275,11 +274,12 @@ export default function ProfileScreen() {
                     backgroundColor: achievement.unlocked ? '#FEF3C7' : themeColors.background,
                   }}
                 >
-                  <Icon
-                    size={28}
-                    color={achievement.unlocked ? '#F59E0B' : themeColors.text}
-                    style={{ opacity: achievement.unlocked ? 1 : 0.5 }}
-                  />
+                  <View style={{ opacity: achievement.unlocked ? 1 : 0.5 }}>
+                    <Icon
+                      size={28}
+                      color={achievement.unlocked ? '#F59E0B' : themeColors.text}
+                    />
+                  </View>
                 </View>
                 <View className="flex-1">
                   <ThemedText
@@ -296,7 +296,7 @@ export default function ProfileScreen() {
                   </ThemedText>
                   {achievement.unlocked && achievement.unlockedDate && (
                     <ThemedText className="text-xs mt-1" style={{ opacity: 0.6 }}>
-                      Unlocked {new Date(achievement.unlockedDate).toLocaleDateString()}
+                      {t('profile.unlocked')} {new Date(achievement.unlockedDate).toLocaleDateString()}
                     </ThemedText>
                   )}
                 </View>
@@ -310,16 +310,16 @@ export default function ProfileScreen() {
 
         {/* Contribution Timeline */}
         <View className="px-6 mb-6">
-          <ThemedText className="text-xl font-bold mb-4">Recent Activity</ThemedText>
+          <ThemedText className="text-xl font-bold mb-4">{t('profile.recentActivity')}</ThemedText>
           <View style={{ backgroundColor: themeColors.card, borderRadius: 16, padding: 24, borderWidth: 1, borderColor: themeColors.border }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: themeColors.border }}>
               <View style={{ width: 40, height: 40, borderRadius: 9999, backgroundColor: '#D1FAE5', alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
                 <CheckCircle size={20} color="#10B981" />
               </View>
               <View className="flex-1">
-                <ThemedText className="text-base font-semibold">Report Verified</ThemedText>
+                <ThemedText className="text-base font-semibold">{t('profile.reportVerified')}</ThemedText>
                 <ThemedText className="text-sm" style={{ opacity: 0.7 }}>Flood report in Karachi</ThemedText>
-                <ThemedText className="text-xs mt-1" style={{ opacity: 0.6 }}>2 days ago</ThemedText>
+                <ThemedText className="text-xs mt-1" style={{ opacity: 0.6 }}>{t('profile.daysAgo', { count: 2 })}</ThemedText>
               </View>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: themeColors.border }}>
@@ -327,9 +327,9 @@ export default function ProfileScreen() {
                 <Heart size={20} color="#3B82F6" />
               </View>
               <View className="flex-1">
-                <ThemedText className="text-base font-semibold">Task Completed</ThemedText>
+                <ThemedText className="text-base font-semibold">{t('profile.taskCompleted')}</ThemedText>
                 <ThemedText className="text-sm" style={{ opacity: 0.7 }}>Volunteer task #12</ThemedText>
-                <ThemedText className="text-xs mt-1" style={{ opacity: 0.6 }}>5 days ago</ThemedText>
+                <ThemedText className="text-xs mt-1" style={{ opacity: 0.6 }}>{t('profile.daysAgo', { count: 5 })}</ThemedText>
               </View>
             </View>
             <View className="flex-row items-center">
@@ -337,9 +337,9 @@ export default function ProfileScreen() {
                 <FileText size={20} color="#F59E0B" />
               </View>
               <View className="flex-1">
-                <ThemedText className="text-base font-semibold">Report Submitted</ThemedText>
+                <ThemedText className="text-base font-semibold">{t('profile.reportSubmitted')}</ThemedText>
                 <ThemedText className="text-sm" style={{ opacity: 0.7 }}>Medical emergency report</ThemedText>
-                <ThemedText className="text-xs mt-1" style={{ opacity: 0.6 }}>1 week ago</ThemedText>
+                <ThemedText className="text-xs mt-1" style={{ opacity: 0.6 }}>{t('profile.weekAgo')}</ThemedText>
               </View>
             </View>
           </View>

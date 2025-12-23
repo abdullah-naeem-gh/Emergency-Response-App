@@ -1,6 +1,6 @@
 import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
 import { useAccessibility } from '@/hooks/useAccessibility';
+import { useTranslation } from '@/hooks/useTranslation';
 import { getGuideById } from '@/src/services/dataService';
 import * as Haptics from 'expo-haptics';
 import { Image } from 'expo-image';
@@ -54,6 +54,7 @@ const StepItem: React.FC<StepItemProps> = ({ stepNumber, text, imageUrl, isLast 
 export default function GuideDetailScreen() {
   const router = useRouter();
   const { themeColors } = useAccessibility();
+  const { t } = useTranslation();
   const { id } = useLocalSearchParams<{ id: string }>();
   const guide = getGuideById(id || '');
 
@@ -66,15 +67,15 @@ export default function GuideDetailScreen() {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: themeColors.background }} edges={['top']}>
         <View className="flex-1 items-center justify-center px-4">
-          <ThemedText className="text-xl font-bold mb-2">Guide not found</ThemedText>
+          <ThemedText className="text-xl font-bold mb-2">{t('guides.guideNotFound')}</ThemedText>
           <ThemedText className="text-center mb-6" style={{ opacity: 0.7 }}>
-            The guide you're looking for doesn't exist.
+            {t('guides.guideNotFoundMessage')}
           </ThemedText>
           <TouchableOpacity
             onPress={handleBack}
             style={{ backgroundColor: themeColors.text, borderRadius: 12, paddingHorizontal: 24, paddingVertical: 16, minHeight: 60 }}
           >
-            <Text style={{ color: themeColors.background, fontWeight: '700', fontSize: 18 }}>Go Back</Text>
+            <Text style={{ color: themeColors.background, fontWeight: '700', fontSize: 18 }}>{t('guides.goBack')}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -84,11 +85,11 @@ export default function GuideDetailScreen() {
   const getCategoryLabel = (category: string) => {
     switch (category) {
       case 'FIRST_AID':
-        return 'First Aid';
+        return t('guides.firstAid');
       case 'EVACUATION':
-        return 'Evacuation';
+        return t('guides.evacuation');
       case 'SURVIVAL':
-        return 'Survival';
+        return t('guides.survival');
       default:
         return category;
     }
@@ -138,7 +139,7 @@ export default function GuideDetailScreen() {
             {guide.isOfflineReady && (
               <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#D1FAE5', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 9999 }}>
                 <CheckCircle size={16} color="#059669" />
-                <Text style={{ color: '#059669', fontSize: 14, fontWeight: '700', marginLeft: 8 }}>Available Offline</Text>
+                <Text style={{ color: '#059669', fontSize: 14, fontWeight: '700', marginLeft: 8 }}>{t('guides.offlineReady')}</Text>
               </View>
             )}
           </View>
@@ -151,7 +152,7 @@ export default function GuideDetailScreen() {
           {/* Steps */}
           <View className="mb-6">
             <ThemedText className="text-xl font-bold mb-6" style={{ fontSize: 22 }}>
-              Steps
+              {t('guides.steps')}
             </ThemedText>
             {guide.steps.map((step, index) => (
               <StepItem

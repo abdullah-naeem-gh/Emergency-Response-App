@@ -1,6 +1,7 @@
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useAccessibility } from '@/hooks/useAccessibility';
+import { useTranslation } from '@/hooks/useTranslation';
 import { Guide } from '@/src/data/guidesData';
 import { getGuides, searchGuides } from '@/src/services/dataService';
 import * as Haptics from 'expo-haptics';
@@ -19,14 +20,15 @@ interface GuideCardProps {
 
 const GuideCard: React.FC<GuideCardProps> = ({ guide, onPress }) => {
   const { themeColors } = useAccessibility();
+  const { t } = useTranslation();
   const getCategoryLabel = (category: Guide['category']) => {
     switch (category) {
       case 'FIRST_AID':
-        return 'First Aid';
+        return t('guides.firstAid');
       case 'EVACUATION':
-        return 'Evacuation';
+        return t('guides.evacuation');
       case 'SURVIVAL':
-        return 'Survival';
+        return t('guides.survival');
       default:
         return category;
     }
@@ -74,7 +76,7 @@ const GuideCard: React.FC<GuideCardProps> = ({ guide, onPress }) => {
         {guide.isOfflineReady && (
           <View style={{ position: 'absolute', top: 8, right: 8, backgroundColor: '#22C55E', borderRadius: 9999, paddingHorizontal: 8, paddingVertical: 4, flexDirection: 'row', alignItems: 'center' }}>
             <CheckCircle size={12} color="white" />
-            <Text style={{ color: '#FFFFFF', fontSize: 10, fontWeight: '700', marginLeft: 4 }}>Offline</Text>
+            <Text style={{ color: '#FFFFFF', fontSize: 10, fontWeight: '700', marginLeft: 4 }}>{t('guides.offline')}</Text>
           </View>
         )}
       </View>
@@ -95,7 +97,7 @@ const GuideCard: React.FC<GuideCardProps> = ({ guide, onPress }) => {
 
         {/* Step Count */}
         <ThemedText className="text-xs mt-1" style={{ opacity: 0.7 }}>
-          {guide.steps.length} {guide.steps.length === 1 ? 'step' : 'steps'}
+          {guide.steps.length} {guide.steps.length === 1 ? t('guides.step') : t('guides.steps')}
         </ThemedText>
       </View>
     </TouchableOpacity>
@@ -105,6 +107,7 @@ const GuideCard: React.FC<GuideCardProps> = ({ guide, onPress }) => {
 export default function GuidesScreen() {
   const router = useRouter();
   const { themeColors } = useAccessibility();
+  const { t } = useTranslation();
   const [activeFilter, setActiveFilter] = useState<FilterType>('All');
 
   // Filter guides based on active filter
@@ -144,6 +147,23 @@ export default function GuidesScreen() {
     router.push(`/guide/${guideId}`);
   };
 
+  const getFilterLabel = (filter: FilterType): string => {
+    switch (filter) {
+      case 'All':
+        return t('guides.all');
+      case 'Medical':
+        return t('guides.medical');
+      case 'Fire':
+        return t('guides.fire');
+      case 'Flood':
+        return t('guides.flood');
+      case 'Earthquake':
+        return t('guides.earthquake');
+      default:
+        return filter;
+    }
+  };
+
   const renderFilterButton = (filter: FilterType) => (
     <TouchableOpacity
       key={filter}
@@ -166,7 +186,7 @@ export default function GuidesScreen() {
           color: activeFilter === filter ? themeColors.background : themeColors.text,
         }}
       >
-        {filter}
+        {getFilterLabel(filter)}
       </Text>
     </TouchableOpacity>
   );
@@ -176,7 +196,7 @@ export default function GuidesScreen() {
       <View className="flex-1 px-4 pt-2">
         {/* Header */}
         <View className="mb-4">
-          <ThemedText className="text-3xl font-bold mb-4">Guides</ThemedText>
+          <ThemedText className="text-3xl font-bold mb-4">{t('guides.title')}</ThemedText>
 
           {/* Quick Filters */}
           <ScrollView
@@ -205,7 +225,7 @@ export default function GuidesScreen() {
           )}
           ListEmptyComponent={
             <View className="items-center justify-center py-20">
-              <ThemedText className="text-base" style={{ opacity: 0.6 }}>No guides found.</ThemedText>
+              <ThemedText className="text-base" style={{ opacity: 0.6 }}>{t('guides.noGuidesFound')}</ThemedText>
             </View>
           }
           contentContainerStyle={{ paddingBottom: 20 }}

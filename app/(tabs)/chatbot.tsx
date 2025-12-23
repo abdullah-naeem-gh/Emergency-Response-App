@@ -1,24 +1,53 @@
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useAccessibility } from '@/hooks/useAccessibility';
+import { useTranslation } from '@/hooks/useTranslation';
+import { useTextInputStyles } from '@/utils/i18n';
 import * as Haptics from 'expo-haptics';
 import { Bot, Phone, Send } from 'lucide-react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import {
-    FlatList,
-    KeyboardAvoidingView,
-    Linking,
-    Platform,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  FlatList,
+  KeyboardAvoidingView,
+  Linking,
+  Platform,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { OpenRouterError, OpenRouterMessage, openRouterService } from '../../services/OpenRouterService';
 import { NewsItem } from '../../src/data/alertsData';
 import { contactsData, EmergencyContact } from '../../src/data/contactsData';
 import { Guide } from '../../src/data/guidesData';
 import { getAlerts, searchGuides } from '../../src/services/dataService';
+
+// Helper function to check if a color is yellow or light
+const isYellowOrLightColor = (color: string): boolean => {
+  const hex = color.replace('#', '').toUpperCase();
+  
+  // Check for common yellow colors
+  if (hex === 'FFFF00' || hex === 'FFD700' || hex === 'FFA500' || hex === 'FFC107' || hex === 'FEF3C7' || hex === 'FEE2E2' || hex === 'FED7AA' || hex === 'FCE7F3' || hex === 'DBEAFE' || hex === 'DCFCE7') {
+    return true;
+  }
+  
+  // Calculate luminance for other light colors
+  const r = parseInt(hex.substr(0, 2), 16);
+  const g = parseInt(hex.substr(2, 2), 16);
+  const b = parseInt(hex.substr(4, 2), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  
+  return luminance > 0.6;
+};
+
+// Helper function to get text color for a background
+const getTextColorForBackground = (backgroundColor: string): string => {
+  if (isYellowOrLightColor(backgroundColor)) {
+    return '#000000';
+  }
+  return '#FFFFFF';
+};
 
 interface Message {
   id: string;
@@ -42,7 +71,7 @@ interface ChatResponse {
 /**
  * Rule-based inference engine to analyze user queries
  */
-const analyzeQuery = (text: string): ChatResponse => {
+const analyzeQuery = (text: string, t: (key: string, params?: Record<string, string | number>) => string): ChatResponse => {
   const lowerText = text.toLowerCase();
 
   // Medical keywords: bleed, cut, pain, burn, injury, wound, etc.
@@ -55,7 +84,7 @@ const analyzeQuery = (text: string): ChatResponse => {
     if (matchingGuides.length > 0) {
       const bestMatch = matchingGuides[0];
       return {
-        text: `I found a guide that might help: "${bestMatch.title}". Here's what you need to know:`,
+        text: t('chatbot.foundGuide', { title: bestMatch.title }),
         data: {
           type: 'guide',
           item: bestMatch,
@@ -63,7 +92,7 @@ const analyzeQuery = (text: string): ChatResponse => {
       };
     } else {
       return {
-        text: "I couldn't find a specific guide for that, but I can help with First Aid, Alerts, or Contacts. Try asking 'How to treat a burn?'",
+        text: t('chatbot.noGuideFound'),
       };
     }
   }
@@ -78,7 +107,7 @@ const analyzeQuery = (text: string): ChatResponse => {
     if (recentAlerts.length > 0) {
       const latestAlert = recentAlerts[0];
       return {
-        text: `Here's the latest alert I found:`,
+        text: t('chatbot.latestAlert'),
         data: {
           type: 'alert',
           item: latestAlert,
@@ -86,7 +115,7 @@ const analyzeQuery = (text: string): ChatResponse => {
       };
     } else {
       return {
-        text: "I don't have any recent alerts right now. Stay safe and check back later for updates.",
+        text: t('chatbot.noAlerts'),
       };
     }
   }
@@ -111,7 +140,7 @@ const analyzeQuery = (text: string): ChatResponse => {
     if (matchingContacts.length > 0) {
       const contact = matchingContacts[0];
       return {
-        text: `I found an emergency contact for you:`,
+        text: t('chatbot.foundContact'),
         data: {
           type: 'contact',
           item: contact,
@@ -119,14 +148,14 @@ const analyzeQuery = (text: string): ChatResponse => {
       };
     } else {
       return {
-        text: "I couldn't find a specific contact. Try asking for 'police' or 'ambulance'.",
+        text: t('chatbot.noContactFound'),
       };
     }
   }
 
   // Default fallback
   return {
-    text: "I can help with First Aid, Alerts, or Contacts. Try asking 'How to treat a burn?' or 'Show me flood alerts' or 'I need police'",
+    text: t('chatbot.defaultResponse'),
   };
 };
 
@@ -138,10 +167,11 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
   const { themeColors } = useAccessibility();
   
   if (message.isUser) {
+    const textColor = getTextColorForBackground(themeColors.primary);
     return (
       <View className="flex-row justify-end mb-4">
         <View style={{ backgroundColor: themeColors.primary, borderRadius: 16, borderTopRightRadius: 4, paddingHorizontal: 16, paddingVertical: 12, maxWidth: '80%' }}>
-          <Text style={{ color: '#FFFFFF', fontSize: 16 }}>{message.text}</Text>
+          <Text style={{ color: textColor, fontSize: 16 }}>{message.text}</Text>
         </View>
       </View>
     );
@@ -169,16 +199,17 @@ interface GuideCardProps {
 
 const GuideCard: React.FC<GuideCardProps> = ({ guide }) => {
   const { themeColors } = useAccessibility();
+  const { t } = useTranslation();
   return (
     <View style={{ backgroundColor: themeColors.card, borderRadius: 12, padding: 12, marginTop: 8, borderWidth: 1, borderColor: themeColors.border }}>
       <ThemedText className="font-bold text-base mb-1">{guide.title}</ThemedText>
       <ThemedText className="text-sm mb-2" style={{ opacity: 0.7 }}>
-        {guide.steps.length} {guide.steps.length === 1 ? 'step' : 'steps'}
+        {guide.steps.length} {guide.steps.length === 1 ? t('chatbot.step') : t('chatbot.steps')}
       </ThemedText>
       <View className="flex-row items-center">
         <View style={{ backgroundColor: '#FEE2E2', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4 }}>
           <Text style={{ color: '#B91C1C', fontSize: 12, fontWeight: '600' }}>
-            {guide.category === 'FIRST_AID' ? 'First Aid' : guide.category}
+            {guide.category === 'FIRST_AID' ? t('chatbot.firstAid') : guide.category}
           </Text>
         </View>
       </View>
@@ -228,6 +259,7 @@ interface ContactCardProps {
 
 const ContactCard: React.FC<ContactCardProps> = ({ contact }) => {
   const { themeColors } = useAccessibility();
+  const { t } = useTranslation();
   const handleCall = async () => {
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
@@ -250,15 +282,13 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact }) => {
         style={{ backgroundColor: '#22C55E', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', minHeight: 60 }}
       >
         <Phone size={20} color="white" />
-        <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 16, marginLeft: 8 }}>Call Now</Text>
+        <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 16, marginLeft: 8 }}>{t('common.callNow')}</Text>
       </TouchableOpacity>
     </View>
   );
 };
 
-interface TypingIndicatorProps {}
-
-const TypingIndicator: React.FC<TypingIndicatorProps> = () => {
+const TypingIndicator: React.FC = () => {
   const { themeColors } = useAccessibility();
   return (
     <View className="flex-row justify-start mb-4">
@@ -276,10 +306,12 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = () => {
 export default function ChatbotScreen() {
   const insets = useSafeAreaInsets();
   const { themeColors } = useAccessibility();
+  const { t } = useTranslation();
+  const textInputStyles = useTextInputStyles();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      text: "Hello! I'm your AI Assistant. I can help with First Aid guides, Emergency Alerts, or Emergency Contacts. What do you need?",
+      text: t('chatbot.welcomeMessage'),
       isUser: false,
       timestamp: new Date(),
     },
@@ -287,6 +319,7 @@ export default function ChatbotScreen() {
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const flatListRef = useRef<FlatList>(null);
+  const [conversationHistory, setConversationHistory] = useState<OpenRouterMessage[]>([]);
   
   // Navbar height + safe area bottom
   const navbarHeight = 56 + insets.bottom;
@@ -301,9 +334,10 @@ export default function ChatbotScreen() {
   const handleSend = async () => {
     if (!inputText.trim() || isTyping) return;
 
+    const userMessageText = inputText.trim();
     const userMessage: Message = {
       id: Date.now().toString(),
-      text: inputText.trim(),
+      text: userMessageText,
       isUser: true,
       timestamp: new Date(),
     };
@@ -315,20 +349,89 @@ export default function ChatbotScreen() {
     // Haptic feedback
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
-    // Simulate typing delay (500ms)
-    setTimeout(() => {
-      const response = analyzeQuery(userMessage.text);
+    try {
+      // Try to get structured data first (guides, alerts, contacts)
+      const structuredResponse = analyzeQuery(userMessageText, t);
+      
+      // Update conversation history for OpenRouter
+      const newUserMessage: OpenRouterMessage = {
+        role: 'user',
+        content: userMessageText,
+      };
+      const updatedHistory = [...conversationHistory, newUserMessage];
+      setConversationHistory(updatedHistory);
+
+      // Get AI response from OpenRouter
+      const aiResponse = await openRouterService.generateEmergencyResponse(
+        userMessageText,
+        conversationHistory
+      );
+
+      // Use AI response if available, otherwise fall back to structured response
+      let responseText = aiResponse || structuredResponse.text;
+      
+      // If we have structured data, include it
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: response.text,
+        text: responseText,
         isUser: false,
         timestamp: new Date(),
-        data: response.data,
+        data: structuredResponse.data, // Keep structured data for cards
       };
 
+      // Update conversation history with bot response
+      if (aiResponse) {
+        const botMessageObj: OpenRouterMessage = {
+          role: 'assistant',
+          content: aiResponse,
+        };
+        setConversationHistory([...updatedHistory, botMessageObj]);
+      }
+
       setMessages(prev => [...prev, botMessage]);
+    } catch (error) {
+      console.error('Error getting AI response:', error);
+      
+      // Handle OpenRouter quota/rate limit errors
+      if (error && typeof error === 'object' && 'type' in error) {
+        const openRouterError = error as OpenRouterError;
+        let errorMessage = openRouterError.message;
+        
+        // Add retry time info if available
+        if (openRouterError.retryAfter) {
+          const minutes = Math.floor(openRouterError.retryAfter / 60);
+          const seconds = openRouterError.retryAfter % 60;
+          if (minutes > 0) {
+            const timeUnit = minutes === 1 ? t('chatbot.minute') : t('chatbot.minutes');
+            errorMessage += ' ' + t('chatbot.pleaseTryAgain', { time: `${minutes} ${timeUnit}` });
+          } else if (seconds > 0) {
+            const timeUnit = seconds === 1 ? t('chatbot.second') : t('chatbot.seconds');
+            errorMessage += ' ' + t('chatbot.pleaseTryAgain', { time: `${seconds} ${timeUnit}` });
+          }
+        }
+        
+        const errorBotMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          text: errorMessage,
+          isUser: false,
+          timestamp: new Date(),
+        };
+        setMessages(prev => [...prev, errorBotMessage]);
+      } else {
+        // Fallback to rule-based response for other errors
+        const fallbackResponse = analyzeQuery(userMessageText, t);
+        const botMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          text: fallbackResponse.text,
+          isUser: false,
+          timestamp: new Date(),
+          data: fallbackResponse.data,
+        };
+        setMessages(prev => [...prev, botMessage]);
+      }
+    } finally {
       setIsTyping(false);
-    }, 500);
+    }
   };
 
   return (
@@ -341,7 +444,7 @@ export default function ChatbotScreen() {
         {/* Header */}
         <View style={{ backgroundColor: themeColors.card, paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: themeColors.border, flexDirection: 'row', alignItems: 'center' }}>
           <Bot size={24} color={themeColors.primary} />
-          <ThemedText className="text-xl font-bold ml-2">AI Assistant</ThemedText>
+          <ThemedText className="text-xl font-bold ml-2">{t('chatbot.title')}</ThemedText>
         </View>
 
         {/* Messages List */}
@@ -378,21 +481,24 @@ export default function ChatbotScreen() {
         >
           <View className="flex-row items-center">
             <TextInput
-              style={{
-                flex: 1,
-                backgroundColor: themeColors.background,
-                borderRadius: 12,
-                paddingHorizontal: 16,
-                paddingVertical: 12,
-                fontSize: 16,
-                color: themeColors.text,
-                marginRight: 12,
-                minHeight: 50,
-                maxHeight: 100,
-                borderWidth: 1,
-                borderColor: themeColors.border,
-              }}
-              placeholder="Ask me anything..."
+              style={[
+                {
+                  flex: 1,
+                  backgroundColor: themeColors.background,
+                  borderRadius: 12,
+                  paddingHorizontal: 16,
+                  paddingVertical: 12,
+                  fontSize: 16,
+                  color: themeColors.text,
+                  marginRight: 12,
+                  minHeight: 50,
+                  maxHeight: 100,
+                  borderWidth: 1,
+                  borderColor: themeColors.border,
+                },
+                textInputStyles,
+              ]}
+              placeholder={t('chatbot.placeholder')}
               placeholderTextColor={themeColors.text + '80'}
               value={inputText}
               onChangeText={setInputText}
@@ -414,7 +520,7 @@ export default function ChatbotScreen() {
                 minWidth: 60,
               }}
             >
-              <Send size={24} color="white" />
+              <Send size={24} color={getTextColorForBackground(inputText.trim() && !isTyping ? themeColors.primary : themeColors.border)} />
             </TouchableOpacity>
           </View>
         </View>

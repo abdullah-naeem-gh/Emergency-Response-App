@@ -25,7 +25,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
+import { Platform } from 'react-native';
+import MapView, { Marker, Polyline, PROVIDER_GOOGLE, PROVIDER_DEFAULT } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RescueTask, tasksData } from '../../src/data/tasksData';
 import { useAppStore } from '../../store/useAppStore';
@@ -442,7 +443,7 @@ export default function VolunteerScreen() {
         showsUserLocation={locationPermission}
         showsMyLocationButton={false}
           toolbarEnabled={false}
-          provider={PROVIDER_GOOGLE}>
+          provider={Platform.OS === 'ios' ? PROVIDER_DEFAULT : PROVIDER_GOOGLE}>
           {displayTasks.map((task) => (
           <Marker
             key={task.id}

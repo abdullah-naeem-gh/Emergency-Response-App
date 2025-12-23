@@ -8,6 +8,7 @@ import {
 } from '@/services/AccessibilityService';
 import { notificationService } from '@/services/NotificationService';
 import { useAccessibility } from '@/hooks/useAccessibility';
+import { useTranslation } from '@/hooks/useTranslation';
 import { useAppStore } from '@/store/useAppStore';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
@@ -32,9 +33,10 @@ import {
   X,
   Zap
 } from 'lucide-react-native';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Dimensions,
   Modal,
   Pressable,
   ScrollView,
@@ -42,6 +44,7 @@ import {
   Text,
   View
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -63,10 +66,38 @@ interface MenuItem {
   badge?: string;
 }
 
+// Helper function to check if a color is yellow or light
+const isYellowOrLightColor = (color: string): boolean => {
+  const hex = color.replace('#', '').toUpperCase();
+  
+  // Check for common yellow colors
+  if (hex === 'FFFF00' || hex === 'FFD700' || hex === 'FFA500' || hex === 'FFC107' || hex === 'FEF3C7' || hex === 'FEE2E2' || hex === 'FED7AA' || hex === 'FCE7F3' || hex === 'DBEAFE' || hex === 'DCFCE7') {
+    return true;
+  }
+  
+  // Calculate luminance for other light colors
+  const r = parseInt(hex.substr(0, 2), 16);
+  const g = parseInt(hex.substr(2, 2), 16);
+  const b = parseInt(hex.substr(4, 2), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  
+  return luminance > 0.6;
+};
+
+// Helper function to get text color for a background
+const getTextColorForBackground = (backgroundColor: string): string => {
+  if (isYellowOrLightColor(backgroundColor)) {
+    return '#000000';
+  }
+  return '#FFFFFF';
+};
+
 export default function SettingsDrawer({ visible, onClose }: SettingsDrawerProps) {
   const { language, toggleLanguage, accessibilitySettings, updateAccessibilitySettings } = useAppStore();
   const { themeColors, getFontSize } = useAccessibility();
+  const { t } = useTranslation();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
@@ -77,6 +108,8 @@ export default function SettingsDrawer({ visible, onClose }: SettingsDrawerProps
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showAccessibilityModal, setShowAccessibilityModal] = useState(false);
   const progressWidth = useSharedValue(0);
+  const translateX = useSharedValue(Dimensions.get('window').width);
+  const screenWidth = Dimensions.get('window').width;
 
   const handleClose = async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -127,14 +160,26 @@ export default function SettingsDrawer({ visible, onClose }: SettingsDrawerProps
     width: `${progressWidth.value}%`,
   }));
 
+  useEffect(() => {
+    if (visible) {
+      translateX.value = withTiming(0, { duration: 300 });
+    } else {
+      translateX.value = withTiming(screenWidth, { duration: 300 });
+    }
+  }, [visible]);
+
+  const drawerStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: translateX.value }],
+  }));
+
   const navigationItems: MenuItem[] = [
-    { id: 'profile', label: 'Profile', icon: User, route: '/(tabs)/profile', color: '#6b7280' },
-    { id: 'reports', label: 'Report History', icon: History, route: '/(tabs)/reports', color: '#f59e0b' },
-    { id: 'explore', label: 'Explore', icon: BookOpen, route: '/(tabs)/explore', color: '#ec4899' },
-    { id: 'community', label: 'Community', icon: Users, route: '/(tabs)/community', color: '#ec4899' },
-    { id: 'crowd-map', label: 'Crowd Map', icon: MapPin, route: '/(tabs)/crowd-map', color: '#10b981' },
-    { id: 'news', label: 'News & Alerts', icon: Newspaper, route: '/(tabs)/news', color: '#ef4444' },
-    { id: 'directory', label: 'Directory', icon: Phone, route: '/(tabs)/directory', color: '#8b5cf6' },
+    { id: 'profile', label: t('settings.profile'), icon: User, route: '/(tabs)/profile', color: '#6b7280' },
+    { id: 'reports', label: t('settings.reportHistory'), icon: History, route: '/(tabs)/reports', color: '#f59e0b' },
+    { id: 'explore', label: t('settings.explore'), icon: BookOpen, route: '/(tabs)/explore', color: '#ec4899' },
+    { id: 'community', label: t('settings.community'), icon: Users, route: '/(tabs)/community', color: '#ec4899' },
+    { id: 'crowd-map', label: t('settings.crowdMap'), icon: MapPin, route: '/(tabs)/crowd-map', color: '#10b981' },
+    { id: 'news', label: t('settings.news'), icon: Newspaper, route: '/(tabs)/news', color: '#ef4444' },
+    { id: 'directory', label: t('settings.directory'), icon: Phone, route: '/(tabs)/directory', color: '#8b5cf6' },
   ];
 
   const renderMenuItem = (item: MenuItem) => {
@@ -188,30 +233,71 @@ export default function SettingsDrawer({ visible, onClose }: SettingsDrawerProps
     <Modal
       visible={visible}
       transparent
-      animationType="slide"
+      animationType="none"
       onRequestClose={handleClose}
     >
-      <View className="flex-1 bg-black/50">
+      <View className="flex-1">
+        {/* Backdrop */}
         <Pressable 
           className="flex-1" 
           onPress={handleClose}
+          style={{ 
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            zIndex: 0,
+          }}
         />
-        <ThemedView className="rounded-t-3xl border-t max-h-[90%]" style={{ borderTopColor: themeColors.border }}>
-          {/* Header */}
-          <View className="flex-row items-center justify-between px-6 py-4 border-b" style={{ backgroundColor: themeColors.card, borderBottomColor: themeColors.border }}>
-            <ThemedText className="text-2xl font-bold" baseSize={24}>Menu</ThemedText>
-            <Pressable
-              onPress={handleClose}
-              style={{ backgroundColor: themeColors.background, borderRadius: 9999, padding: 8, minHeight: 44, minWidth: 44 }}
+        {/* Drawer */}
+        <Animated.View
+          style={[
+            {
+              width: screenWidth,
+              height: '100%',
+              position: 'absolute',
+              left: 0,
+              top: 0,
+              backgroundColor: themeColors.card,
+              zIndex: 1,
+            },
+            drawerStyle,
+          ]}
+        >
+          <ThemedView className="flex-1" style={{ backgroundColor: themeColors.card }}>
+            {/* Header */}
+            <View 
+              className="flex-row items-center justify-between px-6 py-4 border-b" 
+              style={{ 
+                backgroundColor: themeColors.card, 
+                borderBottomColor: themeColors.border,
+                paddingTop: insets.top + 12,
+              }}
             >
-              <X size={20} color={themeColors.text} />
-            </Pressable>
-          </View>
+              <ThemedText className="text-2xl font-bold" baseSize={24}>{t('settings.menu')}</ThemedText>
+              <Pressable
+                onPress={handleClose}
+                style={{ backgroundColor: themeColors.background, borderRadius: 9999, padding: 8, minHeight: 44, minWidth: 44 }}
+              >
+                <X size={20} color={themeColors.text} />
+              </Pressable>
+            </View>
 
-          <ScrollView style={{ backgroundColor: themeColors.card, paddingHorizontal: 24, paddingVertical: 16 }} showsVerticalScrollIndicator={false}>
+            <ScrollView 
+              style={{ 
+                backgroundColor: themeColors.card, 
+                paddingHorizontal: 24, 
+                paddingVertical: 16, 
+                flex: 1 
+              }} 
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ paddingBottom: insets.bottom + 16 }}
+            >
             {/* Accessibility Section - Moved to top for visibility */}
             <View className="mb-6">
-              <ThemedText className="text-lg font-semibold mb-3">Accessibility</ThemedText>
+              <ThemedText className="text-lg font-semibold mb-3">{t('settings.accessibility')}</ThemedText>
               
               <AnimatedPressable
                 onPress={async () => {
@@ -251,9 +337,9 @@ export default function SettingsDrawer({ visible, onClose }: SettingsDrawerProps
                     <Eye size={24} color="#ffffff" />
                   </View>
                   <View className="flex-1">
-                    <ThemedText className="text-base font-semibold">Accessibility Settings</ThemedText>
+                    <ThemedText className="text-base font-semibold">{t('settings.accessibilitySettings')}</ThemedText>
                     <ThemedText className="text-sm" style={{ opacity: 0.7 }}>
-                      Themes, text-to-speech, haptics & more
+                      {t('settings.accessibilityDescription')}
                     </ThemedText>
                   </View>
                 </View>
@@ -311,7 +397,7 @@ export default function SettingsDrawer({ visible, onClose }: SettingsDrawerProps
                   </View>
                 </View>
                 <View style={{ backgroundColor: themeColors.primary, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 }}>
-                  <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: '600' }}>
+                  <Text style={{ color: getTextColorForBackground(themeColors.primary), fontSize: 14, fontWeight: '600' }}>
                     {language === 'en' ? 'اردو' : 'EN'}
                   </Text>
                 </View>
@@ -571,9 +657,10 @@ export default function SettingsDrawer({ visible, onClose }: SettingsDrawerProps
                   <ThemedText className="text-base font-medium">About Muhafiz</ThemedText>
                 </View>
               </AnimatedPressable>
-            </View>
-          </ScrollView>
-        </ThemedView>
+              </View>
+            </ScrollView>
+          </ThemedView>
+        </Animated.View>
       </View>
 
       {/* Help Center Modal */}
@@ -746,7 +833,7 @@ export default function SettingsDrawer({ visible, onClose }: SettingsDrawerProps
             <ScrollView style={{ paddingHorizontal: 24, paddingVertical: 16 }} showsVerticalScrollIndicator={false}>
               <View className="items-center mb-6">
                 <View style={{ backgroundColor: themeColors.primary, borderRadius: 9999, width: 96, height: 96, alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-                  <Shield size={48} color="white" />
+                  <Shield size={48} color={getTextColorForBackground(themeColors.primary)} />
                 </View>
                 <ThemedText className="text-2xl font-bold mb-2">Muhafiz</ThemedText>
                 <ThemedText className="text-base" style={{ opacity: 0.6 }}>Version 1.0.0</ThemedText>
@@ -806,15 +893,15 @@ export default function SettingsDrawer({ visible, onClose }: SettingsDrawerProps
             </View>
             <ScrollView style={{ paddingHorizontal: 24, paddingVertical: 16 }} showsVerticalScrollIndicator={false}>
               <View className="mb-4">
-                <ThemedText className="text-lg font-semibold mb-3">General</ThemedText>
+                <ThemedText className="text-lg font-semibold mb-3">{t('settings.general')}</ThemedText>
                 
                 <View style={{ backgroundColor: themeColors.card, borderRadius: 12, padding: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, borderWidth: 1, borderColor: themeColors.border }}>
                   <View className="flex-row items-center gap-3 flex-1">
                     <Globe size={24} color={themeColors.primary} />
                     <View className="flex-1">
-                      <ThemedText className="text-base font-medium">Language</ThemedText>
+                      <ThemedText className="text-base font-medium">{t('settings.language')}</ThemedText>
                       <ThemedText className="text-sm" style={{ opacity: 0.7 }}>
-                        {language === 'en' ? 'English' : 'اردو (Urdu)'}
+                        {language === 'en' ? t('settings.english') : t('settings.urdu')}
                       </ThemedText>
                     </View>
                   </View>
@@ -822,8 +909,8 @@ export default function SettingsDrawer({ visible, onClose }: SettingsDrawerProps
                     onPress={handleLanguageToggle}
                     style={{ backgroundColor: themeColors.primary, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 }}
                   >
-                    <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: '600' }}>
-                      {language === 'en' ? 'اردو' : 'EN'}
+                    <Text style={{ color: getTextColorForBackground(themeColors.primary), fontSize: 14, fontWeight: '600' }}>
+                      {language === 'en' ? t('settings.switchToUrdu') : t('settings.switchToEnglish')}
                     </Text>
                   </Pressable>
                 </View>
@@ -832,9 +919,9 @@ export default function SettingsDrawer({ visible, onClose }: SettingsDrawerProps
                   <View className="flex-row items-center gap-3 flex-1">
                     <Bell size={24} color="#f59e0b" />
                     <View className="flex-1">
-                      <ThemedText className="text-base font-medium">Notifications</ThemedText>
+                      <ThemedText className="text-base font-medium">{t('settings.notifications')}</ThemedText>
                       <ThemedText className="text-sm" style={{ opacity: 0.7 }}>
-                        Emergency alerts & updates
+                        {t('settings.notificationsEnabled')}
                       </ThemedText>
                     </View>
                   </View>

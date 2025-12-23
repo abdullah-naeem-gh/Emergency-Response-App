@@ -43,10 +43,10 @@ export default function TabLayout() {
             }}
           />
           <Tabs.Screen
-            name="volunteer"
+            name="crowd-map"
             options={{
               title: 'Map',
-              href: '/(tabs)/volunteer',
+              href: '/(tabs)/crowd-map',
             }}
           />
           <Tabs.Screen
@@ -83,7 +83,7 @@ export default function TabLayout() {
             }}
           />
           <Tabs.Screen
-            name="crowd-map"
+            name="volunteer"
             options={{
               href: null,
             }}

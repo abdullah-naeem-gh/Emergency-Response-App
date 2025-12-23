@@ -9,6 +9,7 @@ interface ThemedViewProps extends ViewProps {
 
 /**
  * View component that applies accessibility theme colors
+ * Note: RTL layout direction is handled globally by I18nManager in _layout.tsx
  */
 export const ThemedView: React.FC<ThemedViewProps> = ({ 
   children, 

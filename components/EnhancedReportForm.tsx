@@ -1,6 +1,8 @@
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useAccessibility } from '@/hooks/useAccessibility';
+import { useTranslation } from '@/hooks/useTranslation';
+import { useTextInputStyles } from '@/utils/i18n';
 import { crowdReportService, CrowdReport } from '@/services/CrowdReportService';
 import { reportService } from '@/services/ReportService';
 import * as Haptics from 'expo-haptics';
@@ -34,20 +36,9 @@ interface IncidentCategory {
   icon: string;
 }
 
-const INCIDENT_CATEGORIES: IncidentCategory[] = [
-  { id: 'flood', label: 'Flood', color: '#3B82F6', icon: '🌊' },
-  { id: 'fire', label: 'Fire', color: '#F59E0B', icon: '🔥' },
-  { id: 'medical', label: 'Medical', color: '#EF4444', icon: '🏥' },
-  { id: 'earthquake', label: 'Earthquake', color: '#8B5CF6', icon: '🌍' },
-  { id: 'other', label: 'Other', color: '#10B981', icon: '⚠️' },
-];
-
-const SEVERITY_OPTIONS = [
-  { id: 'LOW', label: 'Low', color: '#10B981' },
-  { id: 'MEDIUM', label: 'Medium', color: '#FBBF24' },
-  { id: 'HIGH', label: 'High', color: '#F59E0B' },
-  { id: 'CRITICAL', label: 'Critical', color: '#EF4444' },
-];
+// These will be translated in the component
+const INCIDENT_CATEGORIES_IDS = ['flood', 'fire', 'medical', 'earthquake', 'other'] as const;
+const SEVERITY_OPTIONS_IDS = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'] as const;
 
 export const EnhancedReportForm: React.FC<EnhancedReportFormProps> = ({
   visible,
@@ -56,6 +47,23 @@ export const EnhancedReportForm: React.FC<EnhancedReportFormProps> = ({
   initialType,
 }) => {
   const { themeColors } = useAccessibility();
+  const { t } = useTranslation();
+  const textInputStyles = useTextInputStyles();
+
+  const INCIDENT_CATEGORIES: IncidentCategory[] = [
+    { id: 'flood', label: t('report.flood'), color: '#3B82F6', icon: '🌊' },
+    { id: 'fire', label: t('report.fire'), color: '#F59E0B', icon: '🔥' },
+    { id: 'medical', label: t('report.medical'), color: '#EF4444', icon: '🏥' },
+    { id: 'earthquake', label: t('report.earthquake'), color: '#8B5CF6', icon: '🌍' },
+    { id: 'other', label: t('report.other'), color: '#10B981', icon: '⚠️' },
+  ];
+
+  const SEVERITY_OPTIONS = [
+    { id: 'LOW', label: t('report.low'), color: '#10B981' },
+    { id: 'MEDIUM', label: t('report.medium'), color: '#FBBF24' },
+    { id: 'HIGH', label: t('report.high'), color: '#F59E0B' },
+    { id: 'CRITICAL', label: t('report.critical'), color: '#EF4444' },
+  ];
   const [selectedType, setSelectedType] = useState<string>(initialType || 'flood');
   const [severity, setSeverity] = useState<'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'>('MEDIUM');
   const [description, setDescription] = useState('');
@@ -94,7 +102,7 @@ export const EnhancedReportForm: React.FC<EnhancedReportFormProps> = ({
 
   const handleTakePhoto = async () => {
     if (!ImagePicker) {
-      Alert.alert('Not Available', 'Image picker is not installed. Run: npx expo install expo-image-picker');
+      Alert.alert(t('report.notAvailable'), t('report.imagePickerNotInstalled'));
       return;
     }
     
@@ -103,7 +111,7 @@ export const EnhancedReportForm: React.FC<EnhancedReportFormProps> = ({
       
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission Required', 'Camera permission is needed to take photos.');
+        Alert.alert(t('report.permissionRequired'), t('report.cameraPermission') || 'Camera permission is needed to take photos.');
         return;
       }
 
@@ -118,13 +126,13 @@ export const EnhancedReportForm: React.FC<EnhancedReportFormProps> = ({
       }
     } catch (error) {
       console.error('Error taking photo:', error);
-      Alert.alert('Error', 'Failed to take photo. Please try again.');
+      Alert.alert(t('common.error'), t('report.photoError') || 'Failed to take photo. Please try again.');
     }
   };
 
   const handlePickImage = async () => {
     if (!ImagePicker) {
-      Alert.alert('Not Available', 'Image picker is not installed. Run: npx expo install expo-image-picker');
+      Alert.alert(t('report.notAvailable'), t('report.imagePickerNotInstalled'));
       return;
     }
     
@@ -133,7 +141,7 @@ export const EnhancedReportForm: React.FC<EnhancedReportFormProps> = ({
       
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission Required', 'Photo library permission is needed.');
+        Alert.alert(t('report.permissionRequired'), t('report.photoLibraryPermission') || 'Photo library permission is needed.');
         return;
       }
 
@@ -148,7 +156,7 @@ export const EnhancedReportForm: React.FC<EnhancedReportFormProps> = ({
       }
     } catch (error) {
       console.error('Error picking image:', error);
-      Alert.alert('Error', 'Failed to pick image. Please try again.');
+      Alert.alert(t('common.error'), t('report.imageError') || 'Failed to pick image. Please try again.');
     }
   };
 
@@ -159,7 +167,7 @@ export const EnhancedReportForm: React.FC<EnhancedReportFormProps> = ({
 
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission Required', 'Location permission is needed to report your location.');
+        Alert.alert(t('report.locationPermissionDenied'), t('report.locationPermissionMessage'));
         setLocationLoading(false);
         return;
       }
@@ -174,7 +182,7 @@ export const EnhancedReportForm: React.FC<EnhancedReportFormProps> = ({
       });
     } catch (error) {
       console.error('Error getting location:', error);
-      Alert.alert('Error', 'Failed to get your location. Please try again.');
+      Alert.alert(t('common.error'), t('report.locationError') || 'Failed to get your location. Please try again.');
     } finally {
       setLocationLoading(false);
     }
@@ -182,12 +190,12 @@ export const EnhancedReportForm: React.FC<EnhancedReportFormProps> = ({
 
   const handleSubmit = async () => {
     if (!description.trim()) {
-      Alert.alert('Required', 'Please provide a description of the incident.');
+      Alert.alert(t('common.error'), t('report.descriptionRequired') || 'Please provide a description of the incident.');
       return;
     }
 
     if (!location) {
-      Alert.alert('Required', 'Please get your location before submitting.');
+      Alert.alert(t('common.error'), t('report.locationRequired') || 'Please get your location before submitting.');
       return;
     }
 
@@ -229,13 +237,13 @@ export const EnhancedReportForm: React.FC<EnhancedReportFormProps> = ({
       setLocation(null);
 
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert('Success', 'Your report has been submitted successfully!');
+      Alert.alert(t('report.success'), t('report.successMessage'));
       
       onSuccess?.();
       onClose();
     } catch (error) {
       console.error('Error submitting report:', error);
-      Alert.alert('Error', 'Failed to submit report. Please try again.');
+      Alert.alert(t('report.error'), t('report.errorMessage'));
     } finally {
       setIsSubmitting(false);
     }
@@ -255,7 +263,7 @@ export const EnhancedReportForm: React.FC<EnhancedReportFormProps> = ({
         <View style={[styles.modalContainer, { backgroundColor: themeColors.card }]}>
           {/* Header */}
           <View style={[styles.header, { backgroundColor: themeColors.card, borderBottomColor: themeColors.border }]}>
-            <ThemedText className="text-2xl font-bold">Report Incident</ThemedText>
+            <ThemedText className="text-2xl font-bold">{t('report.title')}</ThemedText>
             <Pressable
               onPress={onClose}
               style={styles.closeButton}
@@ -274,7 +282,7 @@ export const EnhancedReportForm: React.FC<EnhancedReportFormProps> = ({
             {/* Incident Type */}
             <View className="mb-6">
               <ThemedText className="text-base font-semibold mb-3">
-                Incident Type
+                {t('report.incidentType')}
               </ThemedText>
               <View className="flex-row flex-wrap gap-3">
                 {INCIDENT_CATEGORIES.map((category) => (
@@ -308,7 +316,7 @@ export const EnhancedReportForm: React.FC<EnhancedReportFormProps> = ({
             {/* Severity */}
             <View className="mb-6">
               <ThemedText className="text-base font-semibold mb-3">
-                Severity Level
+                {t('report.severityLevel')}
               </ThemedText>
               <View className="flex-row flex-wrap gap-3">
                 {SEVERITY_OPTIONS.map((option) => (
@@ -339,21 +347,24 @@ export const EnhancedReportForm: React.FC<EnhancedReportFormProps> = ({
             {/* Description */}
             <View className="mb-6">
               <ThemedText className="text-base font-semibold mb-3">
-                Description *
+                {t('report.description')} *
               </ThemedText>
               <TextInput
-                style={{
-                  backgroundColor: themeColors.background,
-                  borderRadius: 12,
-                  paddingHorizontal: 16,
-                  paddingVertical: 12,
-                  color: themeColors.text,
-                  borderWidth: 1,
-                  borderColor: themeColors.border,
-                  minHeight: 100,
-                  textAlignVertical: 'top',
-                }}
-                placeholder="Describe what happened..."
+                style={[
+                  {
+                    backgroundColor: themeColors.background,
+                    borderRadius: 12,
+                    paddingHorizontal: 16,
+                    paddingVertical: 12,
+                    color: themeColors.text,
+                    borderWidth: 1,
+                    borderColor: themeColors.border,
+                    minHeight: 100,
+                    textAlignVertical: 'top',
+                  },
+                  textInputStyles,
+                ]}
+                placeholder={t('report.descriptionPlaceholder')}
                 placeholderTextColor={themeColors.text + '80'}
                 value={description}
                 onChangeText={setDescription}
@@ -365,20 +376,23 @@ export const EnhancedReportForm: React.FC<EnhancedReportFormProps> = ({
             {/* Affected People */}
             <View className="mb-6">
               <ThemedText className="text-base font-semibold mb-3">
-                Number of People Affected (Optional)
+                {t('report.affectedPeople')}
               </ThemedText>
               <TextInput
-                style={{
-                  backgroundColor: themeColors.background,
-                  borderRadius: 12,
-                  paddingHorizontal: 16,
-                  paddingVertical: 12,
-                  color: themeColors.text,
-                  borderWidth: 1,
-                  borderColor: themeColors.border,
-                  minHeight: 60,
-                }}
-                placeholder="Enter number"
+                style={[
+                  {
+                    backgroundColor: themeColors.background,
+                    borderRadius: 12,
+                    paddingHorizontal: 16,
+                    paddingVertical: 12,
+                    color: themeColors.text,
+                    borderWidth: 1,
+                    borderColor: themeColors.border,
+                    minHeight: 60,
+                  },
+                  textInputStyles,
+                ]}
+                placeholder={t('report.affectedPeoplePlaceholder')}
                 placeholderTextColor={themeColors.text + '80'}
                 value={affectedPeople}
                 onChangeText={setAffectedPeople}
@@ -389,7 +403,7 @@ export const EnhancedReportForm: React.FC<EnhancedReportFormProps> = ({
             {/* Location */}
             <View className="mb-6">
               <ThemedText className="text-base font-semibold mb-3">
-                Location *
+                {t('report.location')} *
               </ThemedText>
               <TouchableOpacity
                 onPress={handleGetLocation}
@@ -412,12 +426,12 @@ export const EnhancedReportForm: React.FC<EnhancedReportFormProps> = ({
                   <ThemedText className="font-medium ml-3 flex-1">
                     {location
                       ? `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`
-                      : 'Get Current Location'}
+                      : t('report.getCurrentLocation')}
                   </ThemedText>
                 </View>
                 {locationLoading && (
                   <View className="ml-2">
-                    <ThemedText style={{ color: themeColors.primary }}>Loading...</ThemedText>
+                    <ThemedText style={{ color: themeColors.primary }}>{t('report.loading')}</ThemedText>
                   </View>
                 )}
               </TouchableOpacity>
@@ -426,7 +440,7 @@ export const EnhancedReportForm: React.FC<EnhancedReportFormProps> = ({
             {/* Photo */}
             <View className="mb-6">
               <ThemedText className="text-base font-semibold mb-3">
-                Photo (Optional)
+                {t('report.photo')}
               </ThemedText>
               {photo ? (
                 <View style={{ position: 'relative' }}>
@@ -460,7 +474,7 @@ export const EnhancedReportForm: React.FC<EnhancedReportFormProps> = ({
                     }}
                   >
                     <Camera size={24} color={themeColors.text} style={{ opacity: 0.7 }} />
-                    <ThemedText className="font-medium mt-2" style={{ opacity: 0.7 }}>Take Photo</ThemedText>
+                    <ThemedText className="font-medium mt-2" style={{ opacity: 0.7 }}>{t('report.takePhoto')}</ThemedText>
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={handlePickImage}
@@ -478,7 +492,7 @@ export const EnhancedReportForm: React.FC<EnhancedReportFormProps> = ({
                     }}
                   >
                     <ImageIcon size={24} color={themeColors.text} style={{ opacity: 0.7 }} />
-                    <ThemedText className="font-medium mt-2" style={{ opacity: 0.7 }}>Choose Photo</ThemedText>
+                    <ThemedText className="font-medium mt-2" style={{ opacity: 0.7 }}>{t('report.choosePhoto')}</ThemedText>
                   </TouchableOpacity>
                 </View>
               )}
@@ -496,7 +510,7 @@ export const EnhancedReportForm: React.FC<EnhancedReportFormProps> = ({
               style={{ minHeight: 60 }}
             >
               <Text className="text-white font-bold text-lg">
-                {isSubmitting ? 'Submitting...' : 'Submit Report'}
+                {isSubmitting ? t('report.submitting') : t('report.submit')}
               </Text>
             </TouchableOpacity>
           </ScrollView>

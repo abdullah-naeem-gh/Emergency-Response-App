@@ -3,6 +3,7 @@ import { EnhancedReportForm } from '@/components/EnhancedReportForm';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useAccessibility } from '@/hooks/useAccessibility';
+import { useTranslation } from '@/hooks/useTranslation';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import {
@@ -10,7 +11,6 @@ import {
   BookOpen,
   Bot,
   Heart,
-  Map,
   Mic,
   Newspaper,
   PhoneCall,
@@ -18,7 +18,7 @@ import {
   User,
   Users
 } from 'lucide-react-native';
-import React, { useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   Dimensions,
   ScrollView,
@@ -41,28 +41,100 @@ interface ActionButton {
 export default function HomeScreen() {
   const router = useRouter();
   const { themeColors } = useAccessibility();
+  const { t } = useTranslation();
   const [showEnhancedForm, setShowEnhancedForm] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const handleReportIncident = async () => {
+  // Helper function to get theme-aware card colors
+  const getCardColors = useMemo(() => {
+    const isDark = themeColors.background === '#000000' || 
+                   themeColors.background === '#121212' || 
+                   themeColors.background === '#1a1a1a';
+    
+    // For dark themes, use card color as base (icons provide visual distinction)
+    // For light themes, use colored tints
+    if (isDark) {
+      const baseCard = themeColors.card;
+      return {
+        explore: baseCard,
+        news: baseCard,
+        emergency: baseCard,
+        community: baseCard,
+        profile: baseCard,
+        report: baseCard,
+        volunteer: baseCard,
+        map: baseCard,
+        askAI: baseCard,
+        guides: baseCard,
+      };
+    } else {
+      // Light theme - use subtle tints that match theme
+      return {
+        explore: '#fce7f3', // pink tint
+        news: '#fee2e2', // red tint
+        emergency: '#fee2e2', // red tint
+        community: '#fce7f3', // pink tint
+        profile: '#f3f4f6', // gray tint
+        report: '#dbeafe', // blue tint
+        volunteer: '#ffffff', // white
+        map: '#dcfce7', // green tint
+        askAI: '#fef3c7', // yellow tint
+        guides: '#e0e7ff', // indigo tint
+      };
+    }
+  }, [themeColors]);
+
+  // Helper function to get theme-aware icon colors
+  const getIconColors = useMemo(() => {
+    const isDark = themeColors.background === '#000000' || 
+                   themeColors.background === '#121212' || 
+                   themeColors.background === '#1a1a1a';
+    
+    if (isDark) {
+      // For dark themes, use theme accent colors or primary with variations
+      return {
+        explore: themeColors.accent || themeColors.primary,
+        news: themeColors.accent || themeColors.primary,
+        emergency: '#ef4444', // Keep red for emergency visibility
+        community: themeColors.accent || themeColors.primary,
+        profile: themeColors.text,
+        report: themeColors.accent || themeColors.primary,
+        volunteer: themeColors.accent || themeColors.primary,
+        map: themeColors.secondary || themeColors.primary,
+        askAI: themeColors.accent || themeColors.primary,
+        guides: themeColors.accent || themeColors.primary,
+      };
+    } else {
+      // Light theme - use original colors
+      return {
+        explore: '#ec4899',
+        news: '#ef4444',
+        emergency: '#ef4444',
+        community: '#ec4899',
+        profile: '#6b7280',
+        report: '#ef4444',
+        volunteer: '#ea580c',
+        map: '#3b82f6',
+        askAI: '#eab308',
+        guides: '#6366f1',
+      };
+    }
+  }, [themeColors]);
+
+  const handleReportIncident = useCallback(async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setShowEnhancedForm(true);
-  };
+  }, [setShowEnhancedForm]);
 
-  const handleVolunteer = async () => {
+  const handleVolunteer = useCallback(async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     router.push('/(tabs)/volunteer');
-  };
+  }, [router]);
 
-  const handleViewMap = async () => {
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    router.push('/(tabs)/crowd-map');
-  };
-
-  const handleAskAI = async () => {
+  const handleAskAI = useCallback(async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     router.push('/(tabs)/chatbot');
-  };
+  }, [router]);
 
   const handleSearch = async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -110,67 +182,72 @@ export default function HomeScreen() {
   };
 
 
-  const handleViewCommunity = async () => {
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  const handleViewCommunity = useCallback(async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     router.push('/(tabs)/community');
-  };
+  }, [router]);
+
+  const handleViewGuides = useCallback(async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push('/(tabs)/guides');
+  }, [router]);
 
 
-  const actionButtons: ActionButton[] = [
+  const actionButtons: ActionButton[] = useMemo(() => [
     {
       id: 'report',
-      label: 'Report',
+      label: t('home.reportIncident'),
       icon: AlertTriangle,
-      color: '#ef4444',
-      bgColor: '#dbeafe', // light blue
+      color: getIconColors.report,
+      bgColor: getCardColors.report,
       onPress: handleReportIncident,
     },
     {
       id: 'volunteer',
-      label: 'Volunteer',
+      label: t('home.volunteer'),
       icon: Heart,
-      color: '#ea580c',
-      bgColor: '#ffffff', // white
+      color: getIconColors.volunteer,
+      bgColor: getCardColors.volunteer,
       onPress: handleVolunteer,
     },
     {
-      id: 'map',
-      label: 'View Map',
-      icon: Map,
-      color: '#3b82f6',
-      bgColor: '#dcfce7', // light green
-      onPress: handleViewMap,
+      id: 'community',
+      label: t('home.community'),
+      icon: Users,
+      color: getIconColors.community,
+      bgColor: getCardColors.community,
+      onPress: handleViewCommunity,
     },
     {
       id: 'ask-ai',
-      label: 'Ask AI',
+      label: t('home.askAI'),
       icon: Bot,
-      color: '#eab308',
-      bgColor: '#fef3c7', // light yellow
+      color: getIconColors.askAI,
+      bgColor: getCardColors.askAI,
       onPress: handleAskAI,
     },
-  ];
+  ], [getCardColors, getIconColors, handleReportIncident, handleVolunteer, handleViewCommunity, handleAskAI, t]);
 
   return (
     <ThemedView className="flex-1">
       <ScrollView 
         className="flex-1" 
-        contentContainerStyle={{ paddingBottom: 100, paddingTop: 20 }}
+        contentContainerStyle={{ paddingBottom: 120, paddingTop: 16 }}
         showsVerticalScrollIndicator={false}
       >
         {/* Greeting Section */}
-        <View className="px-6 pt-0 pb-4">
-          <ThemedText className="text-5xl font-bold leading-tight" baseSize={48} style={{ lineHeight: 56 }}>
-            Hi,{'\n'}How can we help you today?
+        <View className="px-6 pt-0 pb-3">
+          <ThemedText className="text-4xl font-bold leading-tight" baseSize={36} style={{ lineHeight: 44 }}>
+            {t('home.title')}
           </ThemedText>
         </View>
 
         {/* Quick Links Section - Horizontal Row */}
-        <View className="pb-4">
+        <View className="pb-3">
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: 24, gap: 12 }}
+            contentContainerStyle={{ paddingHorizontal: 24, gap: 10 }}
           >
             {/* Explore Card */}
             <AnimatedPressable
@@ -179,8 +256,8 @@ export default function HomeScreen() {
               hapticFeedback={true}
               hapticStyle={Haptics.ImpactFeedbackStyle.Light}
               style={{
-                width: 120,
-                backgroundColor: themeColors.card,
+                width: 110,
+                backgroundColor: getCardColors.explore,
                 shadowColor: '#000',
                 shadowOffset: { width: 0, height: 1 },
                 shadowOpacity: 0.1,
@@ -193,22 +270,23 @@ export default function HomeScreen() {
               <View className="items-center">
                 <View
                   style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 20,
-                    backgroundColor: '#fce7f3',
+                    width: 36,
+                    height: 36,
+                    borderRadius: 18,
+                    backgroundColor: getCardColors.explore,
                     alignItems: 'center',
                     justifyContent: 'center',
-                    marginBottom: 8,
+                    marginBottom: 6,
+                    opacity: 0.8,
                   }}
                 >
-                  <BookOpen size={20} color="#ec4899" />
+                  <BookOpen size={18} color={getIconColors.explore} />
                 </View>
                 <ThemedText className="text-sm font-semibold text-center">
-                  Explore
+                  {t('home.explore')}
                 </ThemedText>
                 <ThemedText className="text-xs text-center mt-1" style={{ opacity: 0.7 }} numberOfLines={1}>
-                  Articles
+                  {t('home.articles')}
                 </ThemedText>
               </View>
             </AnimatedPressable>
@@ -220,8 +298,8 @@ export default function HomeScreen() {
               hapticFeedback={true}
               hapticStyle={Haptics.ImpactFeedbackStyle.Light}
               style={{
-                width: 120,
-                backgroundColor: themeColors.card,
+                width: 110,
+                backgroundColor: getCardColors.news,
                 shadowColor: '#000',
                 shadowOffset: { width: 0, height: 1 },
                 shadowOpacity: 0.1,
@@ -234,22 +312,23 @@ export default function HomeScreen() {
               <View className="items-center">
                 <View
                   style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 20,
-                    backgroundColor: '#fee2e2',
+                    width: 36,
+                    height: 36,
+                    borderRadius: 18,
+                    backgroundColor: getCardColors.news,
                     alignItems: 'center',
                     justifyContent: 'center',
-                    marginBottom: 8,
+                    marginBottom: 6,
+                    opacity: 0.8,
                   }}
                 >
-                  <Newspaper size={20} color="#ef4444" />
+                  <Newspaper size={18} color={getIconColors.news} />
                 </View>
                 <ThemedText className="text-sm font-semibold text-center">
-                  News
+                  {t('home.news')}
                 </ThemedText>
                 <ThemedText className="text-xs text-center mt-1" style={{ opacity: 0.7 }} numberOfLines={1}>
-                  Alerts
+                  {t('home.alerts')}
                 </ThemedText>
               </View>
             </AnimatedPressable>
@@ -261,77 +340,37 @@ export default function HomeScreen() {
               hapticFeedback={true}
               hapticStyle={Haptics.ImpactFeedbackStyle.Medium}
               style={{
-                width: 120,
-                backgroundColor: themeColors.card,
+                width: 110,
+                backgroundColor: getCardColors.emergency,
                 shadowColor: '#000',
                 shadowOffset: { width: 0, height: 1 },
                 shadowOpacity: 0.1,
                 shadowRadius: 2,
                 elevation: 2,
                 borderWidth: 1,
-                borderColor: '#fee2e2', // light red border for emergency
+                borderColor: getIconColors.emergency + '40', // semi-transparent emergency color
               }}
             >
               <View className="items-center">
                 <View
                   style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 20,
-                    backgroundColor: '#fee2e2', // light red
+                    width: 36,
+                    height: 36,
+                    borderRadius: 18,
+                    backgroundColor: getCardColors.emergency,
                     alignItems: 'center',
                     justifyContent: 'center',
-                    marginBottom: 8,
+                    marginBottom: 6,
+                    opacity: 0.8,
                   }}
                 >
-                  <PhoneCall size={20} color="#ef4444" />
+                  <PhoneCall size={18} color={getIconColors.emergency} />
                 </View>
                 <ThemedText className="text-sm font-semibold text-center">
-                  Emergency
+                  {t('home.emergency')}
                 </ThemedText>
                 <ThemedText className="text-xs text-center mt-1" style={{ opacity: 0.7 }} numberOfLines={1}>
-                  Contacts
-                </ThemedText>
-              </View>
-            </AnimatedPressable>
-
-            {/* Community Card */}
-            <AnimatedPressable
-              onPress={handleViewCommunity}
-              className="rounded-xl p-3"
-              hapticFeedback={true}
-              hapticStyle={Haptics.ImpactFeedbackStyle.Light}
-              style={{
-                width: 120,
-                backgroundColor: themeColors.card,
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 1 },
-                shadowOpacity: 0.1,
-                shadowRadius: 2,
-                elevation: 2,
-                borderWidth: 1,
-                borderColor: themeColors.border,
-              }}
-            >
-              <View className="items-center">
-                <View
-                  style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 20,
-                    backgroundColor: '#fce7f3',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginBottom: 8,
-                  }}
-                >
-                  <Users size={20} color="#ec4899" />
-                </View>
-                <ThemedText className="text-sm font-semibold text-center">
-                  Community
-                </ThemedText>
-                <ThemedText className="text-xs text-center mt-1" style={{ opacity: 0.7 }} numberOfLines={1}>
-                  Connect
+                  {t('home.contacts')}
                 </ThemedText>
               </View>
             </AnimatedPressable>
@@ -343,8 +382,8 @@ export default function HomeScreen() {
               hapticFeedback={true}
               hapticStyle={Haptics.ImpactFeedbackStyle.Light}
               style={{
-                width: 120,
-                backgroundColor: themeColors.card,
+                width: 110,
+                backgroundColor: getCardColors.profile,
                 shadowColor: '#000',
                 shadowOffset: { width: 0, height: 1 },
                 shadowOpacity: 0.1,
@@ -357,22 +396,65 @@ export default function HomeScreen() {
               <View className="items-center">
                 <View
                   style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 20,
-                    backgroundColor: '#f3f4f6',
+                    width: 36,
+                    height: 36,
+                    borderRadius: 18,
+                    backgroundColor: getCardColors.profile,
                     alignItems: 'center',
                     justifyContent: 'center',
-                    marginBottom: 8,
+                    marginBottom: 6,
+                    opacity: 0.8,
                   }}
                 >
-                  <User size={20} color="#6b7280" />
+                  <User size={18} color={getIconColors.profile} />
                 </View>
                 <ThemedText className="text-sm font-semibold text-center">
-                  Profile
+                  {t('home.profile')}
                 </ThemedText>
                 <ThemedText className="text-xs text-center mt-1" style={{ opacity: 0.7 }} numberOfLines={1}>
-                  Stats
+                  {t('home.stats')}
+                </ThemedText>
+              </View>
+            </AnimatedPressable>
+
+            {/* Guides Card */}
+            <AnimatedPressable
+              onPress={handleViewGuides}
+              className="rounded-xl p-3"
+              hapticFeedback={true}
+              hapticStyle={Haptics.ImpactFeedbackStyle.Light}
+              style={{
+                width: 110,
+                backgroundColor: getCardColors.guides,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.1,
+                shadowRadius: 2,
+                elevation: 2,
+                borderWidth: 1,
+                borderColor: themeColors.border,
+              }}
+            >
+              <View className="items-center">
+                <View
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 18,
+                    backgroundColor: getCardColors.guides,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: 6,
+                    opacity: 0.8,
+                  }}
+                >
+                  <BookOpen size={18} color={getIconColors.guides} />
+                </View>
+                <ThemedText className="text-sm font-semibold text-center">
+                  {t('home.guides')}
+                </ThemedText>
+                <ThemedText className="text-xs text-center mt-1" style={{ opacity: 0.7 }} numberOfLines={1}>
+                  {t('home.tutorials')}
                 </ThemedText>
               </View>
             </AnimatedPressable>
@@ -380,8 +462,8 @@ export default function HomeScreen() {
         </View>
 
         {/* Action Buttons Grid - 2x2 */}
-        <View className="px-6 pb-3">
-          <View className="flex-row flex-wrap justify-between gap-4">
+        <View className="px-6 pb-2">
+          <View className="flex-row flex-wrap justify-between gap-3">
             {actionButtons.map((button) => {
               const IconComponent = button.icon;
               return (
@@ -402,25 +484,26 @@ export default function HomeScreen() {
                     elevation: 3,
                     alignItems: 'center',
                     justifyContent: 'center',
-                    paddingVertical: 20,
+                    paddingVertical: 16,
                   }}
                 >
                   <View className="items-center justify-center">
                     <View
                       style={{
-                        width: 64,
-                        height: 64,
-                        borderRadius: 32,
+                        width: 56,
+                        height: 56,
+                        borderRadius: 28,
                         backgroundColor: themeColors.card,
                         alignItems: 'center',
                         justifyContent: 'center',
-                        marginBottom: 16,
+                        marginBottom: 12,
+                        opacity: 0.9,
                       }}
                     >
-                      <IconComponent size={40} color={themeColors.text} />
+                      <IconComponent size={36} color={button.color} />
                     </View>
                     <ThemedText 
-                      className="text-xl font-semibold"
+                      className="text-lg font-semibold"
                       style={{ textAlign: 'center' }}
                     >
                       {button.label}
@@ -433,22 +516,22 @@ export default function HomeScreen() {
         </View>
 
         {/* Search Bar */}
-        <View className="px-6 pb-3">
+        <View className="px-6 pb-2">
           <View 
-            className="flex-row items-center px-4 py-4"
+            className="flex-row items-center px-4 py-3"
             style={{ 
               backgroundColor: themeColors.card,
-              minHeight: 60,
-              borderRadius: 30,
+              minHeight: 56,
+              borderRadius: 28,
               borderWidth: 1,
               borderColor: themeColors.border,
             }}
           >
-            <Search size={20} color={themeColors.text} />
+            <Search size={18} color={themeColors.text} />
                     <TextInput
-                      className="flex-1 ml-3 text-base"
+                      className="flex-1 ml-3 text-sm"
                       style={{ color: themeColors.text }}
-                      placeholder="Search for guides, alerts, or ask anything"
+                      placeholder={t('home.searchPlaceholder')}
                       placeholderTextColor={themeColors.text + '80'}
                       value={searchQuery}
                       onChangeText={setSearchQuery}
@@ -461,16 +544,16 @@ export default function HomeScreen() {
               hapticFeedback={true}
               hapticStyle={Haptics.ImpactFeedbackStyle.Light}
               style={{
-                width: 36,
-                height: 36,
-                borderRadius: 18,
+                width: 32,
+                height: 32,
+                borderRadius: 16,
                 borderWidth: 1,
                 borderColor: themeColors.border,
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <Mic size={20} color={themeColors.text} />
+              <Mic size={18} color={themeColors.text} />
             </AnimatedPressable>
           </View>
         </View>

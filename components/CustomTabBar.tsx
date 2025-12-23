@@ -23,7 +23,7 @@ interface TabItem {
 
 const tabs: TabItem[] = [
   { name: 'home', route: '/(tabs)', icon: Home, label: 'Home' },
-  { name: 'map', route: '/(tabs)/volunteer', icon: MapPin, label: 'Map' },
+  { name: 'map', route: '/(tabs)/crowd-map', icon: MapPin, label: 'Map' },
   { name: 'sos', route: '/(panic)', icon: AlertCircle, label: 'SOS' },
   { name: 'guides', route: '/(tabs)/guides', icon: BookOpen, label: 'Guides' },
   { name: 'chat', route: '/(tabs)/chatbot', icon: Bot, label: 'Chat' },
@@ -105,6 +105,9 @@ export default function CustomTabBar(props: BottomTabBarProps) {
           if (tab.name === 'home') {
             return r.name === 'index';
           }
+          if (tab.name === 'map') {
+            return r.name === 'crowd-map';
+          }
           return r.name === tab.name;
         });
         if (route) {
@@ -128,7 +131,7 @@ export default function CustomTabBar(props: BottomTabBarProps) {
       );
     }
     if (tab.name === 'map') {
-      return pathname === '/(tabs)/volunteer' || pathname?.includes('/volunteer');
+      return pathname === '/(tabs)/crowd-map' || pathname?.includes('/crowd-map');
     }
     if (tab.name === 'guides') {
       return pathname === '/(tabs)/guides' || pathname?.includes('/guides');
@@ -189,6 +192,18 @@ export default function CustomTabBar(props: BottomTabBarProps) {
           const Icon = tab.icon;
 
           if (isSOS) {
+            // Determine SOS button colors based on theme
+            const isDark = themeColors.background === '#000000' || 
+                          themeColors.background === '#121212' || 
+                          themeColors.background === '#1a1a1a';
+            
+            // Keep red for emergency but adjust brightness for dark themes
+            const sosButtonBg = isDark ? '#ef4444' : '#dc2626'; // Lighter red for dark themes
+            const sosButtonBorder = isDark ? '#ffffff' : '#ffffff'; // White border for contrast
+            const sosIconColor = '#ffffff'; // Always white for maximum contrast
+            const sosWrapperBg = themeColors.card || themeColors.background;
+            const sosWrapperBorder = themeColors.border;
+            
             return (
               <AnimatedPressable
                 key={tab.name}
@@ -197,9 +212,21 @@ export default function CustomTabBar(props: BottomTabBarProps) {
                 hapticFeedback={true}
                 hapticStyle={Haptics.ImpactFeedbackStyle.Medium}
               >
-                <View style={styles.sosButtonWrapper}>
-                  <View style={styles.sosButton}>
-                    <Icon size={28} color="white" />
+                <View style={[
+                  styles.sosButtonWrapper,
+                  {
+                    backgroundColor: sosWrapperBg,
+                    borderBottomColor: sosWrapperBorder,
+                  }
+                ]}>
+                  <View style={[
+                    styles.sosButton,
+                    {
+                      backgroundColor: sosButtonBg,
+                      borderColor: sosButtonBorder,
+                    }
+                  ]}>
+                    <Icon size={28} color={sosIconColor} />
                   </View>
                 </View>
               </AnimatedPressable>
@@ -295,12 +322,10 @@ const styles = StyleSheet.create({
     width: 76,
     height: 76,
     borderRadius: 38,
-    backgroundColor: '#f9fafb', // gray-50 - matches screen background for wrap-around effect
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: -10, // Reduced from -30 to keep it lower, aligned with navbar
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb', // gray-200 - matches navbar top border
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -311,10 +336,8 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#dc2626', // red-600
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 3,
-    borderColor: 'white',
   },
 });

@@ -1,5 +1,6 @@
 import { ThemedView } from '@/components/ThemedView';
 import { useAccessibility } from '@/hooks/useAccessibility';
+import { useTranslation } from '@/hooks/useTranslation';
 import { MockLocationService } from '@/services/MockLocationService';
 import {
   speechRecognitionService,
@@ -30,6 +31,7 @@ const RECORDING_DURATION = 12000; // 12 seconds instead of 5
 export default function PanicScreen() {
   const router = useRouter();
   const { themeColors } = useAccessibility();
+  const { t } = useTranslation();
   const [isRecording, setIsRecording] = useState(false);
   const [isSent, setIsSent] = useState(false);
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
@@ -237,10 +239,10 @@ export default function PanicScreen() {
     try {
       if (permissionResponse?.status !== 'granted') {
         const perm = await requestPermission();
-        if (perm.status !== 'granted') {
-          Alert.alert("Permission required", "Microphone permission is needed for emergency recording.");
-          return;
-        }
+      if (perm.status !== 'granted') {
+        Alert.alert(t('panic.permissionRequired'), t('panic.microphonePermission'));
+        return;
+      }
       }
 
       await Audio.setAudioModeAsync({
@@ -430,9 +432,9 @@ export default function PanicScreen() {
           <View style={{ backgroundColor: '#FFFFFF', borderRadius: 9999, width: 128, height: 128, justifyContent: 'center', alignItems: 'center', marginBottom: 24 }}>
             <CheckCircle size={64} color="#22c55e" strokeWidth={3} />
           </View>
-          <Text style={{ color: '#FFFFFF', fontSize: 36, fontWeight: '700', marginBottom: 8, textAlign: 'center' }}>HELP SENT</Text>
+          <Text style={{ color: '#FFFFFF', fontSize: 36, fontWeight: '700', marginBottom: 8, textAlign: 'center' }}>{t('panic.helpSent')}</Text>
           <Text style={{ color: '#FFFFFF', fontSize: 18, textAlign: 'center', marginBottom: 24, paddingHorizontal: 24 }}>
-            Volunteers have received your location and audio. Stay calm.
+            {t('panic.helpSentMessage')}
           </Text>
 
           {/* Transcription Display */}
@@ -440,7 +442,7 @@ export default function PanicScreen() {
             <View style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', borderRadius: 12, padding: 16, marginBottom: 24, width: '100%', maxWidth: 384 }}>
               <View className="flex-row items-center justify-center mb-2">
                 <ActivityIndicator size="small" color="#ffffff" />
-                <Text style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: 14, marginLeft: 8 }}>Transcribing audio...</Text>
+                <Text style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: 14, marginLeft: 8 }}>{t('chatbot.transcribing')}</Text>
               </View>
             </View>
           )}
@@ -448,12 +450,12 @@ export default function PanicScreen() {
           {transcription && !isTranscribing && (
             <View style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', borderRadius: 12, padding: 16, marginBottom: 24, width: '100%', maxWidth: 384 }}>
               <Text style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: 12, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                Transcribed Message ({speechRecognitionService.getLanguageName(transcription.language)})
+                {t('panic.transcribedMessage', { language: speechRecognitionService.getLanguageName(transcription.language) })}
               </Text>
               <Text style={{ color: '#FFFFFF', fontSize: 16, lineHeight: 20 }}>{transcription.text}</Text>
               {transcription.confidence < 0.7 && (
                 <Text style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: 12, marginTop: 8 }}>
-                  Low confidence transcription ({Math.round(transcription.confidence * 100)}%)
+                  {t('panic.lowConfidence', { percent: Math.round(transcription.confidence * 100) })}
                 </Text>
               )}
             </View>
@@ -463,7 +465,7 @@ export default function PanicScreen() {
             onPress={handleGoBack}
             style={{ backgroundColor: 'rgba(255, 255, 255, 0.2)', paddingHorizontal: 32, paddingVertical: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.4)', minHeight: 60 }}
           >
-            <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 18 }}>I AM SAFE NOW</Text>
+            <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 18 }}>{t('panic.iAmSafeNow')}</Text>
           </Pressable>
         </View>
       </View>
@@ -489,9 +491,9 @@ export default function PanicScreen() {
                 <View className="mb-4">
                   <Mic size={32} color="#ef4444" />
                 </View>
-                <Text style={{ color: '#EF4444', fontSize: 20, fontWeight: '700', marginBottom: 8 }}>RECORDING AUDIO...</Text>
+                <Text style={{ color: '#EF4444', fontSize: 20, fontWeight: '700', marginBottom: 8 }}>{t('panic.recordingAudio')}</Text>
                 <Text style={{ color: themeColors.text, fontSize: 14, fontFamily: 'monospace', opacity: 0.7 }}>
-                  {timeRemaining}s remaining
+                  {t('panic.timeRemaining', { time: timeRemaining })}
                 </Text>
               </View>
               
@@ -527,13 +529,13 @@ export default function PanicScreen() {
                 />
               </View>
               
-              <Text style={{ color: themeColors.text, textAlign: 'center', opacity: 0.7 }}>Keep speaking clearly</Text>
+              <Text style={{ color: themeColors.text, textAlign: 'center', opacity: 0.7 }}>{t('panic.keepSpeaking')}</Text>
             </View>
           ) : (
             <View className="items-center justify-center w-full">
-              <Text style={{ color: '#FFFFFF', fontSize: 48, fontWeight: '900', marginBottom: 16, letterSpacing: -1 }}>PANIC</Text>
+              <Text style={{ color: '#FFFFFF', fontSize: 48, fontWeight: '900', marginBottom: 16, letterSpacing: -1 }}>{t('panic.title')}</Text>
               <Text style={{ color: themeColors.text, textAlign: 'center', fontSize: 18, paddingHorizontal: 24, opacity: 0.7 }}>
-                Slide below to send SOS and start recording instantly.
+                {t('panic.slideToSOS')}
               </Text>
             </View>
           )}
@@ -544,19 +546,19 @@ export default function PanicScreen() {
           {!isRecording && (
             <View className="w-full h-20 bg-neutral-800 rounded-full justify-center p-1 relative overflow-hidden border border-neutral-700">
               <Text className="absolute w-full text-center text-neutral-500 text-xl font-bold tracking-widest uppercase z-0">
-                Slide to SOS  {'>'}{'>'}{'>'}
+                {t('panic.slideToSOS')}
               </Text>
               <GestureDetector gesture={panGesture}>
                 <Animated.View style={[styles.knob, sliderStyle]}>
                   <View className="w-full h-full bg-red-600 rounded-full justify-center items-center shadow-lg shadow-red-900">
-                    <Text className="text-white font-bold text-lg">SOS</Text>
+                    <Text className="text-white font-bold text-lg">{t('panic.sos')}</Text>
                   </View>
                 </Animated.View>
               </GestureDetector>
             </View>
           )}
           {isRecording && (
-            <Text style={{ color: themeColors.text, fontSize: 14, opacity: 0.7 }}>Sending Emergency Alert...</Text>
+            <Text style={{ color: themeColors.text, fontSize: 14, opacity: 0.7 }}>{t('panic.sendingAlert')}</Text>
           )}
         </View>
       </ThemedView>

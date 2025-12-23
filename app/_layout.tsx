@@ -2,6 +2,7 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
+import { I18nManager } from 'react-native';
 import 'react-native-reanimated';
 import '../global.css';
 
@@ -9,6 +10,7 @@ import { AccessibilityProvider } from '@/components/AccessibilityProvider';
 import { GlobalSensorListener } from '@/components/GlobalSensorListener';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { PredictiveModal } from '@/components/PredictiveModal';
+import VoiceNavigationProvider from '@/components/VoiceNavigationProvider';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { notificationService } from '@/services/NotificationService';
 import { reportService } from '@/services/ReportService';
@@ -22,8 +24,18 @@ export const unstable_settings = {
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-  const { mode, isRedZone } = useAppStore();
+  const { mode, isRedZone, language } = useAppStore();
   const [showPredictiveModal, setShowPredictiveModal] = useState(false);
+
+  // Update RTL layout when language changes
+  useEffect(() => {
+    const isRTL = language === 'ur';
+    if (I18nManager.isRTL !== isRTL) {
+      I18nManager.forceRTL(isRTL);
+      // Note: On Android, you may need to restart the app for RTL to take effect
+      // On iOS, it should work immediately
+    }
+  }, [language]);
 
   // Show predictive modal when in PREDICTIVE mode and Red Zone is detected
   useEffect(() => {
@@ -96,18 +108,20 @@ export default function RootLayout() {
   return (
     <AccessibilityProvider>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <GlobalSensorListener />
-        <OfflineBanner />
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="(panic)" options={{ gestureEnabled: false }} />
-          <Stack.Screen name="modal" options={{ presentation: 'modal', headerShown: true }} />
-        </Stack>
-        <PredictiveModal 
-          visible={showPredictiveModal} 
-          onClose={handleClosePredictiveModal}
-        />
-        <StatusBar style={mode === 'PANIC' ? 'light' : 'dark'} />
+        <VoiceNavigationProvider>
+          <GlobalSensorListener />
+          <OfflineBanner />
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="(panic)" options={{ gestureEnabled: false }} />
+            <Stack.Screen name="modal" options={{ presentation: 'modal', headerShown: true }} />
+          </Stack>
+          <PredictiveModal 
+            visible={showPredictiveModal} 
+            onClose={handleClosePredictiveModal}
+          />
+          <StatusBar style={mode === 'PANIC' ? 'light' : 'dark'} />
+        </VoiceNavigationProvider>
       </ThemeProvider>
     </AccessibilityProvider>
   );
