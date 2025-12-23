@@ -1,4 +1,6 @@
 import { useAccessibility } from '@/hooks/useAccessibility';
+import { speechRecognitionService } from '@/services/SpeechRecognitionService';
+import { Audio } from 'expo-av';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
@@ -17,6 +19,8 @@ interface VoiceNavigationContextValue {
   startVoiceNavigation: (options?: VoiceNavigationOptions) => Promise<void>;
   stopVoiceNavigation: () => Promise<void>;
   toggleVoiceNavigation: () => Promise<void>;
+  // Fallback one-shot command in Expo Go
+  runOneShotVoiceCommand: () => Promise<void>;
 }
 
 const VoiceNavigationContext = createContext<VoiceNavigationContextValue | undefined>(undefined);
@@ -35,7 +39,7 @@ interface VoiceNavigationProviderProps {
 
 export default function VoiceNavigationProvider({ children }: VoiceNavigationProviderProps) {
   const router = useRouter();
-  const { themeColors } = useAccessibility();
+  const { themeColors, speak } = useAccessibility();
   const [isActive, setIsActive] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
@@ -94,11 +98,22 @@ export default function VoiceNavigationProvider({ children }: VoiceNavigationPro
   // Handle voice command execution
   const handleVoiceCommand = useCallback(
     async (text: string) => {
+      // Don't process if we're no longer active
+      if (!isActive) return;
+
       try {
+        // Stop listening temporarily while processing to avoid interference
+        await voiceNavigationService.stopListening();
+        setIsListening(false);
+
         const command = await voiceNavigationService.interpretCommand(text, { useAI: true });
 
         if (command.confidence < 0.5) {
-          // Low confidence, ignore
+          // Low confidence, ignore and restart listening
+          if (isActive) {
+             await voiceNavigationService.startListening();
+             setIsListening(true);
+          }
           return;
         }
 
@@ -113,11 +128,32 @@ export default function VoiceNavigationProvider({ children }: VoiceNavigationPro
           setTranscript('');
           setCurrentCommand(null);
         }, 2000);
+        
+        // Restart listening after command execution if still active
+        if (isActive) {
+           // Small delay to ensure UI updates are finished
+           setTimeout(async () => {
+             if (isActive) {
+                try {
+                  await voiceNavigationService.startListening();
+                  setIsListening(true);
+                } catch (e) {
+                  console.log('Failed to restart listening:', e);
+                }
+             }
+           }, 1000);
+        }
+
       } catch (error) {
         console.error('Error handling voice command:', error);
+        // Try to restart listening even on error
+         if (isActive) {
+             await voiceNavigationService.startListening();
+             setIsListening(true);
+          }
       }
     },
-    [router]
+    [router, isActive, executeCommand]
   );
 
   // Execute navigation or action command
@@ -130,12 +166,14 @@ export default function VoiceNavigationProvider({ children }: VoiceNavigationPro
           if (command.target) {
             try {
               router.push(command.target as any);
-              // Continue listening after navigation
-              setTimeout(() => {
-                if (isActive) {
-                  voiceNavigationService.startListening().catch(console.error);
-                }
-              }, 500);
+              // Provide auditory confirmation for accessibility/peace of mind
+              const message = getSpokenLabel(command.target);
+              if (message) {
+                // Slight delay to avoid being interrupted by navigation transition audio changes
+                setTimeout(() => {
+                  speak(message, true).catch(console.error);
+                }, 200);
+              }
             } catch (error) {
               console.error('Navigation error:', error);
             }
@@ -145,11 +183,6 @@ export default function VoiceNavigationProvider({ children }: VoiceNavigationPro
         case 'back':
           try {
             router.back();
-            setTimeout(() => {
-              if (isActive) {
-                voiceNavigationService.startListening().catch(console.error);
-              }
-            }, 500);
           } catch (error) {
             console.error('Back navigation error:', error);
           }
@@ -172,25 +205,176 @@ export default function VoiceNavigationProvider({ children }: VoiceNavigationPro
           console.log('Unknown command type:', command.type);
       }
     },
-    [router, isActive]
+    [router, speak]
   );
+
+  /**
+   * Map route targets to spoken confirmations for accessibility
+   */
+  const getSpokenLabel = (target: string): string | null => {
+    const normalized = normalizeTarget(target);
+    const map: Record<string, string> = {
+      '/(tabs)': 'Home opened',
+      '/(tabs)/index': 'Home opened',
+      '/(tabs)/crowd-map': 'Crowd map opened',
+      '/(tabs)/guides': 'Guides opened',
+      '/(tabs)/chatbot': 'Chat assistant opened',
+      '/(tabs)/news': 'News opened',
+      '/(tabs)/explore': 'Explore opened',
+      '/(tabs)/directory': 'Directory opened',
+      '/(tabs)/volunteer': 'Volunteer opened',
+      '/(tabs)/reports': 'Reports opened',
+      '/(tabs)/profile': 'Profile opened',
+      '/(tabs)/community': 'Community opened',
+      '/(panic)': 'SOS screen opened',
+    };
+
+    if (map[normalized]) return map[normalized];
+
+    // Fallback: build a readable label from the path
+    const slug = normalized.split('/').filter(Boolean).pop();
+    if (slug) {
+      const readable = slug.replace(/[-_]/g, ' ');
+      return `${readable} opened`;
+    }
+    return null;
+  };
+
+  const normalizeTarget = (target: string): string => {
+    // Remove query/fragment and trailing slash
+    const cleaned = target.split(/[?#]/)[0];
+    return cleaned.endsWith('/') && cleaned.length > 1
+      ? cleaned.slice(0, -1)
+      : cleaned;
+  };
+
+  /**
+   * Fallback: one-shot voice command using expo-av + SpeechRecognitionService.
+   * Works in Expo Go by recording a short clip, sending to Google STT, then
+   * interpreting the text as a navigation command.
+   */
+  const runOneShotVoiceCommand = useCallback(async () => {
+    try {
+      // Ensure cloud STT is configured before doing anything heavy
+      const available = await speechRecognitionService.isAvailable();
+      if (!available) {
+        const errorMessage =
+          'Speech recognition is not configured. Please set EXPO_PUBLIC_DEEPGRAM_API_KEY to enable voice commands.';
+        console.warn(errorMessage);
+        setTranscript(errorMessage);
+        return;
+      }
+
+      // Microphone permission
+      const perm = await Audio.requestPermissionsAsync();
+      if (perm.status !== 'granted') {
+        const errorMessage = 'Microphone permission is required for voice commands.';
+        console.warn(errorMessage);
+        setTranscript(errorMessage);
+        return;
+      }
+
+      // Configure audio session
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+        staysActiveInBackground: false,
+        shouldDuckAndroid: true,
+        playThroughEarpieceAndroid: false,
+      });
+
+      // Show overlay while we are in the one-shot flow
+      setIsActive(true);
+      setIsListening(true);
+      setTranscript('Listening…');
+
+      // Record a short clip (e.g. 5 seconds max)
+      const { recording } = await Audio.Recording.createAsync(
+        Audio.RecordingOptionsPresets.HIGH_QUALITY
+      );
+
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+      // Record for ~4 seconds
+      await new Promise<void>((resolve) => {
+        setTimeout(resolve, 4000);
+      });
+
+      await recording.stopAndUnloadAsync();
+      const uri = recording.getURI();
+
+      if (!uri) {
+        setTranscript('Could not capture audio, please try again.');
+        setIsListening(false);
+        setIsActive(false);
+        return;
+      }
+
+      setTranscript('Transcribing your command...');
+      const result = await speechRecognitionService.transcribeWithAutoDetect(uri, {
+        enableOffline: false,
+      });
+
+      if (!result || !result.text.trim()) {
+        setTranscript('Sorry, I could not understand. Please try again.');
+        setIsListening(false);
+        setIsActive(false);
+        return;
+      }
+
+      const text = result.text.trim();
+      setTranscript(text);
+
+      // Interpret and execute command using existing logic
+      const command = await voiceNavigationService.interpretCommand(text, { useAI: true });
+      setCurrentCommand(command);
+      await executeCommand(command);
+
+      // Clear transcript after a short delay
+      if (commandTimeoutRef.current) {
+        clearTimeout(commandTimeoutRef.current);
+      }
+      commandTimeoutRef.current = setTimeout(() => {
+        setTranscript('');
+        setCurrentCommand(null);
+        setIsActive(false);
+        setIsListening(false);
+      }, 2500);
+    } catch (error) {
+      console.error('One-shot voice command error:', error);
+      setTranscript('Voice command failed. Please check your connection and try again.');
+      setIsListening(false);
+      setIsActive(false);
+    }
+  }, [executeCommand]);
 
   // Start voice navigation
   const startVoiceNavigation = useCallback(async (options?: VoiceNavigationOptions) => {
     try {
-      // Check if module is available first
+      // If native streaming module is not available (Expo Go),
+      // use one-shot fallback instead of always-on listening.
       if (!voiceNavigationService.getModuleAvailable()) {
-        const errorMessage = 
-          'Voice navigation requires a development build.\n\n' +
-          'To use this feature:\n' +
-          '1. Run: npx expo prebuild\n' +
-          '2. Run: npx expo run:ios (or npx expo run:android)\n\n' +
-          'This feature is not available in Expo Go.';
+        await runOneShotVoiceCommand();
+        return;
+      }
+
+      // Request microphone permissions explicitly
+      const { status } = await Audio.requestPermissionsAsync();
+      if (status !== 'granted') {
+        const errorMessage = 'Microphone permission is required for voice navigation.';
         console.warn(errorMessage);
-        // Set error state that can be displayed to user
         setTranscript(errorMessage);
         return;
       }
+
+      // Configure audio session for recording (critical for iOS)
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+        staysActiveInBackground: true,
+        shouldDuckAndroid: true,
+        playThroughEarpieceAndroid: false,
+      });
 
       // Try to start listening - errors will be caught and handled below
       setIsActive(true);
@@ -209,14 +393,17 @@ export default function VoiceNavigationProvider({ children }: VoiceNavigationPro
   // Stop voice navigation
   const stopVoiceNavigation = useCallback(async () => {
     try {
-      await voiceNavigationService.stopListening();
+      // Set active to false immediately to prevent any pending timeouts from restarting
       setIsActive(false);
       setIsListening(false);
       setTranscript('');
       setCurrentCommand(null);
+      
       if (commandTimeoutRef.current) {
         clearTimeout(commandTimeoutRef.current);
       }
+      
+      await voiceNavigationService.stopListening();
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     } catch (error) {
       console.error('Error stopping voice navigation:', error);
@@ -249,6 +436,7 @@ export default function VoiceNavigationProvider({ children }: VoiceNavigationPro
     startVoiceNavigation,
     stopVoiceNavigation,
     toggleVoiceNavigation,
+    runOneShotVoiceCommand,
   };
 
   return (

@@ -26,6 +26,32 @@ export const useAccessibility = () => {
   const isHighContrast = accessibilitySettings.highContrast;
   const showVisualIndicators = accessibilitySettings.visualIndicators;
 
+  /**
+   * Speak text if Text-to-Speech or Speak Aloud is enabled
+   */
+  const speak = async (text: string, force: boolean = false) => {
+    const shouldSpeak = force || accessibilitySettings.textToSpeech || accessibilitySettings.speakAloud;
+    if (shouldSpeak) {
+      await accessibilityService.speak(text, { force: true });
+    }
+  };
+
+  /**
+   * Stop any current speech
+   */
+  const stopSpeaking = () => {
+    accessibilityService.stopSpeaking();
+  };
+
+  /**
+   * Trigger haptic feedback based on settings
+   */
+  const triggerHaptic = (type: Parameters<typeof accessibilityService.triggerHaptic>[0]) => {
+    if (accessibilitySettings.hapticFeedback) {
+      accessibilityService.triggerHaptic(type);
+    }
+  };
+
   return {
     themeColors,
     fontSizeMultiplier,
@@ -35,6 +61,9 @@ export const useAccessibility = () => {
     isHighContrast,
     showVisualIndicators,
     settings: accessibilitySettings,
+    speak,
+    stopSpeaking,
+    triggerHaptic,
   };
 };
 

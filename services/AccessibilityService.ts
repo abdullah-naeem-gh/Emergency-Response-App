@@ -1,13 +1,6 @@
 import * as Haptics from 'expo-haptics';
-
-// Text-to-speech - will use expo-speech if available
-let Speech: any = null;
-try {
-  Speech = require('expo-speech');
-} catch {
-  // expo-speech not installed, will use fallback
-  console.warn('expo-speech not available. Install with: npx expo install expo-speech');
-}
+import * as Speech from 'expo-speech';
+import { Audio } from 'expo-av';
 
 export type AccessibilityTheme =
   | 'default'
@@ -150,23 +143,38 @@ class AccessibilityService {
 
   /**
    * Speak text aloud
+   * Note: The caller is responsible for checking if TTS is enabled in settings
    */
-  async speak(text: string, options?: { language?: string; pitch?: number; rate?: number }): Promise<void> {
-    if (!this.settings.textToSpeech && !this.settings.speakAloud) {
-      return;
-    }
-
-    if (!Speech) {
-      console.warn('Text-to-speech not available. Install expo-speech.');
+  async speak(text: string, options?: { language?: string; pitch?: number; rate?: number; force?: boolean }): Promise<void> {
+    // If force is true, we bypass the internal settings check
+    // Otherwise we check internal settings (which might be out of sync if not updated)
+    if (!options?.force && !this.settings.textToSpeech && !this.settings.speakAloud) {
+      console.log('Speak skipped: Settings disabled');
       return;
     }
 
     try {
+      console.log('Attempting to speak:', text);
+      
+      // Ensure audio plays even in silent mode
+      await Audio.setAudioModeAsync({
+        playsInSilentModeIOS: true,
+        allowsRecordingIOS: false,
+        staysActiveInBackground: true,
+        // Keep other audio but do NOT duck so TTS stays loud/clear
+        shouldDuckAndroid: false,
+        playThroughEarpieceAndroid: false,
+      });
+
       await Speech.speak(text, {
         language: options?.language || 'en-US',
         pitch: options?.pitch || 1.0,
         rate: options?.rate || 0.75,
         quality: Speech.VoiceQuality?.Enhanced || Speech.VoiceQuality?.Default,
+        onStart: () => console.log('Speech started'),
+        onDone: () => console.log('Speech done'),
+        onStopped: () => console.log('Speech stopped'),
+        onError: (e) => console.error('Speech error event:', e),
       });
     } catch (error) {
       console.error('Error speaking text:', error);

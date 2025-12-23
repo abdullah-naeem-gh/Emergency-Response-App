@@ -1,4 +1,6 @@
-import * as FileSystem from 'expo-file-system';
+// Use legacy filesystem API for now to keep compatibility with Expo Go
+// The new File / Directory API can be adopted later without changing behavior here.
+import * as FileSystem from 'expo-file-system/legacy';
 
 export type SupportedLanguage = 'en-US' | 'ur-PK' | 'en-PK';
 
@@ -16,8 +18,8 @@ export interface SpeechRecognitionOptions {
 }
 
 class SpeechRecognitionService {
-  private readonly API_ENDPOINT = 'https://speech.googleapis.com/v1/speech:recognize';
-  private readonly API_KEY = process.env.EXPO_PUBLIC_GOOGLE_SPEECH_API_KEY || '';
+  private readonly API_ENDPOINT = 'https://api.deepgram.com/v1/listen';
+  private readonly API_KEY = process.env.EXPO_PUBLIC_DEEPGRAM_API_KEY || '';
 
   /**
    * Transcribe audio file to text
@@ -32,7 +34,6 @@ class SpeechRecognitionService {
       const {
         language = 'en-US',
         enableOffline = false,
-        maxAlternatives = 1,
       } = options;
 
       // Check if offline mode is requested and available
@@ -41,7 +42,7 @@ class SpeechRecognitionService {
       }
 
       // Use cloud-based transcription for better accuracy
-      return await this.transcribeCloud(audioUri, language, maxAlternatives);
+      return await this.transcribeDeepgram(audioUri, language);
     } catch (error) {
       console.error('Speech recognition error:', error);
       return null;
@@ -49,67 +50,53 @@ class SpeechRecognitionService {
   }
 
   /**
-   * Cloud-based transcription using Google Speech-to-Text API
+   * Cloud-based transcription using Deepgram
    */
-  private async transcribeCloud(
+  private async transcribeDeepgram(
     audioUri: string,
-    language: SupportedLanguage,
-    maxAlternatives: number
+    language: SupportedLanguage
   ): Promise<TranscriptionResult | null> {
     try {
-      // Read audio file as base64
-      const audioBase64 = await FileSystem.readAsStringAsync(audioUri, {
-        encoding: 'base64' as any,
-      });
+      if (!this.API_KEY) {
+        throw new Error(
+          'Deepgram API key missing. Set EXPO_PUBLIC_DEEPGRAM_API_KEY to enable transcription.'
+        );
+      }
 
-      // Get audio format from file
-      const audioFormat = this.getAudioFormat(audioUri);
+      const mimeType = this.getMimeType(audioUri);
 
-      // Prepare request
-      const requestBody = {
-        config: {
-          encoding: audioFormat.encoding,
-          sampleRateHertz: audioFormat.sampleRate,
-          languageCode: language,
-          alternativeLanguageCodes: language === 'en-US' ? ['ur-PK'] : ['en-US'],
-          enableAutomaticPunctuation: true,
-          enableWordTimeOffsets: false,
-          maxAlternatives,
-        },
-        audio: {
-          content: audioBase64,
-        },
-      };
-
-      // Make API request
-      const response = await fetch(
-        `${this.API_ENDPOINT}?key=${this.API_KEY}`,
+      const response = await FileSystem.uploadAsync(
+        `${this.API_ENDPOINT}?model=nova-3&language=${language}&smart_format=true&punctuate=true`,
+        audioUri,
         {
-          method: 'POST',
+          httpMethod: 'POST',
+          uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
           headers: {
-            'Content-Type': 'application/json',
+            Authorization: `Token ${this.API_KEY}`,
+            'Content-Type': mimeType,
           },
-          body: JSON.stringify(requestBody),
         }
       );
 
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      if (!data.results || data.results.length === 0) {
+      if (response.status >= 400) {
+        const errorText = response.body || `HTTP ${response.status}`;
+        console.error('Deepgram transcription error:', response.status, errorText);
         return null;
       }
 
-      const result = data.results[0];
-      const alternative = result.alternatives[0];
+      const data = JSON.parse(response.body || '{}');
+      const alternative =
+        data?.results?.channels?.[0]?.alternatives?.[0] ||
+        data?.results?.alternatives?.[0];
+
+      if (!alternative || !alternative.transcript) {
+        return null;
+      }
 
       return {
-        text: alternative.transcript,
-        confidence: alternative.confidence || 0.8,
-        language: data.results[0].languageCode as SupportedLanguage,
+        text: alternative.transcript as string,
+        confidence: (alternative.confidence as number) ?? 0.8,
+        language,
         duration: 0, // Duration would need to be calculated separately
       };
     } catch (error) {
@@ -149,24 +136,10 @@ class SpeechRecognitionService {
    * Get audio format from file URI
    */
   private getAudioFormat(audioUri: string): {
-    encoding: 'LINEAR16' | 'FLAC' | 'MULAW' | 'AMR' | 'AMR_WB' | 'OGG_OPUS' | 'SPEEX_WITH_HEADER_BYTE' | 'WEBM_OPUS';
     sampleRate: number;
   } {
-    // Default to high-quality settings
-    // expo-av typically records in LINEAR16 format
-    const extension = audioUri.split('.').pop()?.toLowerCase();
-
-    switch (extension) {
-      case 'm4a':
-      case 'mp4':
-        return { encoding: 'LINEAR16', sampleRate: 44100 };
-      case 'wav':
-        return { encoding: 'LINEAR16', sampleRate: 44100 };
-      case 'flac':
-        return { encoding: 'FLAC', sampleRate: 44100 };
-      default:
-        return { encoding: 'LINEAR16', sampleRate: 44100 };
-    }
+    // Default sample rate; Deepgram auto-detects encoding
+    return { sampleRate: 44100 };
   }
 
   /**
@@ -174,7 +147,7 @@ class SpeechRecognitionService {
    */
   async detectLanguage(audioUri: string): Promise<SupportedLanguage | null> {
     try {
-      const result = await this.transcribeCloud(audioUri, 'en-US', 1);
+      const result = await this.transcribeDeepgram(audioUri, 'en-US');
       return result?.language || null;
     } catch (error) {
       console.error('Language detection error:', error);
@@ -209,7 +182,7 @@ class SpeechRecognitionService {
   async isAvailable(): Promise<boolean> {
     // Check if API key is configured
     if (!this.API_KEY) {
-      console.warn('Google Speech API key not configured');
+      console.warn('Deepgram API key not configured');
       return false;
     }
     return true;
@@ -235,6 +208,29 @@ class SpeechRecognitionService {
         return 'English (Pakistan)';
       default:
         return 'Unknown';
+    }
+  }
+
+  /**
+   * Map file extension to mime type for Deepgram upload
+   */
+  private getMimeType(audioUri: string): string {
+    const extension = audioUri.split('.').pop()?.toLowerCase();
+    switch (extension) {
+      case 'wav':
+        return 'audio/wav';
+      case 'flac':
+        return 'audio/flac';
+      case 'ogg':
+      case 'opus':
+        return 'audio/ogg';
+      case 'webm':
+        return 'audio/webm';
+      case 'm4a':
+      case 'mp4':
+        return 'audio/mp4';
+      default:
+        return 'application/octet-stream';
     }
   }
 }

@@ -77,8 +77,18 @@ class VoiceNavigationService {
     };
 
     Voice.onSpeechError = (e: any) => {
+      // Ignore "No speech detected" errors (common in simulator or when user is silent)
+      // Error code 7 is often "No match" or "No speech detected" on Android
+      // Error code 1110 is "No speech detected" on iOS
+      const errorMessage = e.error?.message || 'Voice recognition failed';
+      if (errorMessage.includes('1110') || errorMessage.includes('No speech detected')) {
+         console.log('Voice recognition: No speech detected (silence)');
+         // Don't treat silence as a critical error, just log it
+         return;
+      }
+
       console.error('Voice recognition error:', e);
-      this.onErrorCallback?.(new Error(e.error?.message || 'Voice recognition failed'));
+      this.onErrorCallback?.(new Error(errorMessage));
     };
 
     Voice.onSpeechPartialResults = (e: any) => {
@@ -113,7 +123,14 @@ class VoiceNavigationService {
       const language = options.language || 'en-US';
       await Voice.start(language);
       this.isListening = true;
-    } catch (error) {
+    } catch (error: any) {
+      // If speech recognition is already started, we can consider this a success or just ignore it
+      if (error && (error.message === 'Speech recognition already started!' || (error.error && error.error.message === 'Speech recognition already started!'))) {
+        console.log('Speech recognition already started, continuing...');
+        this.isListening = true;
+        return;
+      }
+      
       console.error('Error starting voice recognition:', error);
       this.onErrorCallback?.(error as Error);
       throw error;
@@ -129,13 +146,14 @@ class VoiceNavigationService {
     }
 
     try {
-      if (this.isListening) {
-        await Voice.stop();
-        await Voice.cancel();
-        this.isListening = false;
-      }
+      // Always try to stop and cancel to ensure clean state
+      await Voice.stop();
+      await Voice.cancel(); 
+      this.isListening = false;
     } catch (error) {
       console.error('Error stopping voice recognition:', error);
+      // Even if error, mark as not listening to allow retry
+      this.isListening = false;
     }
   }
 

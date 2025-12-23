@@ -26,7 +26,7 @@ export default function CustomHeader({ onMenuPress }: CustomHeaderProps) {
   const { themeColors, getFontSize } = useAccessibility();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { isActive, toggleVoiceNavigation } = useVoiceNavigation();
+  const { isActive, toggleVoiceNavigation, runOneShotVoiceCommand } = useVoiceNavigation();
   const isVoiceModuleAvailable = voiceNavigationService.getModuleAvailable();
 
   // Hide header in panic mode
@@ -57,7 +57,13 @@ export default function CustomHeader({ onMenuPress }: CustomHeaderProps) {
 
   const handleVoicePress = async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    await toggleVoiceNavigation();
+    // If native streaming module is available (dev/build), use full navigation.
+    // Otherwise, fall back to one-shot command that works in Expo Go.
+    if (voiceNavigationService.getModuleAvailable()) {
+      await toggleVoiceNavigation();
+    } else {
+      await runOneShotVoiceCommand();
+    }
   };
   
   return (
@@ -102,7 +108,6 @@ export default function CustomHeader({ onMenuPress }: CustomHeaderProps) {
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         <Pressable
           onPress={handleVoicePress}
-          disabled={!isVoiceModuleAvailable}
           style={{
             backgroundColor: isActive 
               ? themeColors.primary + '20' 
@@ -115,7 +120,6 @@ export default function CustomHeader({ onMenuPress }: CustomHeaderProps) {
             justifyContent: 'center',
             borderWidth: 1,
             borderColor: isActive ? themeColors.primary : themeColors.border,
-            opacity: isVoiceModuleAvailable ? 1 : 0.5,
           }}
         >
           <Mic size={24} color={isActive ? themeColors.primary : themeColors.text} />
