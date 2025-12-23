@@ -3,8 +3,19 @@ let Voice: any = null;
 let isVoiceModuleAvailable = false;
 
 try {
-  Voice = require('@react-native-voice/voice');
-  isVoiceModuleAvailable = true;
+  // Check if we can import the module
+  const voiceModule = require('@react-native-voice/voice');
+  // Handle default export if it exists (CommonJS vs ES Module)
+  Voice = voiceModule.default || voiceModule;
+  
+  // Basic check if the object has expected methods
+  if (Voice && typeof Voice.start === 'function') {
+    isVoiceModuleAvailable = true;
+  } else {
+    // If methods are missing, it might be due to missing native module linkage
+    console.warn('Voice module imported but appears incomplete (native module missing?)');
+    isVoiceModuleAvailable = false;
+  }
 } catch (error) {
   console.warn(
     '@react-native-voice/voice is not available. ' +
@@ -130,20 +141,14 @@ class VoiceNavigationService {
 
   /**
    * Check if voice recognition is available
+   * Note: The @react-native-voice/voice library doesn't have an isAvailable() method.
+   * This method checks if the module is loaded. Actual availability will be tested
+   * when attempting to start listening.
    */
   async isAvailable(): Promise<boolean> {
-    if (!this.isModuleAvailable || !Voice) {
-      return false;
-    }
-
-    try {
-      const available = await Voice.isAvailable();
-      // Voice.isAvailable() returns a number (1 for available) or boolean
-      return available === 1 || available === true;
-    } catch (error) {
-      console.error('Error checking voice availability:', error);
-      return false;
-    }
+    // If the module loaded successfully, we assume it's available
+    // The actual availability will be tested when we try to start listening
+    return this.isModuleAvailable && Voice !== null;
   }
 
   /**

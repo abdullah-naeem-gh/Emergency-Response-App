@@ -47,11 +47,24 @@
             "backgroundColor": "#000000"
           }
         }
+      ],
+      [
+        "@react-native-voice/voice",
+        {
+          "microphonePermission": "Allow Emergency Response App to access your microphone",
+          "speechRecognitionPermission": "Allow Emergency Response App to access speech recognition"
+        }
       ]
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "ae38d33f-28d4-42c9-874b-5d3a79e20343"
+      }
     }
   }
 }

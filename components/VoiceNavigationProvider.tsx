@@ -192,12 +192,7 @@ export default function VoiceNavigationProvider({ children }: VoiceNavigationPro
         return;
       }
 
-      const available = await voiceNavigationService.isAvailable();
-      if (!available) {
-        console.warn('Voice recognition not available');
-        return;
-      }
-
+      // Try to start listening - errors will be caught and handled below
       setIsActive(true);
       setTranscript('');
       await voiceNavigationService.startListening(options);
