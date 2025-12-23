@@ -53,7 +53,7 @@ const StepItem: React.FC<StepItemProps> = ({ stepNumber, text, imageUrl, isLast 
 
 export default function GuideDetailScreen() {
   const router = useRouter();
-  const { themeColors } = useAccessibility();
+  const { themeColors, speak, settings } = useAccessibility();
   const { t } = useTranslation();
   const { id } = useLocalSearchParams<{ id: string }>();
   const guide = getGuideById(id || '');
@@ -61,6 +61,20 @@ export default function GuideDetailScreen() {
   const handleBack = () => {
     Haptics.selectionAsync();
     router.back();
+  };
+
+  const handleListen = async () => {
+    if (!guide) return;
+    const stepsText = guide.steps
+      .sort((a, b) => a.stepNumber - b.stepNumber)
+      .map((step) => `Step ${step.stepNumber}: ${step.text}`)
+      .join('. ');
+    const message = `${guide.title}. ${stepsText}`;
+    try {
+      await speak(message);
+    } catch {
+      // Ignore TTS errors
+    }
   };
 
   if (!guide) {
@@ -110,6 +124,14 @@ export default function GuideDetailScreen() {
 
   const colors = getCategoryColor(guide.category);
 
+  // Auto-read guide when Speak Aloud is enabled
+  React.useEffect(() => {
+    if (!guide) return;
+    if (!settings.speakAloud) return;
+    handleListen();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [guide?.id, settings.speakAloud]);
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: themeColors.background }} edges={['top']}>
       {/* Header */}
@@ -143,6 +165,31 @@ export default function GuideDetailScreen() {
               </View>
             )}
           </View>
+
+          {/* Listen Button */}
+          <TouchableOpacity
+            onPress={handleListen}
+            style={{
+              backgroundColor: themeColors.text,
+              borderRadius: 12,
+              paddingHorizontal: 20,
+              paddingVertical: 14,
+              marginBottom: 16,
+              alignItems: 'center',
+              minHeight: 60,
+            }}
+            activeOpacity={0.8}
+          >
+            <Text
+              style={{
+                color: themeColors.background,
+                fontWeight: '700',
+                fontSize: 16,
+              }}
+            >
+              Listen to this guide
+            </Text>
+          </TouchableOpacity>
 
           {/* Title */}
           <ThemedText className="text-3xl font-bold mb-8" style={{ fontSize: 28, lineHeight: 36 }}>

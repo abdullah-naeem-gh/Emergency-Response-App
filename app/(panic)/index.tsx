@@ -30,7 +30,7 @@ const RECORDING_DURATION = 12000; // 12 seconds instead of 5
 
 export default function PanicScreen() {
   const router = useRouter();
-  const { themeColors } = useAccessibility();
+  const { themeColors, speak } = useAccessibility();
   const { t } = useTranslation();
   const [isRecording, setIsRecording] = useState(false);
   const [isSent, setIsSent] = useState(false);
@@ -63,6 +63,12 @@ export default function PanicScreen() {
 
   // Audio permission
   const [permissionResponse, requestPermission] = Audio.usePermissions();
+
+  // Announce panic screen when opened (for blind / low-vision users)
+  useEffect(() => {
+    speak('Panic mode. Slide the red SOS button at the bottom to start recording a help message.')
+      .catch(() => {});
+  }, [speak]);
 
   useEffect(() => {
     return () => {
@@ -257,6 +263,10 @@ export default function PanicScreen() {
       setIsRecording(true);
       recordingStartTime.current = Date.now();
       
+      // Voice feedback
+      speak('Recording started. Keep speaking, describing your emergency.')
+        .catch(() => {});
+      
       // Start dynamic visualizer animation
       simulateAudioLevels();
 
@@ -348,6 +358,8 @@ export default function PanicScreen() {
   const handleSentSuccess = async () => {
     setIsSent(true);
     await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    speak('Your emergency message has been sent. Help is on the way. Stay safe and move to a secure place if you can.')
+      .catch(() => {});
   };
 
   const onSlideComplete = () => {

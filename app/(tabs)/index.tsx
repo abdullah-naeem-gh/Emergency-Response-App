@@ -10,7 +10,6 @@ import {
   AlertTriangle,
   BookOpen,
   Bot,
-  Heart,
   Mic,
   Newspaper,
   PhoneCall,
@@ -21,9 +20,11 @@ import {
 import React, { useCallback, useMemo, useState } from 'react';
 import {
   Dimensions,
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
   TextInput,
-  View
+  View,
 } from 'react-native';
 
 const { width } = Dimensions.get('window');
@@ -126,9 +127,9 @@ export default function HomeScreen() {
     setShowEnhancedForm(true);
   }, [setShowEnhancedForm]);
 
-  const handleVolunteer = useCallback(async () => {
+  const handleEmergency = useCallback(async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    router.push('/(tabs)/volunteer');
+    router.push('/(tabs)/directory');
   }, [router]);
 
   const handleAskAI = useCallback(async () => {
@@ -137,11 +138,18 @@ export default function HomeScreen() {
   }, [router]);
 
   const handleSearch = async () => {
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    if (searchQuery.trim()) {
-      // Navigate to chatbot screen
-      router.push('/(tabs)/chatbot');
+    const trimmed = searchQuery.trim();
+    if (!trimmed) {
+      return;
     }
+
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    // Navigate to chatbot and pass the initial query so it can auto-respond
+    router.push({
+      pathname: '/(tabs)/chatbot',
+      params: { initialQuery: trimmed },
+    } as never);
   };
 
   const handleVoiceInput = async () => {
@@ -168,11 +176,6 @@ export default function HomeScreen() {
 
   const handleViewDirectory = async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    router.push('/(tabs)/directory');
-  };
-
-  const handleViewEmergencyDirectory = async () => {
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     router.push('/(tabs)/directory');
   };
 
@@ -203,12 +206,12 @@ export default function HomeScreen() {
       onPress: handleReportIncident,
     },
     {
-      id: 'volunteer',
-      label: t('home.volunteer'),
-      icon: Heart,
-      color: getIconColors.volunteer,
-      bgColor: getCardColors.volunteer,
-      onPress: handleVolunteer,
+      id: 'emergency',
+      label: t('home.emergency'),
+      icon: PhoneCall,
+      color: getIconColors.emergency,
+      bgColor: getCardColors.emergency,
+      onPress: handleEmergency,
     },
     {
       id: 'community',
@@ -226,15 +229,20 @@ export default function HomeScreen() {
       bgColor: getCardColors.askAI,
       onPress: handleAskAI,
     },
-  ], [getCardColors, getIconColors, handleReportIncident, handleVolunteer, handleViewCommunity, handleAskAI, t]);
+  ], [getCardColors, getIconColors, handleReportIncident, handleEmergency, handleViewCommunity, handleAskAI, t]);
 
   return (
     <ThemedView className="flex-1">
-      <ScrollView 
-        className="flex-1" 
-        contentContainerStyle={{ paddingBottom: 120, paddingTop: 16 }}
-        showsVerticalScrollIndicator={false}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
       >
+        <ScrollView 
+          className="flex-1" 
+          contentContainerStyle={{ paddingBottom: 120, paddingTop: 16 }}
+          showsVerticalScrollIndicator={false}
+        >
         {/* Greeting Section */}
         <View className="px-6 pt-0 pb-3">
           <ThemedText className="text-4xl font-bold leading-tight" baseSize={36} style={{ lineHeight: 44 }}>
@@ -329,48 +337,6 @@ export default function HomeScreen() {
                 </ThemedText>
                 <ThemedText className="text-xs text-center mt-1" style={{ opacity: 0.7 }} numberOfLines={1}>
                   {t('home.alerts')}
-                </ThemedText>
-              </View>
-            </AnimatedPressable>
-
-            {/* Emergency Directory Card */}
-            <AnimatedPressable
-              onPress={handleViewEmergencyDirectory}
-              className="rounded-xl p-3"
-              hapticFeedback={true}
-              hapticStyle={Haptics.ImpactFeedbackStyle.Medium}
-              style={{
-                width: 110,
-                backgroundColor: getCardColors.emergency,
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 1 },
-                shadowOpacity: 0.1,
-                shadowRadius: 2,
-                elevation: 2,
-                borderWidth: 1,
-                borderColor: getIconColors.emergency + '40', // semi-transparent emergency color
-              }}
-            >
-              <View className="items-center">
-                <View
-                  style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 18,
-                    backgroundColor: getCardColors.emergency,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginBottom: 6,
-                    opacity: 0.8,
-                  }}
-                >
-                  <PhoneCall size={18} color={getIconColors.emergency} />
-                </View>
-                <ThemedText className="text-sm font-semibold text-center">
-                  {t('home.emergency')}
-                </ThemedText>
-                <ThemedText className="text-xs text-center mt-1" style={{ opacity: 0.7 }} numberOfLines={1}>
-                  {t('home.contacts')}
                 </ThemedText>
               </View>
             </AnimatedPressable>
@@ -528,16 +494,16 @@ export default function HomeScreen() {
             }}
           >
             <Search size={18} color={themeColors.text} />
-                    <TextInput
-                      className="flex-1 ml-3 text-sm"
-                      style={{ color: themeColors.text }}
-                      placeholder={t('home.searchPlaceholder')}
-                      placeholderTextColor={themeColors.text + '80'}
-                      value={searchQuery}
-                      onChangeText={setSearchQuery}
-                      onSubmitEditing={handleSearch}
-                      returnKeyType="search"
-                    />
+            <TextInput
+              className="flex-1 ml-3 text-sm"
+              style={{ color: themeColors.text }}
+              placeholder={t('home.searchPlaceholder')}
+              placeholderTextColor={themeColors.text + '80'}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              onSubmitEditing={handleSearch}
+              returnKeyType="search"
+            />
             <AnimatedPressable
               onPress={handleVoiceInput}
               className="ml-2"
@@ -558,7 +524,8 @@ export default function HomeScreen() {
           </View>
         </View>
 
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       {/* Enhanced Report Form */}
       <EnhancedReportForm

@@ -4,10 +4,12 @@ import { useAccessibility } from '@/hooks/useAccessibility';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useTextInputStyles } from '@/utils/i18n';
 import * as Haptics from 'expo-haptics';
+import { useLocalSearchParams } from 'expo-router';
 import { Bot, Phone, Send } from 'lucide-react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   FlatList,
+  Keyboard,
   KeyboardAvoidingView,
   Linking,
   Platform,
@@ -305,9 +307,10 @@ const TypingIndicator: React.FC = () => {
 
 export default function ChatbotScreen() {
   const insets = useSafeAreaInsets();
-  const { themeColors } = useAccessibility();
+  const { themeColors, speak } = useAccessibility();
   const { t } = useTranslation();
   const textInputStyles = useTextInputStyles();
+  const { initialQuery } = useLocalSearchParams<{ initialQuery?: string }>();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -320,9 +323,92 @@ export default function ChatbotScreen() {
   const [isTyping, setIsTyping] = useState(false);
   const flatListRef = useRef<FlatList>(null);
   const [conversationHistory, setConversationHistory] = useState<OpenRouterMessage[]>([]);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const hasUsedInitialQueryRef = useRef(false);
   
-  // Navbar height + safe area bottom
-  const navbarHeight = 56 + insets.bottom;
+  // Navbar height + safe area bottom (used for spacing)
+  const tabbarHeight = 56 + insets.bottom;
+
+  useEffect(() => {
+    const keyboardShowEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const keyboardHideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const showSubscription = Keyboard.addListener(keyboardShowEvent, () => setKeyboardVisible(true));
+    const hideSubscription = Keyboard.addListener(keyboardHideEvent, () => setKeyboardVisible(false));
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
+
+  // Auto-send initial query when coming from Home search
+  useEffect(() => {
+    const trimmed = typeof initialQuery === 'string' ? initialQuery.trim() : '';
+    if (!trimmed || hasUsedInitialQueryRef.current || isTyping) {
+      return;
+    }
+
+    hasUsedInitialQueryRef.current = true;
+
+    // Reuse the send flow with the provided text
+    void (async () => {
+      const userMessage: Message = {
+        id: Date.now().toString(),
+        text: trimmed,
+        isUser: true,
+        timestamp: new Date(),
+      };
+
+      setMessages(prev => [...prev, userMessage]);
+      setIsTyping(true);
+
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+      try {
+        const structuredResponse = analyzeQuery(trimmed, t);
+
+        const newUserMessage: OpenRouterMessage = {
+          role: 'user',
+          content: trimmed,
+        };
+        const updatedHistory = [...conversationHistory, newUserMessage];
+        setConversationHistory(updatedHistory);
+
+        const aiResponse = await openRouterService.generateEmergencyResponse(
+          trimmed,
+          conversationHistory
+        );
+
+        const responseText = aiResponse || structuredResponse.text;
+
+        const botMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          text: responseText,
+          isUser: false,
+          timestamp: new Date(),
+          data: structuredResponse.data,
+        };
+
+        if (aiResponse) {
+          const botMessageObj: OpenRouterMessage = {
+            role: 'assistant',
+            content: aiResponse,
+          };
+          setConversationHistory([...updatedHistory, botMessageObj]);
+        }
+
+        setMessages(prev => [...prev, botMessage]);
+
+        // Speak AI response for initial query
+        speak(responseText).catch(() => {});
+      } catch (error) {
+        console.error('Error getting AI response (initialQuery):', error);
+      } finally {
+        setIsTyping(false);
+      }
+    })();
+  }, [initialQuery, conversationHistory, isTyping, t]);
 
   useEffect(() => {
     // Scroll to bottom when messages change
@@ -368,7 +454,7 @@ export default function ChatbotScreen() {
       );
 
       // Use AI response if available, otherwise fall back to structured response
-      let responseText = aiResponse || structuredResponse.text;
+      const responseText = aiResponse || structuredResponse.text;
       
       // If we have structured data, include it
       const botMessage: Message = {
@@ -389,6 +475,9 @@ export default function ChatbotScreen() {
       }
 
       setMessages(prev => [...prev, botMessage]);
+
+      // Speak bot response if TTS/Speak Aloud enabled
+      speak(responseText).catch(() => {});
     } catch (error) {
       console.error('Error getting AI response:', error);
       
@@ -417,6 +506,7 @@ export default function ChatbotScreen() {
           timestamp: new Date(),
         };
         setMessages(prev => [...prev, errorBotMessage]);
+        speak(errorMessage).catch(() => {});
       } else {
         // Fallback to rule-based response for other errors
         const fallbackResponse = analyzeQuery(userMessageText, t);
@@ -428,6 +518,7 @@ export default function ChatbotScreen() {
           data: fallbackResponse.data,
         };
         setMessages(prev => [...prev, botMessage]);
+        speak(fallbackResponse.text).catch(() => {});
       }
     } finally {
       setIsTyping(false);
@@ -438,8 +529,8 @@ export default function ChatbotScreen() {
     <ThemedView className="flex-1">
       <KeyboardAvoidingView
         className="flex-1"
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? navbarHeight + 20 : navbarHeight}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
       >
         {/* Header */}
         <View style={{ backgroundColor: themeColors.card, paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: themeColors.border, flexDirection: 'row', alignItems: 'center' }}>
@@ -453,12 +544,13 @@ export default function ChatbotScreen() {
           data={messages}
           keyExtractor={item => item.id}
           renderItem={({ item }) => <MessageBubble message={item} />}
-          contentContainerStyle={{ padding: 16, paddingBottom: navbarHeight + 100 }}
+          contentContainerStyle={{ padding: 16, paddingBottom: 20 }}
           ListFooterComponent={isTyping ? <TypingIndicator /> : null}
           onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+          style={{ flex: 1 }}
         />
 
-        {/* Input Bar - Positioned absolutely above navbar */}
+        {/* Input Bar */}
         <View 
           style={{ 
             backgroundColor: themeColors.card,
@@ -466,12 +558,10 @@ export default function ChatbotScreen() {
             borderTopColor: themeColors.border,
             paddingHorizontal: 16,
             paddingVertical: 12,
-            position: 'absolute',
-            bottom: navbarHeight,
-            left: 0,
-            right: 0,
-            paddingBottom: insets.bottom + 8,
-            zIndex: 10,
+            // Add padding for tab bar when keyboard is closed
+            // Only add extra padding when keyboard is NOT visible
+            // When keyboard is visible, KeyboardAvoidingView pushes it up, so we don't need extra padding
+            paddingBottom: (keyboardVisible ? 0 : tabbarHeight) + 12,
             shadowColor: '#000',
             shadowOffset: { width: 0, height: -2 },
             shadowOpacity: 0.1,
